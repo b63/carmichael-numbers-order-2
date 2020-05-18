@@ -9,13 +9,17 @@ void seive(int*, int);
 void printProd(std::vector<int>&, std::vector<int>&);
 
 int main() {
+	// order of the carmicheal number
 	const int ORDER = 1;
+	// size of the seive used to initially generate the prime numbers
 	const int SEIVE_SIZE = 100000;
-	// 27·33·52·7·11·13·17·19·29
-	const int L_PRIMES[]        = {2, 3, 5,  7};
-	const int L_PRIMES_POWERS[] = {3, 1, 1,  1};
+
+	// prime factorization of the L parameter
+	const int L_PRIMES[]        = {2, 3, 5,  7}; // prime factors
+	const int L_PRIMES_POWERS[] = {3, 1, 1,  1}; // corresponding powers
 	const int L_PRIMES_SIZE = sizeof(L_PRIMES)/sizeof(int);
 
+	// multiply the prime factors with appropriate powers to get L
 	NTL::ZZ *L = new NTL::ZZ(1);
 	for (int i = 0; i < L_PRIMES_SIZE; ++i)
 	{
@@ -24,7 +28,7 @@ int main() {
 	NTL::ZZ_p::init(*L);
 	std::cout << "L=" << *L << "\n";
 
-	// create list of pimes
+	// list of integers that will be seived
 	int seive_array[SEIVE_SIZE];
 	for (int i = 0; i < SEIVE_SIZE; ++i) {
 		seive_array[i] = i+1;
@@ -32,6 +36,7 @@ int main() {
 
 	seive(seive_array, SEIVE_SIZE);
 
+	// collect all the primes
 	std::vector<int> primes;
 	for (int i = 1; i < SEIVE_SIZE; ++i)
 	{
@@ -44,13 +49,17 @@ int main() {
 
 	std::cout << primes.size() << " primes\n\n";
 
-	// filter list of primes
+	// filter list of primes using the following rule:
+	//     1. p must not divide L
+	//     2. p^r - 1 must divide L for every r in 1,2,..,ORDER
 	std::vector<int> filtered_primes;
 	int len = primes.size();
 	for (int i = 0; i < len; ++i)
 	{
 		int prime = primes[i];
 		bool include = true;
+
+		// check that p does not divide L
 		for (int j = 0; j < L_PRIMES_SIZE; ++j)
 		{
 			if (L_PRIMES[j] == prime)
@@ -89,12 +98,14 @@ int main() {
 	int filtered_size = filtered_primes.size();
 	std::vector<std::vector<int>> cprimes;
 
+	// go through all possible subset sizes starting from 2
 	for (int t=2; t <= filtered_size; ++t)
 	{
 		int factors = t;
 		std::vector<int> index_stack = {0};
 		std::cout << "\nchecking subsets of size " << t << " ... (found " << cprimes.size() << " till now)\n\n";
 
+		// go through subsets of size factors suing a stack
 		while (index_stack.size() > 0)
 		{
 			int top_i = index_stack.size() - 1;
@@ -120,6 +131,8 @@ int main() {
 					prod *= filtered_primes[index_stack[j]];
 				}
 
+				// check that every prime factor satisfies the following divisibility property
+				//     p^r -1 divides n, where r ranges from 1,..,ORDER
 				for (int j = 0; j < factors; ++j)
 				{
 					int p_factor = filtered_primes[index_stack[j]];
@@ -135,6 +148,8 @@ int main() {
 					}
 				}
 
+				// create a copy of the indices for the prime numbers whose product
+				// is a carmicheal number
 				if (carmicheal)
 				{
 					std::vector<int> copy(index_stack);
@@ -167,6 +182,8 @@ int main() {
 	}
 }
 
+// prints the integers in arr specified by the array of indices ind 
+// with a '*' as separator
 void printProd(std::vector<int> &ind, std::vector<int> &arr)
 {
 	int factors = ind.size();
@@ -178,6 +195,7 @@ void printProd(std::vector<int> &ind, std::vector<int> &arr)
 }
 
 
+// prints a vector of integers
 void printVec(std::vector<int> &arr) 
 {
 	int size = arr.size();
@@ -195,6 +213,7 @@ void printVec(std::vector<int> &arr)
 	std::cout << "}";
 }
 
+// sieve an array of integers starting from 1 to create a  list of primes
 // arr: [1, 2, 3, ..., size-1]
 void seive(int *arr, int size)
 {

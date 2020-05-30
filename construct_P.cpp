@@ -5,7 +5,6 @@
  *	2. For every divisor of L' find primes that satisfies d | p^2 - 1, and 
  *	   take note of the factor k = (p^2-1)/d
  *	3. Is there a factor k that comes up most often? If so let L = k*L'
- * Bobby
  **/
 #include <iomanip>
 #include <iostream>

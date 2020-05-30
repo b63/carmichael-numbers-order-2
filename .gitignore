@@ -38,3 +38,4 @@
 # compiled binaries
 generate_cprimes
 generate_cprimes_order_2
+construct_P

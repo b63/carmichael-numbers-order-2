@@ -20,20 +20,24 @@ LINK=$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 	$(COMPILE) $< -o $@
 
 
-SOURCES=generate_cprimes.cpp generate_cprimes_order_2.cpp timer.cpp
+SOURCES=generate_cprimes.cpp generate_cprimes_order_2.cpp timer.cpp \
+		construct_P.cpp
 OBJECTS=$(SOURCES:%.cpp=%.o)
-BINARIES=generate_cprimes generate_cprimes_order_2
+BINARIES=generate_cprimes generate_cprimes_order_2 construct_P
 
 .PHONY: all clean
 
 all: $(BINARIES)
 
-$(OBJECTS): timer.h
+$(OBJECTS): timer.h util.h
 
-generate_cprimes: generate_cprimes.o timer.o
+generate_cprimes: generate_cprimes.o timer.o util.o
 	$(LINK) $^ -o $@ $(LDLIBS)
 
-generate_cprimes_order_2: generate_cprimes_order_2.o timer.o
+generate_cprimes_order_2: generate_cprimes_order_2.o timer.o util.o
+	$(LINK) $^ -o $@ $(LDLIBS)
+
+construct_P: construct_P.o timer.o util.o
 	$(LINK) $^ -o $@ $(LDLIBS)
 
 clean:

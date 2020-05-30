@@ -1,12 +1,20 @@
 #ifndef TIMER_H00
 #define TIMER_H00
+#include <vector>
 
-const int MAP_SIZE = 100;
+const size_t MAP_SIZE = 100;
 
 /**
  * Must be called before any other procedure.
  */
 void init_timer();
+
+/**
+ * Start the timer. 
+ * Returns the id that was used which can be passed to end_cpu_time to
+ * get elapsed time.
+ */
+int start();
 
 /**
  * Start the timer. The id must be between 0 and MAP_SIZE to be valid.

@@ -12,11 +12,8 @@
 #include <NTL/ZZ_p.h>
 
 #include "timer.h"
+#include "util.h"
 
-void printVec(const std::vector<int>&);
-void printProd(const std::vector<int>&, const std::vector<int>&);
-
-void seive(int *arr, size_t size);
 void filter_primes(const std::vector<int> &primes, std::vector<int> &dest);
 void subset_product_brute_force(const std::vector<int> &,
                                 std::vector<std::vector<int>> &);
@@ -87,61 +84,6 @@ int main() {
 	}
 }
 
-// prints the integers in arr specified by the array of indices ind 
-// with a '*' as separator
-void printProd(const std::vector<int> &ind, const std::vector<int> &arr)
-{
-	size_t factors = ind.size();
-	for (size_t k = 0; k < factors; ++k)
-	{
-		if (k > 0) std::cout << " * ";
-		std::cout << arr[ind[k]];
-	}
-}
-
-
-// prints a vector of integers
-void printVec(const std::vector<int> &arr) 
-{
-	size_t size = arr.size();
-	std::cout << "{";
-
-	for (size_t i = 0; i < size; ++i)
-	{
-		if (i > 0) 
-		{
-			std::cout << ", ";
-		}
-		std::cout << arr[i];
-	}
-
-	std::cout << "}";
-}
-
-// sieve an array of integers starting from 1 to create a  list of primes
-// arr: [1, 2, 3, ..., size-1]
-void seive(int *arr, size_t size)
-{
-	size_t index = 1;
-	while (index < size)
-	{
-		size_t jump = arr[index];
-		if (jump == 0)
-		{
-			++index;
-			continue;
-		}
-
-		size_t sieve_index = index + jump;
-
-		for (; sieve_index < size; sieve_index += jump)
-		{
-			arr[sieve_index] = 0;
-		}
-
-		++index;
-	}
-}
 
 // filters the vector of primes using the following rule:
 //     1. p must not divide L
@@ -185,7 +127,7 @@ void filter_primes(const std::vector<int> &primes, std::vector<int> &dest)
 // is stored in the vector cprimes.
 void subset_product_brute_force(const std::vector<int> &primes, std::vector<std::vector<int>> &cprimes)
 {
-	int timer_id = start(-1); // for timing with timer.h
+	int timer_id = start(); // for timing with timer.h
 	size_t num_primes = primes.size();
 	// go through all possible subset sizes starting from 2
 	for (size_t t = 2; t <= num_primes; ++t) 
@@ -265,3 +207,5 @@ void subset_product_brute_force(const std::vector<int> &primes, std::vector<std:
 		std::cout << "(cpu time " << end_cpu_time(timer_id) << " ms)\n";
     }
 }
+
+

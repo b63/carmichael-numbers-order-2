@@ -1,6 +1,5 @@
 /**
  * Generates Carmicheal numbers using general Erdos construction.
- * Bobby
  **/
 #include <iostream>
 #include <vector>
@@ -8,7 +7,6 @@
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
 #include "util.h"
-
 
 
 void filter_primes(const std::vector<int> &primes, std::vector<int> &dest);

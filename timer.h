@@ -1,3 +1,16 @@
+/*
+ * Contains functions for easily timing sections of code.
+ * Usage:
+ *   1. Invoke init_timer once for initializaiton
+ *
+ *   2. Invoke start and keep track of id returned before
+ *      the section of code that needs to be timed
+ *
+ *   3. At the end, invoking end_cpu_time will return
+ *      approximately how much cpu time elapsed since
+ *      start was called
+ */
+
 #ifndef TIMER_H00
 #define TIMER_H00
 #include <vector>

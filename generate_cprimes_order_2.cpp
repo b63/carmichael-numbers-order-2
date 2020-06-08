@@ -30,58 +30,58 @@ const int L_PRIMES_SIZE = sizeof(L_PRIMES)/sizeof(int);
 
 
 int main() {
-	// for timing
-	init_timer();
-	std::cout << std::fixed << std::setprecision(2);
+    // for timing
+    init_timer();
+    std::cout << std::fixed << std::setprecision(2);
 
-	// multiply the prime factors with appropriate powers to get L
-	NTL::ZZ *L = new NTL::ZZ(1);
-	for (int i = 0; i < L_PRIMES_SIZE; ++i)
-	{
-		*L *= std::pow(L_PRIMES[i], L_PRIMES_POWERS[i]);
-	}
-	NTL::ZZ_p::init(*L);
-	std::cout << "L=" << *L << "\n";
+    // multiply the prime factors with appropriate powers to get L
+    NTL::ZZ L { 1 };
+    for (int i = 0; i < L_PRIMES_SIZE; ++i)
+    {
+        L *= std::pow(L_PRIMES[i], L_PRIMES_POWERS[i]);
+    }
+    NTL::ZZ_p::init(L);
+    std::cout << "L=" << L << "\n";
 
-	// list of integers that will be seived
-	int seive_array[SEIVE_SIZE];
-	for (int i = 0; i < SEIVE_SIZE; ++i) {
-		seive_array[i] = i+1;
-	}
+    // list of integers that will be seived
+    int seive_array[SEIVE_SIZE];
+    for (int i = 0; i < SEIVE_SIZE; ++i) {
+        seive_array[i] = i+1;
+    }
 
-	seive(seive_array, SEIVE_SIZE);
+    seive(seive_array, SEIVE_SIZE);
 
-	// collect all the primes
-	std::vector<int> primes;
-	for (int i = 1; i < SEIVE_SIZE; ++i)
-	{
-		int n = seive_array[i];
-		if (n != 0)
-		{
-			primes.push_back(n);
-		}
-	}
+    // collect all the primes
+    std::vector<int> primes;
+    for (int i = 1; i < SEIVE_SIZE; ++i)
+    {
+        int n = seive_array[i];
+        if (n != 0)
+        {
+            primes.push_back(n);
+        }
+    }
 
-	std::cout << primes.size() << " primes\n";
+    std::cout << primes.size() << " primes\n";
 
-	// filter list of primes and store in this vector
-	std::vector<int> filtered_primes;
-	filter_primes(primes, filtered_primes);
+    // filter list of primes and store in this vector
+    std::vector<int> filtered_primes;
+    filter_primes(primes, filtered_primes);
 
-	std::cout << filtered_primes.size() << " filtered primes" << "\n";
+    std::cout << filtered_primes.size() << " filtered primes" << "\n";
 
-	// subset products of filetered_primes are possible carmicheal numbers
-	// go over every subset of size factors, store results in cprime list
-	std::vector< std::vector<int> > cprimes;
+    // subset products of filetered_primes are possible carmicheal numbers
+    // go over every subset of size factors, store results in cprime list
+    std::vector< std::vector<int> > cprimes;
         subset_product_brute_force(filtered_primes, cprimes);
 
         int found = cprimes.size();
-	std::cout << "found " << found << " carmicheal primes\n";
-	for (int i = 0; i < found; ++i)
-	{
-		printProd(cprimes[i], filtered_primes);
-		std::cout << "\n";
-	}
+    std::cout << "found " << found << " carmicheal primes\n";
+    for (int i = 0; i < found; ++i)
+    {
+        printProd(cprimes[i], filtered_primes);
+        std::cout << "\n";
+    }
 }
 
 
@@ -91,32 +91,32 @@ int main() {
 // the result is stored in the vector object dest
 void filter_primes(const std::vector<int> &primes, std::vector<int> &dest)
 {
-	size_t len = primes.size();
-	for (size_t i = 0; i < len; ++i)
-	{
-		int prime = primes[i];
-		bool include = true;
+    size_t len = primes.size();
+    for (size_t i = 0; i < len; ++i)
+    {
+        int prime = primes[i];
+        bool include = true;
 
-		// check that p does not divide L
-		for (size_t j = 0; j < L_PRIMES_SIZE; ++j)
-		{
-			if (L_PRIMES[j] == prime)
-			{
-				include = false;
-				break;
-			}
-		}
+        // check that p does not divide L
+        for (size_t j = 0; j < L_PRIMES_SIZE; ++j)
+        {
+            if (L_PRIMES[j] == prime)
+            {
+                include = false;
+                break;
+            }
+        }
 
-		if (!include) continue;
+        if (!include) continue;
 
-		// check p^2 - 1 divides L
-		NTL::ZZ_p p_mod_L(prime);
-		p_mod_L *= prime;
+        // check p^2 - 1 divides L
+        NTL::ZZ_p p_mod_L(prime);
+        p_mod_L *= prime;
 
-		if (p_mod_L != 1) continue;
-		
-		dest.push_back(prime);
-	}
+        if (p_mod_L != 1) continue;
+        
+        dest.push_back(prime);
+    }
 }
 
 // brute force approach to finding subset products with correct modulo.
@@ -127,84 +127,86 @@ void filter_primes(const std::vector<int> &primes, std::vector<int> &dest)
 // is stored in the vector cprimes.
 void subset_product_brute_force(const std::vector<int> &primes, std::vector<std::vector<int>> &cprimes)
 {
-	int timer_id = start(); // for timing with timer.h
-	size_t num_primes = primes.size();
-	// go through all possible subset sizes starting from 2
-	for (size_t t = 2; t <= num_primes; ++t) 
-	{
-		size_t factors = t;
-		std::vector<int> index_stack = {0};
-		std::cout << "checking subsets of size " << t << " ...";
-		std::cout << "(found " << cprimes.size() << " till now)\n";
-		
-		// start timer
-		start(timer_id);
-		// go through subsets of size factors suing a stack
-		while (index_stack.size() > 0) 
-		{
-			size_t top_i = index_stack.size() - 1;
-			// initializaiton
-			if (index_stack[top_i] == -1) 
-			{
-				index_stack[top_i] = index_stack.size() > 1 ? index_stack[top_i - 1] + 1 : 0;
-			}
+    int timer_id = start(); // for timing with timer.h
+    size_t num_primes = primes.size();
+    // go through all possible subset sizes starting from 2
+    for (size_t t = 2; t <= num_primes; ++t) 
+    {
+        size_t factors = t;
+        std::vector<int> index_stack = {0};
+        std::cout << "checking subsets of size " << t << " ...";
+        std::cout << "(found " << cprimes.size() << " till now)\n";
+        
+        // start timer
+        start(timer_id);
+        // go through subsets of size factors suing a stack
+        while (index_stack.size() > 0) 
+        {
+            size_t top_i = index_stack.size() - 1;
+            // initializaiton
+            if (index_stack[top_i] == -1) 
+            {
+                index_stack[top_i] = index_stack.size() > 1 ? index_stack[top_i - 1] + 1 : 0;
+            }
 
-			if ((size_t)index_stack[top_i] < num_primes) 
-			{
-				if (index_stack.size() < factors) 
-				{
-					index_stack.push_back(-1);
-					continue;
-				}
+            if ((size_t)index_stack[top_i] < num_primes) 
+            {
+                if (index_stack.size() < factors) 
+                {
+                    index_stack.push_back(-1);
+                    continue;
+                }
 
-				// check that this subset is a carmicheal prime
-				bool carmicheal = true;
-				NTL::ZZ prod(1);
-				for (size_t j = 0; j < factors; ++j) 
-				{
-					prod *= primes[index_stack[j]];
-				}
+                // check that this subset is a carmicheal prime
+                bool carmicheal = true;
+                NTL::ZZ prod(1);
+                for (size_t j = 0; j < factors; ++j) 
+                {
+                    prod *= primes[index_stack[j]];
+                }
 
-				// check that every prime factor satisfies the following divisibility
-				// property
-				//     p^2 -1 divides n
-				for (size_t j = 0; j < factors; ++j) 
-				{
-					int p_factor = primes[index_stack[j]];
-					NTL::ZZ p2(p_factor);
-					p2 *= p_factor;
+                // check that every prime factor satisfies the following divisibility
+                // property
+                //     p^2 -1 divides n
+                for (size_t j = 0; j < factors; ++j) 
+                {
+                    int p_factor = primes[index_stack[j]];
+                    NTL::ZZ p2(p_factor);
+                    p2 *= p_factor;
 
-					if (prod % (p2 - 1) != 1) {
-					carmicheal = false;
-					break;
-					}
-				}
+                    if (prod % (p2 - 1) != 1) {
+                    carmicheal = false;
+                    break;
+                    }
+                }
 
-				// create a copy of the indices for the prime numbers whose product
-				// is a carmicheal number
-				if (carmicheal) {
-					std::cout << "found ";
-					std::vector<int> copy(index_stack);
-					cprimes.push_back(copy);
-					printProd(index_stack, primes);
-					std::cout << "\n";
-				}
+                // create a copy of the indices for the prime numbers whose product
+                // is a carmicheal number
+                if (carmicheal) {
+                    std::cout << "found ";
+                    std::vector<int> copy(index_stack);
+                    cprimes.push_back(copy);
+                    printProd(index_stack, primes);
+                    std::cout << "\n";
+                }
 
-				++index_stack[top_i];
-			} 
-			else 
-			{
-				index_stack.pop_back();
-				if (top_i > 0) {
-					++index_stack[top_i - 1];
-				}
+                ++index_stack[top_i];
+            } 
+            else 
+            {
+                index_stack.pop_back();
+                if (top_i > 0) {
+                    ++index_stack[top_i - 1];
+                }
 
-				continue;
-			}
-		}
+                continue;
+            }
+        }
 
-		// print cpu time
-		std::cout << "(cpu time " << end_cpu_time(timer_id) << " ms)\n";
+        // print elapsed time
+        const time_metric &time { end(timer_id) };
+        std::cout << "(cpu time " << time.cpu_time << " s)\n";
+        std::cout << "(wall time " << time.wall_time << " s)\n";
     }
 }
 

@@ -17,8 +17,13 @@
 
 const size_t MAP_SIZE = 100;
 
+struct time_metric 
+{
+    const double cpu_time;
+    const double wall_time;
+};
+
 /**
- * Must be called before any other procedure.
  */
 void init_timer();
 
@@ -41,6 +46,11 @@ int start(int id);
  * Returns elapsed time in ms.
  * The id is the integer returned by start or the same one that was passed to it.
  */
-double end_cpu_time(int id);
+const time_metric end(int id);
+
+/**
+ * Prints out the cpu and wall time to stdout;
+ */
+void printTime(const time_metric &t);
 
 #endif

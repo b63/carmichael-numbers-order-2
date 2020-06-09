@@ -21,9 +21,9 @@ LINK=$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 
 
 SOURCES=generate_cprimes.cpp generate_cprimes_order_2.cpp timer.cpp \
-		construct_P.cpp
+		construct_P.cpp counting_factors.cpp
 OBJECTS=$(SOURCES:%.cpp=%.o)
-BINARIES=generate_cprimes generate_cprimes_order_2 construct_P
+BINARIES=generate_cprimes generate_cprimes_order_2 construct_P counting_factors
 
 .PHONY: all clean
 
@@ -38,6 +38,9 @@ generate_cprimes_order_2: generate_cprimes_order_2.o timer.o util.o
 	$(LINK) $^ -o $@ $(LDLIBS)
 
 construct_P: construct_P.o timer.o util.o
+	$(LINK) $^ -o $@ $(LDLIBS)
+
+counting_factors: counting_factors.o timer.o util.o
 	$(LINK) $^ -o $@ $(LDLIBS)
 
 clean:

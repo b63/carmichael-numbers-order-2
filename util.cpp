@@ -51,6 +51,23 @@ void printVecInt(const std::vector<int> &arr)
     std::cout << "}";
 }
 
+void printVecLong(const std::vector<long> &arr) 
+{
+    size_t size = arr.size();
+    std::cout << "{";
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (i > 0) 
+        {
+            std::cout << ", ";
+        }
+        std::cout << arr[i];
+    }
+
+    std::cout << "}";
+}
+
 
 void seive_primes(std::vector<int> &primes, size_t size)
 {

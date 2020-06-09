@@ -12,6 +12,7 @@ void printVec(const std::vector<NTL::ZZ> &arr);
 
 // prints a vector of integers
 void printVecInt(const std::vector<int> &arr);
+void printVecLong(const std::vector<long> &arr);
 
 void seive(int *arr, size_t size);
 void seive_primes(std::vector<int> &primes, size_t size);

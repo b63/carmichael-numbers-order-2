@@ -5,7 +5,7 @@ CXX=g++
 CPPFLAGS=
 
 # Extra flags to give to the C++ compiler. 
-CXXFLAGS=-Wall -pedantic -Werror -std=c++11
+CXXFLAGS=-Wall -pedantic -Werror -std=c++14
 
 # Extra flags to give to compilers when they are supposed to invoke the linker, ‘ld’, such as -L. Libraries (-lfoo) should be added to the LDLIBS variable instead. 
 LDFLAGS=
@@ -23,13 +23,13 @@ LINK=$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS)
 SOURCES=generate_cprimes.cpp generate_cprimes_order_2.cpp timer.cpp \
 		construct_P.cpp counting_factors.cpp
 OBJECTS=$(SOURCES:%.cpp=%.o)
-BINARIES=generate_cprimes generate_cprimes_order_2 construct_P counting_factors
+BINARIES=generate_cprimes generate_cprimes_order_2 construct_P
 
 .PHONY: all clean
 
 all: $(BINARIES)
 
-$(OBJECTS): timer.h util.h
+$(OBJECTS): timer.h util.h counting_factors.h
 
 generate_cprimes: generate_cprimes.o timer.o util.o
 	$(LINK) $^ -o $@ $(LDLIBS)
@@ -37,14 +37,11 @@ generate_cprimes: generate_cprimes.o timer.o util.o
 generate_cprimes_order_2: generate_cprimes_order_2.o timer.o util.o
 	$(LINK) $^ -o $@ $(LDLIBS)
 
-construct_P: construct_P.o timer.o util.o
-	$(LINK) $^ -o $@ $(LDLIBS)
-
-counting_factors: counting_factors.o timer.o util.o
+construct_P: construct_P.o timer.o util.o counting_factors.o
 	$(LINK) $^ -o $@ $(LDLIBS)
 
 clean:
-	rm $(OBJECTS) $(BINARIES)
+	rm -f $(OBJECTS) $(BINARIES)
 
 
 

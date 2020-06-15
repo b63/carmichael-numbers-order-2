@@ -1,88 +1,32 @@
+#ifndef UTIL_H_TEMPLATES
+
 #include <iostream>
 #include <stdexcept>
 #include <map>
-
 #include <NTL/ZZ.h>
 
 #include "util.h"
 
 
-void printProd(const std::vector<int> &ind, const std::vector<int> &arr)
+// generate list of primes using a sieve and store
+// them in `primes` vector.
+// @param primes vector instance where the primes will be stored
+// @param size   size of the sieve used to generate primes
+//               effectively limits the largest primes
+void sieve_primes(std::vector<long> &primes, size_t size)
 {
-    int factors = ind.size();
-    for (int k = 0; k < factors; ++k)
-    {
-        if (k > 0) std::cout << " * ";
-        std::cout << arr[ind[k]];
-    }
-}
-
-void printVec(const std::vector<NTL::ZZ> &arr) 
-{
-    size_t size = arr.size();
-    std::cout << "{";
-
-    for (size_t i = 0; i < size; ++i)
-    {
-        if (i > 0) 
-        {
-            std::cout << ", ";
-        }
-        std::cout << arr[i];
-    }
-
-    std::cout << "}";
-}
-
-void printVecInt(const std::vector<int> &arr) 
-{
-    size_t size = arr.size();
-    std::cout << "{";
-
-    for (size_t i = 0; i < size; ++i)
-    {
-        if (i > 0) 
-        {
-            std::cout << ", ";
-        }
-        std::cout << arr[i];
-    }
-
-    std::cout << "}";
-}
-
-void printVecLong(const std::vector<long> &arr) 
-{
-    size_t size = arr.size();
-    std::cout << "{";
-
-    for (size_t i = 0; i < size; ++i)
-    {
-        if (i > 0) 
-        {
-            std::cout << ", ";
-        }
-        std::cout << arr[i];
-    }
-
-    std::cout << "}";
-}
-
-
-void seive_primes(std::vector<int> &primes, size_t size)
-{
-    // list of integers that will be seived
-    int *seive_array = new int[size];
+    // list of integers that will be sieved
+    long *sieve_array = new long[size];
     for (size_t i = 0; i < size; ++i) {
-        seive_array[i] = i+1;
+        sieve_array[i] = i+1;
     }
-    
-    seive(seive_array, size);
-    
+
+    sieve(sieve_array, size);
+
     // collect all the primes
     for (size_t i = 1; i < size; ++i)
     {
-        int n = seive_array[i];
+        long n = sieve_array[i];
         if (n != 0)
         {
             primes.push_back(n);
@@ -91,26 +35,27 @@ void seive_primes(std::vector<int> &primes, size_t size)
 }
 
 // sieve an array of integers starting from 1 to create a  list of primes
-// arr: [1, 2, 3, ..., size-1]
-void seive(int *arr, size_t size)
+// @prarm arr  pointer to the array, should contain [1, 2, ..., size-1]
+// @param size the length of the array
+void sieve(long *arr, size_t size)
 {
     size_t index = 1;
     while (index < size)
     {
-        int jump = arr[index];
+        long jump = arr[index];
         if (jump == 0)
         {
             ++index;
             continue;
         }
-    
+
         size_t  sieve_index = index + jump;
-    
+
         for (; sieve_index < size; sieve_index += jump)
         {
             arr[sieve_index] = 0;
         }
-    
+
         ++index;
     }
 }
@@ -151,6 +96,11 @@ bool poklington_test(const NTL::ZZ &N)
     return false;
 }
 
+
+/**
+ * Returns the nth prime number using the PrimeSeq class
+ * from the NTL library.
+ */
 long get_nth_prime(size_t n)
 {
     static std::vector<long> _cache {0};
@@ -162,6 +112,7 @@ long get_nth_prime(size_t n)
         return _cache[n];
     }
 
+    _cache.reserve(n);
     while (size < n)
     {
         _cache.push_back(s.next());
@@ -170,3 +121,69 @@ long get_nth_prime(size_t n)
 
     return _cache[n];
 }
+
+
+/** 
+ * prints a carriage return ('\r') and `width` number
+ * of spaces followed by another carriage return.
+ * Helpful to 'erase' text written to a terminal
+ */
+void clrln(size_t width)
+{
+    char *spaces {new char[width+3]};
+    spaces[0] = '\r';
+    for (size_t i = 1; i <= width; ++i) spaces[i] = ' ';
+    spaces[width+1] = '\r';
+    spaces[width+2] = '\0';
+    std::cout << spaces;
+    delete[] spaces;
+}
+
+
+#else
+
+// prints the integers in arr specified by the array of indices ind 
+// with a '*' as separator
+template <typename T>
+void printProd(const std::vector<size_t> &ind, const std::vector<T> &arr)
+{
+    size_t factors = ind.size();
+    for (size_t k = 0; k < factors; ++k)
+    {
+        if (k > 0) std::cout << " * ";
+        std::cout << arr[ind[k]];
+    }
+}
+
+// prints a vector of integers of type NTL:ZZ
+template <typename T>
+void printVec(const std::vector<T> &arr) 
+{
+    size_t size = arr.size();
+    std::cout << "{";
+
+    for (size_t i = 0; i < size; ++i)
+    {
+        if (i > 0) 
+        {
+            std::cout << ", ";
+        }
+        std::cout << arr[i];
+    }
+
+    std::cout << "}";
+}
+
+
+template <typename T>
+void printFactorization(const std::vector<T> &factors, const std::vector<T> &powers)
+{
+    size_t len = factors .size();
+    for (size_t k = 0; k < len; ++k)
+    {
+        if (k > 0) std::cout << " * ";
+        std::cout << factors[k] << "^" << powers[k];
+    }
+}
+
+#endif

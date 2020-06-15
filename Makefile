@@ -5,7 +5,7 @@ CXX=g++
 CPPFLAGS=
 
 # Extra flags to give to the C++ compiler. 
-CXXFLAGS=-Wall -pedantic -Werror -std=c++14
+CXXFLAGS=-Wall -pedantic -Werror -std=c++11
 
 # Extra flags to give to compilers when they are supposed to invoke the linker, ‘ld’, such as -L. Libraries (-lfoo) should be added to the LDLIBS variable instead. 
 LDFLAGS=

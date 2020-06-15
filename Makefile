@@ -2,7 +2,7 @@
 CXX=g++
 
 # preprocessor flags
-CPPFLAGS=
+CPPFLAGS=-I ./include
 
 # Extra flags to give to the C++ compiler. 
 CXXFLAGS=-Wall -pedantic -Werror -std=c++11
@@ -29,7 +29,7 @@ BINARIES=generate_cprimes generate_cprimes_order_2 construct_P
 
 all: $(BINARIES)
 
-$(OBJECTS): timer.h util.h counting_factors.h
+$(OBJECTS): include/*
 
 generate_cprimes: generate_cprimes.o timer.o util.o
 	$(LINK) $^ -o $@ $(LDLIBS)

@@ -11,6 +11,13 @@ Product *MAP;
 size_t PRODUCT_MAP_SIZE { 0 };
 
 
+/**
+ * Sieves an array the size of `max` so that subsequent calls
+ * to `get_prime_factors` can compute the prime factorization
+ * of a  number <= max quickly.
+ * @param max size of sieve, arguments to subsequent calls of `get_prime_factors`
+ *            must be <= `max`
+ */
 void init(size_t max)
 {
     MAP =  new Product[max+1];
@@ -48,7 +55,19 @@ void init(size_t max)
     }
 }
 
-std::vector<long> &get_prime_factors(size_t n)
+
+
+/**
+ * Returns a pointer to a vector of prime factors of `n`, including the multiplicity.
+ * All repeated factors will be a next to each other in the vector.
+ * Eg. {2, 2, 3, 3, 5} and never {2, 3, 2, 3, 5}
+ * Will throw an error if `init(max)` has not been been at least once with max >= n.
+ *
+ * @param n  number to get the prime factorization of
+ *
+ * Returns a pointer to a vector containing the prime factors.
+ */
+std::vector<long> *get_prime_factors(size_t n)
 {
     if (n >= PRODUCT_MAP_SIZE)
     {
@@ -74,7 +93,7 @@ std::vector<long> &get_prime_factors(size_t n)
 
     }
 
-    return *factors;
+    return factors;
 }
 
 

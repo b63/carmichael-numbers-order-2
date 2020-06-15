@@ -87,6 +87,31 @@ int main()
 }
 
 
+
+/**
+ * Constructs a set of primes using prime factorization 
+ * of L' (L_P) parameter given through the `L_P_primes` and `L_P_primes_power`
+ * lists.
+ *
+ * This method goes the multiples of each divisor of L' and
+ * considers the ones that take th form:
+ *                N^2 - 1  = divisor * k
+ * Then runs the primality test of N to check if N is prime.
+ * If N is prime then updates `factor_map` by adding N to the 
+ * list of primes that the key k maps to
+ *
+ * Returns the smallest co-factor k with the largest of list of primes.
+ *
+ * @param factor_map            reference to std::map that will be updated with 
+ *                              co-factors as keys and list of corresponding primes
+ *                              as values
+ * @param L_P_primes            vector of prime factors of L'
+ * @param L_P_primes_power      vector of powers of correspoding 
+ *                              powers for the prime factors of L'
+ * @param MAX                   maximum multiple of divisor to consider.
+ *                              Only considers co-factors such that
+ *                                          divisor*k <= MAX
+ **/
 NTL::ZZ construct_primes_2(
         std::map<const NTL::ZZ, std::vector<long> > &factor_map,
         const std::vector<long> &L_P_primes,
@@ -120,26 +145,17 @@ NTL::ZZ construct_primes_2(
         {
 
             if (!is_perfect_square(N, multiple+1)) continue;
-            const std::vector<long> &factors_k { get_prime_factors(k) };
-            std::cout << "divisor " << divisor << ", N=" << N << " " ;
-            printVec(factors_k);
-            std::cout << "\n";
+            const std::vector<long> *factors_k { get_prime_factors(k) };
 
             std::vector<long> distinct_factors_k;
             std::vector<long> powers_k;
-            collapse_factors(distinct_factors_k, powers_k, factors_k);
+            collapse_factors(distinct_factors_k, powers_k, *factors_k);
             combine_factors(factors[i], powers[i], distinct_factors_k, powers_k);
 
-             printFactorization(factors[i], powers[i]);
-            std::cout << "\n";
             std::vector<long> factors_n_1;
             std::vector<long> powers_n_1;
             factor_n_1(factors_n_1, powers_n_1, factors[i], powers[i], N);
-            std::cout << "N^2-1 = " << N*N-1 << "\n"; 
-            std::cout << "N-1 = ";
-            printFactorization(factors_n_1, powers_n_1);
-            std::cout << "\n\n";
-            delete &factors_k;
+            delete factors_k;
         }
     }
 
@@ -147,7 +163,19 @@ NTL::ZZ construct_primes_2(
     return L_P;
 }
 
-// does not assume the factor vector is sorted
+/**
+ * Combines the factorization of two numbers (n1 and n2) into one but adding
+ * factors to one of the vectors. Does not assume that the vectors are sorted.
+ *
+ * @param factors       reference to vector of prime factors of n1
+ *                      prime factors of n2 are appended to this vector
+ * @param powers        corresponding powers of the prime factors of n1,
+ *                      will be modified as factors of n2 are appended to
+ *                      `factors` vector
+ * @param othr_factors  reference to vector of prime factors of n2   
+ * @param othr_powers   reference to vector corresponding powers of
+ *                      the prime factors of n2   
+ */
 void 
 combine_factors( std::vector<long>  &factors, std::vector<long> &powers,
         const std::vector<long> &othr_factors, const std::vector<long> &othr_powers)
@@ -178,6 +206,18 @@ combine_factors( std::vector<long>  &factors, std::vector<long> &powers,
 
 }
 
+
+/**
+ * Extracts the factor of N-1 and stores it in `factors_n_1` and the powers
+ * in `powers_n_1` given the prime factorization of N^2-1.
+ *
+ * @param factors_n_1   referece to vector where factors of N-1 should be stored
+ * @param powers_n_1    referece to vector where corresponding powers of the factors
+ *                      should be stored
+ * @param factors_n2_1  reference to vector containing the prime factors of  N^2-1
+ * @param powers_n2_1   referece to vector containing the corresponding powers of
+ *                      the prime factors of N^2-1
+ */
 void 
 factor_n_1(std::vector<long>  &factors_n_1, std::vector<long> &powers_n_1,
         const std::vector<long> &factors_n2_1, const std::vector<long> &powers_n2_1,
@@ -199,6 +239,14 @@ factor_n_1(std::vector<long>  &factors_n_1, std::vector<long> &powers_n_1,
 
 
 
+/**
+ * Returns true if `n2` is a perfect square, and stores the square root in `n`.
+ * If `n2` is not a prefect square, the value of `n` is not changed.
+ *
+ * @param n  referce to a NTL::ZZ where the square root is stored if `n2` is a
+ *           perfect square
+ * @param n2 the number to check if it is a perfect square
+ */
 bool
 is_perfect_square(NTL::ZZ &n, const NTL::ZZ &n2)
 {
@@ -238,6 +286,17 @@ is_perfect_square(NTL::ZZ &n, const NTL::ZZ &n2)
  * map `factor_map_ptr` with the co-factor k as the key.
  *
  * Returns the smallest co-factor k with the largest of list of primes.
+ *
+ * @param factor_map            reference to std::map that will be updated with 
+ *                              co-factors as keys and list of corresponding primes
+ *                              as values
+ * @param L_P_primes            vector of prime factors of L'
+ * @param L_P_primes_power      vector of powers of correspoding 
+ *                              powers for the prime factors of L'
+ * @param sieve_size            size of the sieve to use when generating the list
+ *                              of primes so that only co-factors that satisfy
+ *                                          divisor*k <= sieve_size
+ *                              are considered
  **/
 NTL::ZZ construct_primes(
         std::map<const NTL::ZZ, std::vector<long> > &factor_map,
@@ -294,7 +353,6 @@ NTL::ZZ construct_primes(
 
     return k_max;
 }
-
 
 
 
@@ -514,6 +572,16 @@ void get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
 }
 
 
+/**
+ * Multiplies each element of `factor` raised to the corresponding element of `powers`
+ * and stores the final product in `prod`.
+ *
+ * @param prod    referece to NTL::ZZ where the final product is accumulated
+ * @param factors vector of factors
+ * @param powers  vector of powers for each factor in`factors`
+ *
+ * Returns a referce to `prod`.
+ */
 NTL::ZZ& 
 multiply_factors(NTL::ZZ &prod, const std::vector<long> &factors, const std::vector<long> &powers)
 {

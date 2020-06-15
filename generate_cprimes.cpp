@@ -86,7 +86,7 @@ void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
     {
         long prime = primes[i];
         bool include = true;
-        
+
         // check that p does not divide L
         for (size_t j = 0; j < L_PRIMES_SIZE; ++j)
         {
@@ -96,9 +96,9 @@ void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
                 break;
             }
         }
-        
+
         if (!include) continue;
-        
+
         // check p^r - 1 divides L
         NTL::ZZ_p p_mod_L(1);
         int r = 1;
@@ -109,12 +109,12 @@ void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
                 include = false;
                 break;
             }
-            
+
             ++r;
         } while (r <= ORDER);
-        
+
         if (!include) continue;
-        
+
         dest.push_back(prime);
     }
 }
@@ -135,7 +135,7 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
         std::vector<int> index_stack = {0};
         std::cout << "checking subsets of size " << t << " ...";
         std::cout <<  "(found " << cprimes.size() << " till now)\n";
-        
+
         // go through subsets of size factors suing a stack
         while (index_stack.size() > 0)
         {
@@ -145,7 +145,7 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
             {
                 index_stack[top_i] = index_stack.size() > 1 ? index_stack[top_i-1]+1 : 0;
             }
-            
+
             if ((size_t) index_stack[top_i] < num_primes)
             {
                 if (index_stack.size() < factors)
@@ -153,7 +153,7 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
                     index_stack.push_back(-1);
                     continue;
                 }
-            
+
                 // check that this subset is a carmicheal prime
                 bool carmicheal = true;
                 NTL::ZZ prod(1);
@@ -161,7 +161,7 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
                 {
                     prod *= primes[index_stack[j]];
                 }
-                
+
                 // check that every prime factor satisfies the following divisibility property
                 //     p^r -1 divides n, where r ranges from 1,..,ORDER
                 for (size_t j = 0; j < factors; ++j)
@@ -178,7 +178,7 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
                         }
                     }
                 }
-                
+
                 // create a copy of the indices for the prime numbers whose product
                 // is a carmicheal number
                 if (carmicheal)
@@ -192,7 +192,7 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
                     printProd(copy, primes);
                     std::cout << "\n";
                 }
-                    
+
                 ++index_stack[top_i];
             }
             else

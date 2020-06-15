@@ -26,6 +26,10 @@ std::vector<time_point> wall_clock_starts;
 int id_map[MAP_SIZE];
 
 
+/**
+ * Initialize the timer. Must be called once before any
+ * other procedure in this module.
+ */
 void init_timer()
 {
     for (size_t i = 0; i < MAP_SIZE; ++i)

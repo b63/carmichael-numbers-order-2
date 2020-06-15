@@ -5,7 +5,7 @@
 #include <map>
 #include <NTL/ZZ.h>
 
-#include "util.h"
+#include <util.h>
 
 
 // generate list of primes using a sieve and store

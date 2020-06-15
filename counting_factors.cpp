@@ -3,9 +3,9 @@
 #include <cmath>
 #include <stdexcept>
 
-#include "counting_factors.h"
-#include "timer.h"
-#include "util.h"
+#include <counting_factors.h>
+#include <timer.h>
+#include <util.h>
 
 Product *MAP;
 size_t PRODUCT_MAP_SIZE { 0 };

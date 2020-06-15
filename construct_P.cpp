@@ -17,9 +17,9 @@
 #include <NTL/ZZ_p.h>
 #include <NTL/RR.h>
 
-#include "timer.h"
-#include "util.h"
-#include "counting_factors.h"
+#include <timer.h>
+#include <util.h>
+#include <counting_factors.h>
 
 
 NTL::RR get_density(NTL::ZZ &L, size_t prime_size);
@@ -72,8 +72,8 @@ int main()
     // naming note: L_P stands for L_PRIME -> L'
     // prime factorization of the L' parameter
     // prime factors  & corresponding powers
-    const std::vector<long> L_P_PRIMES        {2, 5 }; 
-    const std::vector<long> L_P_PRIMES_POWERS {2, 3 };
+    const std::vector<long> L_P_PRIMES        {  2,  5,  7 }; 
+    const std::vector<long> L_P_PRIMES_POWERS { 11, 12,  3 };
 
     // size of the sieve used to initially generate the prime numbers
     //const size_t SEIVE_SIZE = 10000000;
@@ -141,6 +141,7 @@ NTL::ZZ construct_primes_2(
         NTL::ZZ multiple { divisor };
         NTL::ZZ N;
 
+        std::cout << divisor << '\n';
         for (long k {1}; multiple < MAX; ++k, multiple += divisor)
         {
 
@@ -155,6 +156,8 @@ NTL::ZZ construct_primes_2(
             std::vector<long> factors_n_1;
             std::vector<long> powers_n_1;
             factor_n_1(factors_n_1, powers_n_1, factors[i], powers[i], N);
+
+            std::cout << k << ' ';
             delete factors_k;
         }
     }

@@ -16,7 +16,7 @@
 #include <chrono>
 #include <stdexcept>
 #include <vector>
-#include "timer.h"
+#include <timer.h>
 
 typedef std::chrono::high_resolution_clock::time_point time_point;
 typedef std::chrono::duration<double> double_duration;
@@ -28,7 +28,7 @@ int id_map[MAP_SIZE];
 
 /**
  * Initialize the timer. Must be called once before any
- * other procedure in this module.
+ * other procedure in this module..
  */
 void init_timer()
 {

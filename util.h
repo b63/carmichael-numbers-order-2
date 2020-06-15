@@ -3,19 +3,15 @@
 #include <vector>
 #include <NTL/ZZ.h>
 
-// prints the integers in arr specified by the array of indices ind 
-// with a '*' as separator
-void printProd(const std::vector<int> &ind, const std::vector<int> &arr);
+// clear `width` number of characters from terminal
+// by writing that number of spaces followed by a
+// carriage return
+void clrln(size_t width=80);
 
-// prints a vector of integers of type NTL:ZZ
-void printVec(const std::vector<NTL::ZZ> &arr);
-
-// prints a vector of integers
-void printVecInt(const std::vector<int> &arr);
-void printVecLong(const std::vector<long> &arr);
-
-void seive(int *arr, size_t size);
-void seive_primes(std::vector<int> &primes, size_t size);
+// stores list of primes < size in `primes` vector
+void sieve_primes(std::vector<long> &primes, size_t size);
+// sieves `arr` , and `size` is lenght of arr
+void sieve(long *arr, size_t size);
 
 
 // TODO: finish implementation
@@ -25,5 +21,8 @@ bool poklington_test(NTL::ZZ N);
 // generate consecutive primes. Counts start from 0,
 // so get_nth_prime(0) returns 2.
 long get_nth_prime(size_t n);
+
+#define UTIL_H_TEMPLATES 
+#include "util.cpp"
 
 #endif

@@ -9,18 +9,18 @@
 #include "util.h"
 
 
-void filter_primes(const std::vector<int> &primes, std::vector<int> &dest);
-void subset_product(const std::vector<int>&, std::vector<std::vector<int> >&);
+void filter_primes(const std::vector<long> &primes, std::vector<long> &dest);
+void subset_product(const std::vector<long>&, std::vector<std::vector<size_t> >&);
 
 // order of the carmicheal number
 const int ORDER = 1;
-// size of the seive used to initially generate the prime numbers
+// size of the sieve used to initially generate the prime numbers
 const size_t SEIVE_SIZE = 100000;
 
 // prime factorization of the L parameter
-const int L_PRIMES[]        = {2, 3, 5,  7}; // prime factors
-const int L_PRIMES_POWERS[] = {3, 1, 1,  1}; // corresponding powers
-const size_t L_PRIMES_SIZE = sizeof(L_PRIMES)/sizeof(int);
+const long L_PRIMES[]        = {2, 3, 5,  7}; // prime factors
+const long L_PRIMES_POWERS[] = {3, 1, 1,  1}; // corresponding powers
+const size_t L_PRIMES_SIZE = sizeof(L_PRIMES)/sizeof(long);
 
 
 int main() {
@@ -33,19 +33,19 @@ int main() {
     NTL::ZZ_p::init(L);
     std::cout << "L=" << L << "\n";
 
-    // list of integers that will be seived
-    int seive_array[SEIVE_SIZE];
+    // list of integers that will be sieved
+    long sieve_array[SEIVE_SIZE];
     for (size_t i = 0; i < SEIVE_SIZE; ++i) {
-        seive_array[i] = i+1;
+        sieve_array[i] = i+1;
     }
 
-    seive(seive_array, SEIVE_SIZE);
+    sieve(sieve_array, SEIVE_SIZE);
 
     // collect all the primes
-    std::vector<int> primes;
+    std::vector<long> primes;
     for (size_t i = 1; i < SEIVE_SIZE; ++i)
     {
-        int n = seive_array[i];
+        long n = sieve_array[i];
         if (n != 0)
         {
             primes.push_back(n);
@@ -55,14 +55,14 @@ int main() {
     std::cout << primes.size() << " primes\n";
 
     // filter list of primes and store in this vector
-    std::vector<int> filtered_primes;
+    std::vector<long> filtered_primes;
     filter_primes(primes, filtered_primes);
 
     std::cout << filtered_primes.size() << " filtered primes" << "\n\n";
 
     // subset products of filetered_primes are possible carmicheal numbers
     // go over every subset of size factors, store results in cprime list
-    std::vector< std::vector<int> > cprimes;
+    std::vector< std::vector<size_t> > cprimes;
     subset_product(filtered_primes, cprimes);
 
     size_t found = cprimes.size();
@@ -75,41 +75,16 @@ int main() {
 }
 
 
-// sieve an array of integers starting from 1 to create a  list of primes
-// arr: [1, 2, 3, ..., size-1]
-void seive(int *arr, int size)
-{
-    int index = 1;
-    while (index < size)
-    {
-        int jump = arr[index];
-        if (jump == 0)
-        {
-            ++index;
-            continue;
-        }
-        
-        int sieve_index = index + jump;
-        
-        for (; sieve_index < size; sieve_index += jump)
-        {
-            arr[sieve_index] = 0;
-        }
-        
-        ++index;
-    }
-}
-
 // filters the vector of primes using the following rule:
 //     1. p must not divide L
 //     2. p^r - 1 must divide L for every r in 1,2,..,ORDER
 // the result is stored in the vector object dest
-void filter_primes(const std::vector<int> &primes, std::vector<int> &dest)
+void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
 {
-    int len = primes.size();
-    for (int i = 0; i < len; ++i)
+    size_t len = primes.size();
+    for (size_t i = 0; i < len; ++i)
     {
-        int prime = primes[i];
+        long prime = primes[i];
         bool include = true;
         
         // check that p does not divide L
@@ -150,13 +125,13 @@ void filter_primes(const std::vector<int> &primes, std::vector<int> &dest)
 //
 // If the residue is what we want, the list of indicies
 // is stored in the vector cprimes.
-void subset_product(const std::vector<int> &primes, std::vector< std::vector<int> > &cprimes)
+void subset_product(const std::vector<long> &primes, std::vector< std::vector<size_t> > &cprimes)
 {
     size_t num_primes = primes.size();
     // go through all possible subset sizes starting from 2
     for (size_t t=2; t <= num_primes; ++t)
     {
-        unsigned int factors = t;
+        size_t factors = t;
         std::vector<int> index_stack = {0};
         std::cout << "checking subsets of size " << t << " ...";
         std::cout <<  "(found " << cprimes.size() << " till now)\n";
@@ -191,7 +166,7 @@ void subset_product(const std::vector<int> &primes, std::vector< std::vector<int
                 //     p^r -1 divides n, where r ranges from 1,..,ORDER
                 for (size_t j = 0; j < factors; ++j)
                 {
-                    int p_factor = primes[index_stack[j]];
+                    long p_factor = primes[index_stack[j]];
                     NTL::ZZ p_r(1);
                     for (int r = 1; r <= ORDER; ++r)
                     {
@@ -208,9 +183,13 @@ void subset_product(const std::vector<int> &primes, std::vector< std::vector<int
                 // is a carmicheal number
                 if (carmicheal)
                 {
-                    std::vector<int> copy(index_stack);
+                    // TODO: use size_t for type fo index stack
+                    std::vector<size_t> copy;
+                    copy.reserve(index_stack.size());
+                    for(size_t k=0; k < index_stack.size(); ++k) copy.push_back((size_t) index_stack[k]);
+
                     cprimes.push_back(copy);
-                    printProd(index_stack, primes);
+                    printProd(copy, primes);
                     std::cout << "\n";
                 }
                     

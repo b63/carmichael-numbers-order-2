@@ -9,7 +9,5 @@ struct Product
 
 void init(size_t max);
 std::vector<long> &get_prime_factors(size_t n);
-void collapse_factors(std::vector<long> &factors, std::vector<long> &powers, 
-        const std::vector<long> &uncollapsed_factors);
 
 #endif

@@ -14,19 +14,19 @@
 #include "timer.h"
 #include "util.h"
 
-void filter_primes(const std::vector<int> &primes, std::vector<int> &dest);
-void subset_product_brute_force(const std::vector<int> &,
-                                std::vector<std::vector<int>> &);
+void filter_primes(const std::vector<long> &primes, std::vector<long> &dest);
+void subset_product_brute_force(const std::vector<long> &,
+                                std::vector<std::vector<size_t>> &);
 
 // order of the carmicheal number
 constexpr int ORDER = 2;
-// size of the seive used to initially generate the prime numbers
-const int SEIVE_SIZE = 100000;
+// size of the sieve used to initially generate the prime numbers
+const size_t SEIVE_SIZE = 100000;
 
 // prime factorization of the L parameter
-const int L_PRIMES[]        = {2, 3, 5,  7}; // prime factors
-const int L_PRIMES_POWERS[] = {3, 1, 1,  1}; // corresponding powers
-const int L_PRIMES_SIZE = sizeof(L_PRIMES)/sizeof(int);
+const long L_PRIMES[]        = {2, 3, 5,  7}; // prime factors
+const long L_PRIMES_POWERS[] = {3, 1, 1,  1}; // corresponding powers
+const long L_PRIMES_SIZE = sizeof(L_PRIMES)/sizeof(long);
 
 
 int main() {
@@ -36,26 +36,26 @@ int main() {
 
     // multiply the prime factors with appropriate powers to get L
     NTL::ZZ L { 1 };
-    for (int i = 0; i < L_PRIMES_SIZE; ++i)
+    for (size_t i = 0; i < L_PRIMES_SIZE; ++i)
     {
         L *= std::pow(L_PRIMES[i], L_PRIMES_POWERS[i]);
     }
     NTL::ZZ_p::init(L);
     std::cout << "L=" << L << "\n";
 
-    // list of integers that will be seived
-    int seive_array[SEIVE_SIZE];
-    for (int i = 0; i < SEIVE_SIZE; ++i) {
-        seive_array[i] = i+1;
+    // list of integers that will be sieved
+    long sieve_array[SEIVE_SIZE];
+    for (size_t i = 0; i < SEIVE_SIZE; ++i) {
+        sieve_array[i] = i+1;
     }
 
-    seive(seive_array, SEIVE_SIZE);
+    sieve(sieve_array, SEIVE_SIZE);
 
     // collect all the primes
-    std::vector<int> primes;
-    for (int i = 1; i < SEIVE_SIZE; ++i)
+    std::vector<long> primes;
+    for (size_t i = 1; i < SEIVE_SIZE; ++i)
     {
-        int n = seive_array[i];
+        long n = sieve_array[i];
         if (n != 0)
         {
             primes.push_back(n);
@@ -65,19 +65,19 @@ int main() {
     std::cout << primes.size() << " primes\n";
 
     // filter list of primes and store in this vector
-    std::vector<int> filtered_primes;
+    std::vector<long> filtered_primes;
     filter_primes(primes, filtered_primes);
 
     std::cout << filtered_primes.size() << " filtered primes" << "\n";
 
     // subset products of filetered_primes are possible carmicheal numbers
     // go over every subset of size factors, store results in cprime list
-    std::vector< std::vector<int> > cprimes;
-        subset_product_brute_force(filtered_primes, cprimes);
+    std::vector< std::vector<size_t> > cprimes;
+    subset_product_brute_force(filtered_primes, cprimes);
 
-        int found = cprimes.size();
+    size_t found = cprimes.size();
     std::cout << "found " << found << " carmicheal primes\n";
-    for (int i = 0; i < found; ++i)
+    for (size_t i = 0; i < found; ++i)
     {
         printProd(cprimes[i], filtered_primes);
         std::cout << "\n";
@@ -89,12 +89,12 @@ int main() {
 //     1. p must not divide L
 //     2. p^2 - 1 must divide L
 // the result is stored in the vector object dest
-void filter_primes(const std::vector<int> &primes, std::vector<int> &dest)
+void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
 {
     size_t len = primes.size();
     for (size_t i = 0; i < len; ++i)
     {
-        int prime = primes[i];
+        long prime = primes[i];
         bool include = true;
 
         // check that p does not divide L
@@ -125,7 +125,7 @@ void filter_primes(const std::vector<int> &primes, std::vector<int> &dest)
 //
 // If the residue is what we want, the list of indicies
 // is stored in the vector cprimes.
-void subset_product_brute_force(const std::vector<int> &primes, std::vector<std::vector<int>> &cprimes)
+void subset_product_brute_force(const std::vector<long> &primes, std::vector<std::vector<size_t>> &cprimes)
 {
     int timer_id = start(); // for timing with timer.h
     size_t num_primes = primes.size();
@@ -170,7 +170,7 @@ void subset_product_brute_force(const std::vector<int> &primes, std::vector<std:
                 //     p^2 -1 divides n
                 for (size_t j = 0; j < factors; ++j) 
                 {
-                    int p_factor = primes[index_stack[j]];
+                    long p_factor = primes[index_stack[j]];
                     NTL::ZZ p2(p_factor);
                     p2 *= p_factor;
 
@@ -184,9 +184,12 @@ void subset_product_brute_force(const std::vector<int> &primes, std::vector<std:
                 // is a carmicheal number
                 if (carmicheal) {
                     std::cout << "found ";
-                    std::vector<int> copy(index_stack);
+                    // TODO: use size_t for type fo index stack
+                    std::vector<size_t> copy;
+                    copy.reserve(index_stack.size());
+                    for(size_t k=0; k < index_stack.size(); ++k) copy.push_back((size_t) index_stack[k]);
                     cprimes.push_back(copy);
-                    printProd(index_stack, primes);
+                    printProd(copy, primes);
                     std::cout << "\n";
                 }
 

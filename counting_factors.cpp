@@ -10,36 +10,6 @@
 Product *MAP;
 size_t PRODUCT_MAP_SIZE { 0 };
 
-int main()
-{
-    init_timer();
-    int id { start() };
-
-    size_t max { 1000000000 };
-
-    start(id);
-    init(max);
-    printTime(end(id));
-
-    long input;
-    while ( true )
-    {
-        std::cout << "n = ";
-        std::cin >> input;
-
-        if (input < 2) break;
-
-        start(id);
-        const std::vector<long> factors = get_prime_factors(input);
-        const time_metric &t = end(id);
-
-        printVecLong(factors);
-        std::cout << "\n";
-        printTime(t);
-
-        std::cout << std::endl;
-    }
-}
 
 void init(size_t max)
 {
@@ -105,4 +75,48 @@ std::vector<long> &get_prime_factors(size_t n)
     }
 
     return *factors;
+}
+
+
+/**
+ * 'Collapses' the vector of factors given by `get_prime_factors`.
+ * Separates the vector of factors including multiplicities into two vectors:
+ * one containing the factors, and the other the powers.
+ * The list of factors given must have repeated factors adjacent each other.
+ * @param factors             reference to vector where distinct factors should be stored
+ * @param powers              reference to vector where corresponding powers should be stored
+ * @param uncollapsed_factors vector of factors that has repeated factors adjacent each other
+ *                            eg. {2, 2, 4, 4, 5, 5, 5} but not {2, 3, 2, 3, 3, 4}
+ */
+void collapse_factors(std::vector<long> &factors, std::vector<long> &powers, 
+        const std::vector<long> &uncollapsed_factors)
+{
+    const size_t len {uncollapsed_factors.size()};
+
+    long prev = 0;
+    long count = 0;
+    for (size_t i {0}; i < len; ++i)
+    {
+        if (uncollapsed_factors[i] == prev)
+        {
+            ++count;
+        }
+        else 
+        {
+            if (prev != 0)
+            {
+                factors.push_back(prev);
+                powers.push_back(count);
+            }
+            prev  = uncollapsed_factors[i];
+            count = 1;
+        }
+
+    }
+    // add the last factor to the vector, unless there were zero factors
+    if (prev != 0)
+    {
+        factors.push_back(prev);
+        powers.push_back(count);
+    }
 }

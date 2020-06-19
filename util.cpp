@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <functional>
 #include <map>
 #include <NTL/ZZ.h>
 
@@ -155,7 +156,10 @@ void printProd(const std::vector<size_t> &ind, const std::vector<T> &arr)
     }
 }
 
-// prints a vector of integers of type NTL:ZZ
+/**
+ * prints a vector of type T as a formatted list
+ *      {arr[0], arr[1], .., arr[n-1]}
+ */
 template <typename T>
 void printVec(const std::vector<T> &arr) 
 {
@@ -175,6 +179,11 @@ void printVec(const std::vector<T> &arr)
 }
 
 
+/**
+ * Prints the prime factorization i.e "2^6 * 3^2  * 7^5"
+ * @param factors vector of factors
+ * @param powers  vector of corresponding powers 
+ */
 template <typename T>
 void printFactorization(const std::vector<T> &factors, const std::vector<T> &powers)
 {
@@ -184,6 +193,74 @@ void printFactorization(const std::vector<T> &factors, const std::vector<T> &pow
         if (k > 0) std::cout << " * ";
         std::cout << factors[k] << "^" << powers[k];
     }
+}
+
+
+/**
+ * Binary searches elements of a collection using randomly acessible iterator
+ * starting at offset `start` and the next `length` elements.
+ * The element that is being searched for is the element for which `comp`
+ * function returns 0.
+ *
+ * If the element `x` being searched is compared to some other element `y`, then
+ * `comp` should return;
+ *      0    if  x == y
+ *      <0    if  x < y
+ *      >0    if  x > y
+ * The offset where the element being serached for is found is written to `ind`.
+ * If the element is not found, the the offset where the element would be found
+ * if it exsisted is written to `ind`. Meaning, if the element being searched
+ * for is inserted to the collected at the offset written to `ind`, the order
+ * of the collection is perserved.
+ *
+ * Returns true if element was found, otherwise false.
+ *
+ * Ex. to binary search a vector<int> vec for `7`:
+ *       binary_search(&ind, vec.begin(), 0, vec.size(), [](int y){ return x-y; } )
+ *
+ * @param ind     reference to variable where the offset is written
+ * @param it      random access iterator
+ * @param start   offset to start the search
+ * @param length  number of elments from `start` to search
+ * @param comp    function that takes an arugment and returns and integer whose
+ *                sign determines whether the element being searched for 
+ *                is less than or greater than the argument
+ */
+template <typename RandomAccessIterator, typename T>
+bool
+binary_search(
+        size_t &ind, const RandomAccessIterator it, size_t start, size_t length,
+        std::function<int(const T&)> comp)
+{
+    if (start == length) {
+        ind = start;
+        return false;
+    }
+
+    size_t mid;
+    int order;
+    do 
+    {
+        mid = (start + length)/2;
+        order = comp(it[mid]);
+
+        if (order < 0)
+        {
+            start = mid+1;
+        }
+        else if (order > 0)
+        {
+            length = mid;
+        }
+        else
+        {
+            ind = mid;
+            return true;
+        }
+    } while (start < length);
+
+    ind = mid < start ? start : mid;
+    return false;
 }
 
 #endif

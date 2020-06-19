@@ -5,7 +5,7 @@ CXX=g++
 override CPPFLAGS:=$(CPPFLAGS) -I ./include
 
 # Extra flags to give to the C++ compiler. 
-override CXXFLAGS:=$(CXXFLAGS) -Wall -pedantic -Werror -std=c++11
+override CXXFLAGS:=$(CXXFLAGS) -Wall -pedantic -Werror -std=c++14
 
 # Extra flags to give to compilers when they are supposed to invoke the linker, ‘ld’, such as -L. Libraries (-lfoo) should be added to the LDLIBS variable instead. 
 override LDFLAGS:=$(LDFLAGS)

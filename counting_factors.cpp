@@ -2,12 +2,13 @@
 #include <vector>
 #include <cmath>
 #include <stdexcept>
+#include <memory>
 
 #include <counting_factors.h>
 #include <timer.h>
 #include <util.h>
 
-Product *MAP;
+std::unique_ptr<Product[]> MAP;
 size_t PRODUCT_MAP_SIZE { 0 };
 
 
@@ -18,12 +19,15 @@ size_t PRODUCT_MAP_SIZE { 0 };
  * @param max size of sieve, arguments to subsequent calls of `get_prime_factors`
  *            must be <= `max`
  */
-void init(size_t max)
+void
+init(size_t max)
 {
-    MAP =  new Product[max+1];
+    std::cout << "(init) max=" << max << " ";
+    MAP =  std::make_unique<Product[]>(max+1);
     PRODUCT_MAP_SIZE = max+1;
 
-    size_t bound { static_cast<size_t>(ceil(sqrt(max+1))) };
+    size_t bound { max/2 };
+    std::cout << "bound=" << bound << "\n";
 
     size_t p { 2 };
     while (p <= bound)
@@ -67,21 +71,26 @@ void init(size_t max)
  *
  * Returns a pointer to a vector containing the prime factors.
  */
-std::vector<long> *get_prime_factors(size_t n)
+std::unique_ptr<std::vector<long>>
+get_prime_factors(size_t n)
 {
     if (n >= PRODUCT_MAP_SIZE)
     {
         throw std::invalid_argument(std::string("n too big, call init first")) ;
     }
 
-    std::vector<long> *factors = new std::vector<long> {};
-
+    std::unique_ptr<std::vector<long> > factors { std::make_unique<std::vector<long>>() };
+    if (n < 2) return factors;
+    
+    bool log = (n == 185);
     while (true)
     {
         Product &prod = MAP[n];
+        if (log)
+            std::cout << prod.first_term << ", " << prod.second_term << "\n";
         factors->push_back(prod.first_term);
 
-        if (prod.second_term == 1)
+        if (prod.second_term == 1 || prod.second_term == 0)
         {
             // reached end of expansion
             break;
@@ -107,7 +116,8 @@ std::vector<long> *get_prime_factors(size_t n)
  * @param uncollapsed_factors vector of factors that has repeated factors adjacent each other
  *                            eg. {2, 2, 4, 4, 5, 5, 5} but not {2, 3, 2, 3, 3, 4}
  */
-void collapse_factors(std::vector<long> &factors, std::vector<long> &powers, 
+void
+collapse_factors(std::vector<long> &factors, std::vector<long> &powers, 
         const std::vector<long> &uncollapsed_factors)
 {
     const size_t len {uncollapsed_factors.size()};

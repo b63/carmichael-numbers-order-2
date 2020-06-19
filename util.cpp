@@ -1,8 +1,8 @@
 #ifndef UTIL_H_TEMPLATES
 
 #include <iostream>
+#include <stdio.h>
 #include <stdexcept>
-#include <functional>
 #include <map>
 #include <NTL/ZZ.h>
 
@@ -141,7 +141,11 @@ void clrln(size_t width)
 }
 
 
+
+
 #else
+#include <functional>
+
 
 // prints the integers in arr specified by the array of indices ind 
 // with a '*' as separator

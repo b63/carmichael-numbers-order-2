@@ -146,6 +146,58 @@ print_stats(const std::map<const long, std::vector<T>> &factor_map, size_t max_r
 }
 
 
+/**
+ * Parses null-terminated `str` as "factor^power", and writes them to 
+ * `factor` and `power`. If 'power' is not given, then 1 is assumed.
+ * Throws std::invalid_argument if there were parsing errors.
+ * Returns true if factor and power were successfully extracted.
+ *
+ * @param factor  reference to variable where factor is to be written
+ * @param power   reference to variable where the power is to be written
+ * @param str     pointer to first character of string to parse
+ */
+template <typename T>
+bool
+parse_factor_string(T &factor, T &power, char *str)
+{
+    size_t i { 0 };
+    char *ch {str}, *mid {0};
+    while(*ch)
+    {
+        if (*ch < '0' || *ch > '9')
+        {
+            /* character is not a digit */
+            if (!i)
+            {
+                throw std::invalid_argument("first character cannot be non-digit");
+            }
+            else if (mid)
+            {
+                throw std::invalid_argument("only digit characters allowed");
+            }
+            else
+            {
+                mid = ch+1;
+            }
+        }
+        ++i;
+        ++ch;
+    }
+    if(!i) return false;
+
+    if (!mid || mid == ch)
+        power = NTL::conv<T>(1);
+    else
+        power = NTL::conv<T>(mid);
+
+    char prev { *mid };
+    *mid = 0;
+    factor = NTL::conv<T>(str);
+    *mid = prev;
+    return true;
+}
+
+
 
 void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers)
 {
@@ -159,7 +211,10 @@ void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> 
     int time_id = start();
     construct_primes_2(factor_map, L_P_primes, L_P_primes_powers, 1000);
     printTime(end(time_id));
-    print_stats<NTL::ZZ>(factor_map, 9);
+
+    // print stats
+    std::cout << "\nstats:\n";
+    print_stats<NTL::ZZ>(factor_map, 3);
 }
 
 
@@ -180,21 +235,31 @@ void test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> 
 
 
 
-
-
 int 
-main()
+main(int argc, char **argv)
 {
-    // for timing
-    init_timer();
-    std::cout << std::fixed << std::setprecision(2);
-
     // naming note: L_P stands for L_PRIME -> L'
     // prime factorization of the L' parameter
     // prime factors  & corresponding powers
-    const std::vector<long> L_P_primes  {  2,  5,  7 }; 
-    std::vector<long> L_P_primes_powers { 11, 12,  3 };
+    std::vector<long> L_P_primes  {}; 
+    std::vector<long> L_P_primes_powers {};
 
+    long factor, power;
+    for (int i {1};  i < argc; ++i)
+    {
+        parse_factor_string<long>(factor, power, argv[i]);
+        L_P_primes.push_back(factor);
+        L_P_primes_powers.push_back(power);
+    }
+
+    if (L_P_primes.size() < 1)
+    {
+        return 0;
+    }
+
+    // for timing
+    init_timer();
+    std::cout << std::fixed << std::setprecision(2);
 
     test_method_2(L_P_primes, L_P_primes_powers);
 }

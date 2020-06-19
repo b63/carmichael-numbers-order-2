@@ -2,16 +2,16 @@
 CXX=g++
 
 # preprocessor flags
-CPPFLAGS=-I ./include
+override CPPFLAGS:=$(CPPFLAGS) -I ./include
 
 # Extra flags to give to the C++ compiler. 
-CXXFLAGS=-Wall -pedantic -Werror -std=c++11
+override CXXFLAGS:=$(CXXFLAGS) -Wall -pedantic -Werror -std=c++11
 
 # Extra flags to give to compilers when they are supposed to invoke the linker, ‘ld’, such as -L. Libraries (-lfoo) should be added to the LDLIBS variable instead. 
-LDFLAGS=
+override LDFLAGS:=$(LDFLAGS)
 
 # Library flags or names given to compilers when they are supposed to invoke the linker, ‘ld’.
-LDLIBS=-lntl -lgmp -lm -pthread
+LDLIBS:=-lntl -lgmp -lm -pthread
 
 COMPILE=$(CXX) -c $(CXXFLAGS) $(CPPFLAGS)
 LINK=$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) 

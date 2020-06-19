@@ -22,12 +22,10 @@ size_t PRODUCT_MAP_SIZE { 0 };
 void
 init(size_t max)
 {
-    std::cout << "(init) max=" << max << " ";
     MAP =  std::make_unique<Product[]>(max+1);
     PRODUCT_MAP_SIZE = max+1;
 
     size_t bound { max/2 };
-    std::cout << "bound=" << bound << "\n";
 
     size_t p { 2 };
     while (p <= bound)
@@ -57,6 +55,8 @@ init(size_t max)
             k += 1;
         }
     }
+
+    std::cout << "(init) finished lookup table of size " << bound << "\n";
 }
 
 

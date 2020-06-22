@@ -2,7 +2,7 @@
 #define CONSTRUCT_P_H
 
 
-long construct_primes_2(
+void construct_primes_2(
         std::map<const long, std::vector<NTL::ZZ> > &factor_map,
         const std::vector<long> &L_P_primes,
         const std::vector<long> &L_P_primes_powers,
@@ -24,14 +24,14 @@ bool is_perfect_square(NTL::ZZ &n, const NTL::ZZ &n2);
 
 
 
-long construct_primes(
+void construct_primes(
         std::map<const long, std::vector<long> > &factor_map,
         const std::vector<long> &L_P_primes,
         const std::vector<long> &L_P_primes_powers,
-        size_t SEIVE_SIZE = 1000
+        size_t seive_size = 1000
     );
 
-long populate_cofactor_map(std::map<const long, std::vector<long> > &factor_map, 
+void populate_cofactor_map(std::map<const long, std::vector<long> > &factor_map, 
         const std::vector<NTL::ZZ> &divisors, const std::vector<long> &primes);
 
 void get_divisors(std::vector<NTL::ZZ> &divisors, 

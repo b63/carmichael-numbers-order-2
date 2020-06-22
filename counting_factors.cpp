@@ -56,7 +56,7 @@ init(size_t max)
         }
     }
 
-    std::cout << "(init) finished lookup table of size " << bound << "\n";
+    std::cout << "finished prime-factorization lookup table of size " << max << "\n";
 }
 
 

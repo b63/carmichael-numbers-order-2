@@ -169,11 +169,15 @@ parse_factor_string(T &factor, T &power, char *str)
             /* character is not a digit */
             if (!i)
             {
-                throw std::invalid_argument("first character cannot be non-digit");
+                char buf[100];
+                snprintf(buf, 100, "first character cannot be non-digit, '%s'", str);
+                throw std::invalid_argument(buf);
             }
             else if (mid)
             {
-                throw std::invalid_argument("only digit characters allowed");
+                char buf[100];
+                snprintf(buf, 100, "only digit characters allowed, '%s'", str);
+                throw std::invalid_argument(buf);
             }
             else
             {
@@ -253,20 +257,42 @@ main(int argc, char **argv)
     std::vector<long> L_P_primes  {}; 
     std::vector<long> L_P_primes_powers {};
 
-    int method {0};
     long factor, power;
+    size_t max;
+
+    int method {0}; // whether a method flag has been parsed or not
+    int limit {0};  // whether a limit flag has been parsed or not
     for (int i {1};  i < argc; ++i)
     {
-        if (!method && *argv[i] == '-')
+        if (*argv[i] == '-')
         {
-            /* parse method option */
-            char opt {argv[i][1]};
-            if (opt == '1' || opt == '2')
+            if (!method && argv[i][1] == 'm')
             {
-                method = opt - '0';
-                continue;
+                /* parse method option */
+                char opt {argv[i][2]};
+                if (opt == '1' || opt == '2')
+                {
+                    method = opt - '0';
+                    continue;
+                }
+            }
+            else if (!limit && argv[i][1] == 'l')
+            {
+                size_t digits=0;
+                char *ptr = argv[i]+2;
+                for(; *ptr; ++digits,++ptr)
+                    if(*ptr < '0' || *ptr > '9') break;
+
+                // at least 1 digits and no nondigit characters
+                if (digits && !*ptr)
+                {
+                    max = NTL::conv<size_t>(argv[i]+2);
+                    limit = 1;
+                    continue;
+                }
             }
         }
+
 
         parse_factor_string<long>(factor, power, argv[i]);
         L_P_primes.push_back(factor);
@@ -278,14 +304,16 @@ main(int argc, char **argv)
         return 0;
     }
 
+    printf("max %lu\n", max);
+
     // for timing
     init_timer();
     std::cout << std::fixed << std::setprecision(2);
 
     if (!method || method == 1)
-        test_method_1(L_P_primes, L_P_primes_powers, 1000);
+        test_method_1(L_P_primes, L_P_primes_powers, max);
     else
-        test_method_2(L_P_primes, L_P_primes_powers, 1000);
+        test_method_2(L_P_primes, L_P_primes_powers, max);
 }
 
 

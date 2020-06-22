@@ -185,21 +185,26 @@ parse_factor_string(T &factor, T &power, char *str)
     }
     if(!i) return false;
 
-    if (!mid || mid == ch)
+    if (!mid)
+    {
         power = NTL::conv<T>(1);
+        factor = NTL::conv<T>(str);
+    }
     else
+    {
         power = NTL::conv<T>(mid);
+        char prev { *mid };
+        *mid = 0;
+        *mid = prev;
+        factor = NTL::conv<T>(str);
+    }
 
-    char prev { *mid };
-    *mid = 0;
-    factor = NTL::conv<T>(str);
-    *mid = prev;
     return true;
 }
 
 
 
-void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers)
+void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers, size_t lim)
 {
     // multiply the prime factors with appropriate powers to get L'
     NTL::ZZ L_P { 1 };
@@ -209,7 +214,7 @@ void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> 
     std::map<const long, std::vector<NTL::ZZ> > factor_map;
 
     int time_id = start();
-    construct_primes_2(factor_map, L_P_primes, L_P_primes_powers, 1000);
+    construct_primes_2(factor_map, L_P_primes, L_P_primes_powers, lim);
     printTime(end(time_id));
 
     // print stats
@@ -218,7 +223,7 @@ void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> 
 }
 
 
-void test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers)
+void test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers, size_t lim)
 {
     // multiply the prime factors with appropriate powers to get L'
     NTL::ZZ L_P { 1 };
@@ -228,8 +233,12 @@ void test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> 
     std::map<const long, std::vector<long> > factor_map;
 
     int time_id = start();
-    construct_primes(factor_map, L_P_primes, L_P_primes_powers, 1000);
+    construct_primes(factor_map, L_P_primes, L_P_primes_powers, lim);
     printTime(end(time_id));
+
+    // print stats
+    std::cout << "\nstats:\n";
+    print_stats<long>(factor_map, 3);
 }
 
 
@@ -244,9 +253,21 @@ main(int argc, char **argv)
     std::vector<long> L_P_primes  {}; 
     std::vector<long> L_P_primes_powers {};
 
+    int method {0};
     long factor, power;
     for (int i {1};  i < argc; ++i)
     {
+        if (!method && *argv[i] == '-')
+        {
+            /* parse method option */
+            char opt {argv[i][1]};
+            if (opt == '1' || opt == '2')
+            {
+                method = opt - '0';
+                continue;
+            }
+        }
+
         parse_factor_string<long>(factor, power, argv[i]);
         L_P_primes.push_back(factor);
         L_P_primes_powers.push_back(power);
@@ -261,7 +282,10 @@ main(int argc, char **argv)
     init_timer();
     std::cout << std::fixed << std::setprecision(2);
 
-    test_method_2(L_P_primes, L_P_primes_powers);
+    if (!method || method == 1)
+        test_method_1(L_P_primes, L_P_primes_powers, 1000);
+    else
+        test_method_2(L_P_primes, L_P_primes_powers, 1000);
 }
 
 
@@ -282,7 +306,7 @@ main(int argc, char **argv)
  * If N is prime then updates `factor_map` by adding N to the 
  * list of primes that the key k maps to
  *
- * Returns the smallest co-factor k with the largest of list of primes.
+ * ~~Returns the smallest co-factor k with the largest of list of primes.~~
  *
  * @param factor_map            reference to std::map that will be updated with 
  *                              co-factors as keys and list of corresponding primes
@@ -294,7 +318,7 @@ main(int argc, char **argv)
  *                              Only considers co-factors such that
  *                                          divisor*k <= MAX
  **/
-long
+void
 construct_primes_2(
         std::map<const long, std::vector<NTL::ZZ> > &factor_map,
         const std::vector<long> &L_P_primes,
@@ -304,13 +328,12 @@ construct_primes_2(
 {
     // for get_prime_factors
     init(MAX);
-    std::cout << "(construct_primes_2) MAX=" << MAX << "\n";
 
     std::vector<NTL::ZZ> divisors;
     std::vector<std::vector<long>> factors;
     std::vector<std::vector<long>> powers;
 
-    std::cout << "(generating divisors...)"<< std::flush;
+    //std::cout << "(generating divisors...)"<< std::flush;
     get_divisors_with_factors(divisors, factors, powers, L_P_primes, L_P_primes_powers);
     clrln(); std::cout << divisors.size() << " divisors\n";
 
@@ -338,9 +361,6 @@ construct_primes_2(
             factor_map[k].push_back(std::move(N));
         }
     }
-
-    // temporary
-    return 0;
 }
 
 
@@ -550,7 +570,7 @@ is_perfect_square(NTL::ZZ &n, const NTL::ZZ &n2)
  * satisfy, divisor | (p^2-1). Each prime found if added to 
  * map `factor_map_ptr` with the co-factor k as the key.
  *
- * Returns the smallest co-factor k with the largest of list of primes.
+ * ~~Returns the smallest co-factor k with the largest of list of primes.~~
  *
  * @param factor_map            reference to std::map that will be updated with 
  *                              co-factors as keys and list of corresponding primes
@@ -560,10 +580,10 @@ is_perfect_square(NTL::ZZ &n, const NTL::ZZ &n2)
  *                              powers for the prime factors of L'
  * @param sieve_size            size of the sieve to use when generating the list
  *                              of primes so that only co-factors that satisfy
- *                                          divisor*k <= sieve_size
+ *                                          divisor*k <= max_prime^2-1
  *                              are considered
  **/
-long
+void
 construct_primes(
         std::map<const long, std::vector<long> > &factor_map,
         const std::vector<long> &L_P_primes,
@@ -571,21 +591,18 @@ construct_primes(
         size_t sieve_size
     )
 {
+    // get list of consecutive primes
+    std::vector<long> primes;
+    sieve_primes(primes, sieve_size);
+    std::cout << "sieze size " << sieve_size << ", " << primes.size() << " primes\n";
+
     std::vector<NTL::ZZ> divisors;
-    std::cout << "(generating divisors...)"<< std::flush;
     get_divisors(divisors, L_P_primes, L_P_primes_powers);
     clrln(); std::cout << divisors.size() << " divisors\n";
 
-    // get list of consecutive primes
-    std::vector<long> primes;
-    std::cout << "(generating primes...)" << std::flush;
-    sieve_primes(primes, sieve_size);
-
-    clrln(); std::cout << "(filtering primes...)" << std::flush;
+    //clrln(); std::cout << "(filtering primes...)";
     // populate map with lists of primes
-    long k_max { populate_cofactor_map(factor_map, divisors, primes) };
-
-    return k_max;
+    populate_cofactor_map(factor_map, divisors, primes);
 }
 
 
@@ -599,7 +616,7 @@ construct_primes(
  *
  *  NOTE: max{primes}^2 needs to fit in a long type
  */
-long
+void
 populate_cofactor_map(
         std::map<const long, std::vector<long> > &factor_map, 
         const std::vector<NTL::ZZ> &divisors,
@@ -608,14 +625,10 @@ populate_cofactor_map(
     const size_t num_primes   { primes.size() };
     const size_t num_divisors { divisors.size() };
 
-    // to keep track of the co-factor k with max set of primes
-    long k_max;             // co-factor k
-    size_t k_max_size {0};  // max size of set of primes
-
-    // skip first and last divisor
-    // they are 1 and L' itself
-    for(size_t j = 1; j+1 < num_divisors; ++j)
+    // skip last divisor
+    for(size_t j = 0; j+1 < num_divisors; ++j)
     {
+        // TODO: maybe use gmp to do the modulo test
         const NTL::ZZ &divisor { divisors[j] };
         long ldivisor { NTL::conv<long>(divisor) };
         for (size_t i = 0;  i < num_primes; ++i)
@@ -636,30 +649,15 @@ populate_cofactor_map(
             //  add prime to map
             std::vector<long> &modprimes {factor_map[k]};
             modprimes.push_back(prime);
-
-            // update max co-factor
-            size_t modp_size = modprimes.size();
-            if (modp_size > k_max_size)
-            {
-                k_max_size = modp_size;
-                k_max = k;
-            }
-            else if (modp_size == k_max_size && k < k_max)
-            {
-                // if size of set of primes is the same, then pick
-                // the smaller co-factor
-                k_max = k;
-            }
         }
     }
-
-    return k_max;
 }
 
 
 /**
  * Populates vector `divisors` with divisors by going through every combination of prime factors in
  * `prime_factors` vector raised to every power up to corresponding entry in `powers` vector
+ * Note: 1 is not included as a divisor
  */
 void
 get_divisors(std::vector<NTL::ZZ> &divisors, 
@@ -699,7 +697,8 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
                     }
                 }
                 ++stack[top];
-                divisors.push_back(std::move(prod));
+                if (prod > 1)
+                    divisors.push_back(std::move(prod));
             }
         }
         else

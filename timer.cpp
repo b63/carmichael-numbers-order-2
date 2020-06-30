@@ -32,7 +32,7 @@ int id_map[MAP_SIZE];
  */
 void init_timer()
 {
-    for (size_t i = 0; i < MAP_SIZE; ++i)
+    for (size_t i = 0; i < MAP_SIZE; i++)
     {
         id_map[i] = -1;
     }
@@ -60,7 +60,7 @@ int start(int id)
     // get a valid id if id is negative
     if (id < 0)
     {
-        for (size_t i = 0; i < MAP_SIZE; ++i)
+        for (size_t i = 0; i < MAP_SIZE; i++)
         {
             if (id_map[i] < 0)
             {

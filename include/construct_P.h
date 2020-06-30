@@ -9,6 +9,8 @@ void construct_primes_2(
         const long MAX
     );
 
+bool quick_fermat_test(const NTL::ZZ &N);
+
 void get_divisors_with_factors(std::vector<NTL::ZZ> &divisors, 
         std::vector<std::vector<long>> &div_factors, std::vector<std::vector<long>> &div_powers,
         const std::vector<long> &prime_factors, const std::vector<long> &powers);
@@ -36,12 +38,6 @@ void populate_cofactor_map(std::map<const long, std::vector<long> > &factor_map,
 
 void get_divisors(std::vector<NTL::ZZ> &divisors, 
         const std::vector<long> &prime_factors, const std::vector<long> &powers);
-
-
-
-NTL::ZZ& multiply_factors(NTL::ZZ &prod, const std::vector<long> &factors, const std::vector<long> &powers);
-
-NTL::RR get_density(NTL::ZZ &L, size_t prime_size);
 
 
 #endif

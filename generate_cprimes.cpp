@@ -27,7 +27,7 @@ const size_t L_PRIMES_SIZE = sizeof(L_PRIMES)/sizeof(long);
 int main() {
     // multiply the prime factors with appropriate powers to get L
     NTL::ZZ L { 1 };
-    for (size_t i = 0; i < L_PRIMES_SIZE; ++i)
+    for (size_t i = 0; i < L_PRIMES_SIZE; i++)
     {
         L *= std::pow(L_PRIMES[i], L_PRIMES_POWERS[i]);
     }
@@ -36,7 +36,7 @@ int main() {
 
     // list of integers that will be sieved
     long sieve_array[SEIVE_SIZE];
-    for (size_t i = 0; i < SEIVE_SIZE; ++i) {
+    for (size_t i = 0; i < SEIVE_SIZE; i++) {
         sieve_array[i] = i+1;
     }
 
@@ -44,7 +44,7 @@ int main() {
 
     // collect all the primes
     std::vector<long> primes;
-    for (size_t i = 1; i < SEIVE_SIZE; ++i)
+    for (size_t i = 1; i < SEIVE_SIZE; i++)
     {
         long n = sieve_array[i];
         if (n != 0)
@@ -68,7 +68,7 @@ int main() {
 
     size_t found = cprimes.size();
     std::cout << "found " << found << " carmicheal primes\n";
-    for (size_t i = 0; i < found; ++i)
+    for (size_t i = 0; i < found; i++)
     {
         printProd(cprimes[i], filtered_primes);
         std::cout << "\n";
@@ -83,13 +83,13 @@ int main() {
 void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
 {
     size_t len = primes.size();
-    for (size_t i = 0; i < len; ++i)
+    for (size_t i = 0; i < len; i++)
     {
         long prime = primes[i];
         bool include = true;
 
         // check that p does not divide L
-        for (size_t j = 0; j < L_PRIMES_SIZE; ++j)
+        for (size_t j = 0; j < L_PRIMES_SIZE; j++)
         {
             if (L_PRIMES[j] == prime)
             {
@@ -111,7 +111,7 @@ void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
                 break;
             }
 
-            ++r;
+            r++;
         } while (r <= ORDER);
 
         if (!include) continue;
@@ -130,7 +130,7 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
 {
     size_t num_primes = primes.size();
     // go through all possible subset sizes starting from 2
-    for (size_t t=2; t <= num_primes; ++t)
+    for (size_t t=2; t <= num_primes; t++)
     {
         size_t factors = t;
         std::vector<int> index_stack = {0};
@@ -158,18 +158,18 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
                 // check that this subset is a carmicheal prime
                 bool carmicheal = true;
                 NTL::ZZ prod(1);
-                for (size_t j = 0; j < factors; ++j)
+                for (size_t j = 0; j < factors; j++)
                 {
                     prod *= primes[index_stack[j]];
                 }
 
                 // check that every prime factor satisfies the following divisibility property
                 //     p^r -1 divides n, where r ranges from 1,..,ORDER
-                for (size_t j = 0; j < factors; ++j)
+                for (size_t j = 0; j < factors; j++)
                 {
                     long p_factor = primes[index_stack[j]];
                     NTL::ZZ p_r(1);
-                    for (int r = 1; r <= ORDER; ++r)
+                    for (int r = 1; r <= ORDER; r++)
                     {
                         p_r *= p_factor;
                         if (prod % (p_r-1) != 1)
@@ -187,21 +187,21 @@ void subset_product(const std::vector<long> &primes, std::vector< std::vector<si
                     // TODO: use size_t for type fo index stack
                     std::vector<size_t> copy;
                     copy.reserve(index_stack.size());
-                    for(size_t k=0; k < index_stack.size(); ++k) copy.push_back((size_t) index_stack[k]);
+                    for(size_t k=0; k < index_stack.size(); k++) copy.push_back((size_t) index_stack[k]);
 
                     cprimes.push_back(copy);
                     printProd(copy, primes);
                     std::cout << "\n";
                 }
 
-                ++index_stack[top_i];
+                index_stack[top_i]++;
             }
             else
             {
                 index_stack.pop_back();
                 if (top_i > 0)
                 {
-                    ++index_stack[top_i-1];
+                    index_stack[top_i-1]++;
                 }
                 
                 continue;

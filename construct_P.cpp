@@ -22,191 +22,7 @@
 #include <util.h>
 #include <counting_factors.h>
 #include <construct_P.h>
-
-struct CoFactorSet
-{
-    /* number of primes associated with the set of cofactors */
-    size_t num_primes;
-    /* set of cofactors that have `num_primes` number of associated primes */
-    std::vector<long> cofactors;
-};
-
-struct SizeCount
-{
-    /* number of primes */
-    size_t num_primes;
-    /* number of cofactors that have `num_primes` number of associated primes */
-    size_t num_cofactors;
-};
-
-
-/**
- * Prints general statistics extracted from `factor_map`.
- * @param max_ranking    print the top `max_ranking` number of cofactors in terms of the
- *                       number of associated primes
-*  @param T              type of the prime (long or NTL::ZZ)
- */
-template <typename T>
-void 
-print_stats(const std::map<const long, std::vector<T>> &factor_map, size_t max_ranking)
-{
-
-    std::vector<CoFactorSet> ranking;
-    std::vector<SizeCount> bag_sizes;
-
-    for (auto it=factor_map.cbegin(); it != factor_map.cend(); ++it)
-    {
-        const long k      { it->first         };
-        const size_t size { it->second.size() };
-
-        /* update bag_sizes */
-        size_t bag_size { bag_sizes.size() };
-        size_t ind {0};
-        bool found { 
-            binary_search<std::vector<SizeCount>::const_iterator, SizeCount>
-                (
-                    ind, bag_sizes.begin(), 0, bag_size, 
-                    [=](const SizeCount &item)->int 
-                    {
-                        if      (item.num_primes < size) return -1;
-                        else if (item.num_primes > size) return  1;
-                        else                             return  0;
-                    }
-                )
-            };
-
-        if (found)
-        {
-            bag_sizes[ind].num_cofactors += 1;
-        }
-        else
-        {
-            SizeCount entry {size, 1};
-            if (ind == bag_size)
-                bag_sizes.push_back(entry);
-            else
-                bag_sizes.insert(bag_sizes.begin()+ind, entry);
-        }
-
-        /* update ranking */
-        found = binary_search<std::vector<CoFactorSet>::const_iterator, CoFactorSet>
-            (
-                ind, ranking.begin(), 0, ranking.size(),
-                [=](const CoFactorSet &item)->int
-                {
-                    if      (item.num_primes < size) return -1;
-                    else if (item.num_primes > size) return  1;
-                    else                             return  0;
-                }
-            );
-        if (found)
-        {
-            ranking[ind].cofactors.push_back(k);
-        }
-        else
-        {
-            CoFactorSet entry {size, std::vector<long>{k}};
-            ranking.insert(ranking.begin()+ind, entry);
-            if (ranking.size() >= max_ranking)
-                ranking.erase(ranking.begin());
-        }
-
-    }
-
-    /* print bag */
-    size_t w {10};
-    std::cout << std::setw(w) << "# primes" << "," << std::setw(w) << "# co-factors" << "\n";
-    for(size_t i = 0; i < bag_sizes.size(); ++i)
-    {
-        const SizeCount &item {bag_sizes[bag_sizes.size() - i - 1]};
-        std::cout << std::setw(w) << item.num_primes << ",";
-        std::cout << std::setw(w) << item.num_cofactors << "\n";
-    }
-    std::cout << "\n";
-
-    /* print ranking */
-    if (ranking.size() > 0)
-    {
-        w = 5;
-        for (auto it {ranking.crbegin()}; it != ranking.crend(); ++it)
-        {
-            std::cout << "num primes=" << it->num_primes << "\n";
-            const std::vector<long> &cfs {it->cofactors};
-            for (size_t j = 0; j < cfs.size(); ++j)
-            {
-                std::cout << "k=" << std::setw(w) << cfs[j] << " -> ";
-                const std::vector<T> &primes {factor_map.at(cfs[j])};
-                printVec<T>(primes);
-                std::cout << "\n";
-            }
-            if (it+1 < ranking.crend())
-                std::cout << "\n";
-        }
-    }
-}
-
-
-/**
- * Parses null-terminated `str` as "factor^power", and writes them to 
- * `factor` and `power`. If 'power' is not given, then 1 is assumed.
- * Throws std::invalid_argument if there were parsing errors.
- * Returns true if factor and power were successfully extracted.
- *
- * @param factor  reference to variable where factor is to be written
- * @param power   reference to variable where the power is to be written
- * @param str     pointer to first character of string to parse
- */
-template <typename T>
-bool
-parse_factor_string(T &factor, T &power, char *str)
-{
-    size_t i { 0 };
-    char *ch {str}, *mid {0};
-    while(*ch)
-    {
-        if (*ch < '0' || *ch > '9')
-        {
-            /* character is not a digit */
-            if (!i)
-            {
-                char buf[100];
-                snprintf(buf, 100, "first character cannot be non-digit, '%s'", str);
-                throw std::invalid_argument(buf);
-            }
-            else if (mid)
-            {
-                char buf[100];
-                snprintf(buf, 100, "only digit characters allowed, '%s'", str);
-                throw std::invalid_argument(buf);
-            }
-            else
-            {
-                mid = ch+1;
-            }
-        }
-        ++i;
-        ++ch;
-    }
-    if(!i) return false;
-
-    if (!mid)
-    {
-        power = NTL::conv<T>(1);
-        factor = NTL::conv<T>(str);
-    }
-    else
-    {
-        power = NTL::conv<T>(mid);
-        char prev { *mid };
-        *mid = 0;
-        *mid = prev;
-        factor = NTL::conv<T>(str);
-    }
-
-    return true;
-}
-
-
+#include <primality.h>
 
 void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers, size_t lim)
 {
@@ -214,6 +30,8 @@ void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> 
     NTL::ZZ L_P { 1 };
     multiply_factors(L_P, L_P_primes, L_P_primes_powers);
     std::cout << "L'=" << L_P << "\n";
+    printFactorization(L_P_primes, L_P_primes_powers);
+    std::cout << "\n";
 
     std::map<const long, std::vector<NTL::ZZ> > factor_map;
 
@@ -223,7 +41,7 @@ void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> 
 
     // print stats
     std::cout << "\nstats:\n";
-    print_stats<NTL::ZZ>(factor_map, 3);
+    print_stats<NTL::ZZ>(factor_map, L_P, 3);
 }
 
 
@@ -232,7 +50,9 @@ void test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> 
     // multiply the prime factors with appropriate powers to get L'
     NTL::ZZ L_P { 1 };
     multiply_factors(L_P, L_P_primes, L_P_primes_powers);
-    std::cout << "L'=" << L_P << "\n";
+    std::cout << "L'=" << L_P << "\nL'=";
+    printFactorization(L_P_primes, L_P_primes_powers);
+    std::cout << "\n";
 
     std::map<const long, std::vector<long> > factor_map;
 
@@ -242,9 +62,8 @@ void test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> 
 
     // print stats
     std::cout << "\nstats:\n";
-    print_stats<long>(factor_map, 3);
+    print_stats<long>(factor_map, L_P, 3);
 }
-
 
 
 
@@ -262,7 +81,7 @@ main(int argc, char **argv)
 
     int method {0}; // whether a method flag has been parsed or not
     int limit {0};  // whether a limit flag has been parsed or not
-    for (int i {1};  i < argc; ++i)
+    for (int i {1};  i < argc; i++)
     {
         if (*argv[i] == '-')
         {
@@ -280,7 +99,7 @@ main(int argc, char **argv)
             {
                 size_t digits=0;
                 char *ptr = argv[i]+2;
-                for(; *ptr; ++digits,++ptr)
+                for(; *ptr; digits++,ptr++)
                     if(*ptr < '0' || *ptr > '9') break;
 
                 // at least 1 digits and no nondigit characters
@@ -363,16 +182,17 @@ construct_primes_2(
 
     //std::cout << "(generating divisors...)"<< std::flush;
     get_divisors_with_factors(divisors, factors, powers, L_P_primes, L_P_primes_powers);
-    clrln(); std::cout << divisors.size() << " divisors\n";
+    std::cout << divisors.size() << " divisors\n";
 
     // skip the last divisor
-    for (size_t i {0}; i+1 < divisors.size(); ++i)
+    const size_t num_divisors {divisors.size()};
+    for (size_t i {0}; i+1 < num_divisors; i++)
     {
         NTL::ZZ &divisor { divisors[i] };
         NTL::ZZ multiple { divisor };
         NTL::ZZ N;
 
-        for (long k {1}; multiple < MAX; ++k, multiple += divisor)
+        for (long k {1}; multiple < MAX; k++, multiple += divisor)
         {
             if (!is_perfect_square(N, multiple+1)) continue;
             const std::unique_ptr<std::vector<long>> factors_k { get_prime_factors(k) };
@@ -386,9 +206,62 @@ construct_primes_2(
             std::vector<long> powers_n_1;
             factor_n_1(factors_n_1, powers_n_1, factors[i], powers[i], N);
 
-            factor_map[k].push_back(std::move(N));
+            bool prime { false };
+            if (N == 2) /* gcd of N-1 will give error so seprate case for 2 */
+            {
+                prime = true;
+            }
+            else
+            {
+                /* test if N is composite */
+                if (!quick_fermat_test(N)) continue;
+
+                /* verify that N is prime */
+                prime = pocklington(N, factors_n_1);
+            }
+
+            if (prime)
+                factor_map[k].push_back(std::move(N));
         }
+
+        if (i & 0x100000)
+            std::cerr <<  "divisor " << i << "/" << num_divisors << "               \r";
     }
+}
+
+
+/**
+ * Checks if Fermat's little theorem holds for a couple of small integers.
+ * Returns false if a witness was found (i.e N is composite), true if no witness was found among the
+ * integers checked (could be prime).
+ * @param N  the integer to check if it is composite by trying to find a Fermat's witness for it
+ */
+bool
+quick_fermat_test(const NTL::ZZ &N)
+{
+    static const std::vector<NTL::ZZ> witnesses {
+        NTL::ZZ(2), NTL::ZZ(3), NTL::ZZ(4), NTL::ZZ( 5), 
+        NTL::ZZ(6), NTL::ZZ(7), NTL::ZZ(8), NTL::ZZ(16)
+    };
+    const NTL::ZZ N_1 {N-1};
+
+    NTL::ZZ mod;
+    NTL::ZZ a;
+    for(size_t i {0}; i < witnesses.size(); i++)
+    {
+        /* a and n must be relatively prime */
+        NTL::GCD(mod, witnesses[i], N);
+        if (!NTL::IsOne(mod)) continue;
+
+        /* power mod gives error if any `a' is number if greater than base */
+        NTL::rem(a, witnesses[i], N);
+
+        NTL::PowerMod(mod, a, N_1, N);
+        if (!NTL::IsOne(mod))
+            return false;
+    }
+
+    return true;
 }
 
 
@@ -433,7 +306,7 @@ get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
                 f.reserve(last_size);
                 p.reserve(last_size);
 
-                for (size_t i = 0; i < primes; ++i)
+                for (size_t i = 0; i < primes; i++)
                 {
                     int power = stack[i];
                     if (power > 0) 
@@ -443,7 +316,7 @@ get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
                         p.push_back(power);
                     }
                 }
-                ++stack[top];
+                stack[top]++;
                 // ignore 1
                 if ((last_size = f.size()) > 0)
                 {
@@ -459,7 +332,7 @@ get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
             if (top > 0) 
             {
                 // pop current prime factor and increment exponent of the previous one
-                ++stack[--top];
+                stack[--top]++;
             } 
             else 
             {
@@ -493,11 +366,11 @@ combine_factors( std::vector<long>  &factors, std::vector<long> &powers,
     const size_t len {factors.size()};
     const size_t othr_len {othr_factors.size()};
 
-    for (size_t i {0}; i < othr_len; ++i)
+    for (size_t i {0}; i < othr_len; i++)
     {
         bool common = false;
         long factor {othr_factors[i]};
-        for (size_t j {0}; j < len; ++j)
+        for (size_t j {0}; j < len; j++)
         {
             if (factor == factors[j])
             {
@@ -534,10 +407,10 @@ factor_n_1(std::vector<long>  &factors_n_1, std::vector<long> &powers_n_1,
         const NTL::ZZ &N)
 {
     NTL::ZZ N_1 {N - 1};
-    for(size_t i {0}; N_1 > 1 && i < factors_n2_1.size(); ++i)
+    for(size_t i {0}; N_1 > 1 && i < factors_n2_1.size(); i++)
     {
         long power {0};
-        while (NTL::divide(N_1, N_1, factors_n2_1[i])) ++power;
+        while (NTL::divide(N_1, N_1, factors_n2_1[i])) power++;
 
         if (power > 0)
         {
@@ -626,7 +499,7 @@ construct_primes(
 
     std::vector<NTL::ZZ> divisors;
     get_divisors(divisors, L_P_primes, L_P_primes_powers);
-    clrln(); std::cout << divisors.size() << " divisors\n";
+    std::cout << divisors.size() << " divisors\n";
 
     //clrln(); std::cout << "(filtering primes...)";
     // populate map with lists of primes
@@ -654,14 +527,14 @@ populate_cofactor_map(
     const size_t num_divisors { divisors.size() };
 
     // skip last divisor
-    for(size_t j = 0; j+1 < num_divisors; ++j)
+    for(size_t j = 0; j+1 < num_divisors; j++)
     {
         // TODO: maybe use gmp to do the modulo test
         const NTL::ZZ &divisor { divisors[j] };
         long ldivisor { NTL::conv<long>(divisor) };
-        for (size_t i = 0;  i < num_primes; ++i)
+        for (size_t i = 0;  i < num_primes; i++)
         {
-            int prime = primes[i];
+            long prime = primes[i];
 
             NTL::ZZ_p::init(divisor);
 
@@ -678,6 +551,9 @@ populate_cofactor_map(
             std::vector<long> &modprimes {factor_map[k]};
             modprimes.push_back(prime);
         }
+        // to track progress without dirtying output
+        if (j & 0x100000)
+            std::cerr << "divisor " << j << "/" << num_divisors << "               \r";
     }
 }
 
@@ -716,7 +592,7 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
                 // every prime factor has a corresponding exponent
                 // multiply it out to get the divisor
                 NTL::ZZ prod{1};
-                for (size_t i = 0; i < primes; ++i)
+                for (size_t i = 0; i < primes; i++)
                 {
                     int power = stack[i];
                     if (power > 0) 
@@ -724,7 +600,7 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
                         prod *= std::pow(prime_factors[i], power);
                     }
                 }
-                ++stack[top];
+                stack[top]++;
                 if (prod > 1)
                     divisors.push_back(std::move(prod));
             }
@@ -735,7 +611,7 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
             if (top > 0) 
             {
                 // pop current prime factor and increment exponent of the previous one
-                ++stack[--top];
+                stack[--top]++;
             } 
             else 
             {
@@ -751,44 +627,4 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
 
 
 
-
-/********************** UTIL ****************************/
-
-/**
- * Multiplies each element of `factor` raised to the corresponding element of `powers`
- * and stores the final product in `prod`.
- *
- * @param prod    referece to NTL::ZZ where the final product is accumulated
- * @param factors vector of factors
- * @param powers  vector of powers for each factor in`factors`
- *
- * Returns a referce to `prod`.
- */
-NTL::ZZ&
-multiply_factors(NTL::ZZ &prod, const std::vector<long> &factors, const std::vector<long> &powers)
-{
-    prod = 1;
-    const size_t size { factors.size() };
-    for (size_t i = 0; i < size; ++i)
-    {
-        prod *= std::pow(factors[i], powers[i]);
-    }
-
-    return prod;
-}
-
-/**
- * returns the density as a float, i.e 2^|prime_size| / L
- */
-NTL::RR
-get_density(NTL::ZZ &L, size_t prime_size)
-{
-    // in arbitary precision, 2^|P| might be really big
-    NTL::RR density {2};
-    // density = density^primes_size
-    NTL::pow(density, density, NTL::conv<NTL::RR>(prime_size));
-    density /= NTL::conv<NTL::RR>(L);
-
-    return density;
-}
 

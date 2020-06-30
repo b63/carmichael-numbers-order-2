@@ -5,7 +5,7 @@ BIN=""
 JOBS=""
 
 OPTIND=1
-while getopts ":o:j:c:" opt; do
+while getopts ":o:j:C:" opt; do
     case $opt in
         o)
             OUTPUT_DIR=$OPTARG

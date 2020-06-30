@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+DATA=data/inter
+SUMMARY=$DATA/summary
+[[ -f $DATA ]] || mkdir -p $DATA
+
+IFS=', ' read -r -a primes <<< "$@"
+./gen_distributions "$@" > data/distributions
+TOTAL=$(wc -l data/distributions | cut -d ' ' -f 1)
+
+echo "$@" > $SUMMARY
+
+i=0
+while read line;
+do
+    param=('-m1' '-l100000')
+    IFS=', ' read -r -a array <<< "$line"
+    for index in "${!array[@]}";
+    do
+        param+=( "${primes[index]}^${array[index]}" )
+    done
+
+    printf "$i/$TOTAL\r"
+    echo $i > data/inter/$i 
+    printf "$i, $line, " >> $SUMMARY
+
+    ./construct_P "${param[@]}" >> data/inter/$i 2>progress
+
+    head -n 50 data/inter/$i | sed -n -e 's/density = \(.*\)/\1/p' >> $SUMMARY
+
+    i=$(($i+1))
+done < data/distributions

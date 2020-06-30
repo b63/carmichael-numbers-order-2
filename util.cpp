@@ -1,5 +1,3 @@
-#ifndef UTIL_H_TEMPLATES
-
 #include <iostream>
 #include <stdio.h>
 #include <stdexcept>
@@ -18,14 +16,14 @@ void sieve_primes(std::vector<long> &primes, size_t size)
 {
     // list of integers that will be sieved
     long *sieve_array = new long[size];
-    for (size_t i = 0; i < size; ++i) {
+    for (size_t i = 0; i < size; i++) {
         sieve_array[i] = i+1;
     }
 
     sieve(sieve_array, size);
 
     // collect all the primes
-    for (size_t i = 1; i < size; ++i)
+    for (size_t i = 1; i < size; i++)
     {
         long n = sieve_array[i];
         if (n != 0)
@@ -34,6 +32,7 @@ void sieve_primes(std::vector<long> &primes, size_t size)
         }
     }
 }
+
 
 // sieve an array of integers starting from 1 to create a  list of primes
 // @prarm arr  pointer to the array, should contain [1, 2, ..., size-1]
@@ -46,7 +45,7 @@ void sieve(long *arr, size_t size)
         long jump = arr[index];
         if (jump == 0)
         {
-            ++index;
+            index++;
             continue;
         }
 
@@ -57,7 +56,7 @@ void sieve(long *arr, size_t size)
             arr[sieve_index] = 0;
         }
 
-        ++index;
+        index++;
     }
 }
 
@@ -77,7 +76,7 @@ bool poklington_test(const NTL::ZZ &N)
     NTL::ZZ f {1};
     NTL::ZZ r {N_1};
     std::vector<long> prime_factors {};
-    for (size_t i {0}; f < bound; ++i)
+    for (size_t i {0}; f < bound; i++)
     {
         long ith_prime = get_nth_prime(i);
         // if ith_prime | r, then r /= ith_prime
@@ -117,7 +116,7 @@ long get_nth_prime(size_t n)
     while (size < n)
     {
         _cache.push_back(s.next());
-        ++size;
+        size++;
     }
 
     return _cache[n];
@@ -133,7 +132,7 @@ void clrln(size_t width)
 {
     char *spaces {new char[width+3]};
     spaces[0] = '\r';
-    for (size_t i = 1; i <= width; ++i) spaces[i] = ' ';
+    for (size_t i = 1; i <= width; i++) spaces[i] = ' ';
     spaces[width+1] = '\r';
     spaces[width+2] = '\0';
     std::cout << spaces;
@@ -141,130 +140,43 @@ void clrln(size_t width)
 }
 
 
-
-
-#else
-#include <functional>
-
-
-// prints the integers in arr specified by the array of indices ind 
-// with a '*' as separator
-template <typename T>
-void printProd(const std::vector<size_t> &ind, const std::vector<T> &arr)
-{
-    size_t factors = ind.size();
-    for (size_t k = 0; k < factors; ++k)
-    {
-        if (k > 0) std::cout << " * ";
-        std::cout << arr[ind[k]];
-    }
-}
-
 /**
- * prints a vector of type T as a formatted list
- *      {arr[0], arr[1], .., arr[n-1]}
- */
-template <typename T>
-void printVec(const std::vector<T> &arr) 
-{
-    size_t size = arr.size();
-    std::cout << "{";
-
-    for (size_t i = 0; i < size; ++i)
-    {
-        if (i > 0) 
-        {
-            std::cout << ", ";
-        }
-        std::cout << arr[i];
-    }
-
-    std::cout << "}";
-}
-
-
-/**
- * Prints the prime factorization i.e "2^6 * 3^2  * 7^5"
+ * Multiplies each element of `factor` raised to the corresponding element of `powers`
+ * and stores the final product in `prod`.
+ *
+ * @param prod    referece to NTL::ZZ where the final product is accumulated
  * @param factors vector of factors
- * @param powers  vector of corresponding powers 
+ * @param powers  vector of powers for each factor in`factors`
+ *
+ * Returns a referce to `prod`.
  */
-template <typename T>
-void printFactorization(const std::vector<T> &factors, const std::vector<T> &powers)
+NTL::ZZ&
+multiply_factors(NTL::ZZ &prod, const std::vector<long> &factors, const std::vector<long> &powers)
 {
-    size_t len = factors .size();
-    for (size_t k = 0; k < len; ++k)
+    prod = 1;
+    const size_t size { factors.size() };
+    for (size_t i = 0; i < size; i++)
     {
-        if (k > 0) std::cout << " * ";
-        std::cout << factors[k] << "^" << powers[k];
+        NTL::ZZ pow { NTL::power_ZZ(factors[i], powers[i]) };
+        prod *= pow;
     }
+
+    return prod;
 }
 
 
 /**
- * Binary searches elements of a collection using randomly acessible iterator
- * starting at offset `start` and the next `length` elements.
- * The element that is being searched for is the element for which `comp`
- * function returns 0.
- *
- * If the element `x` being searched is compared to some other element `y`, then
- * `comp` should return;
- *      0    if  x == y
- *      <0    if  x < y
- *      >0    if  x > y
- * The offset where the element being serached for is found is written to `ind`.
- * If the element is not found, the the offset where the element would be found
- * if it exsisted is written to `ind`. Meaning, if the element being searched
- * for is inserted to the collected at the offset written to `ind`, the order
- * of the collection is perserved.
- *
- * Returns true if element was found, otherwise false.
- *
- * Ex. to binary search a vector<int> vec for `7`:
- *       binary_search(&ind, vec.begin(), 0, vec.size(), [](int y){ return x-y; } )
- *
- * @param ind     reference to variable where the offset is written
- * @param it      random access iterator
- * @param start   offset to start the search
- * @param length  number of elments from `start` to search
- * @param comp    function that takes an arugment and returns and integer whose
- *                sign determines whether the element being searched for 
- *                is less than or greater than the argument
+ * returns the density as a float, i.e 2^|prime_size| / L
  */
-template <typename RandomAccessIterator, typename T>
-bool
-binary_search(
-        size_t &ind, const RandomAccessIterator it, size_t start, size_t length,
-        std::function<int(const T&)> comp)
+NTL::RR
+get_density(NTL::ZZ &L, size_t prime_size)
 {
-    if (start == length) {
-        ind = start;
-        return false;
-    }
-
-    size_t mid;
-    int order;
-    do 
-    {
-        mid = (start + length)/2;
-        order = comp(it[mid]);
-
-        if (order < 0)
-        {
-            start = mid+1;
-        }
-        else if (order > 0)
-        {
-            length = mid;
-        }
-        else
-        {
-            ind = mid;
-            return true;
-        }
-    } while (start < length);
-
-    ind = mid < start ? start : mid;
-    return false;
+    static const NTL::RR log2 { NTL::log(NTL::conv<NTL::RR>(2)) };
+    NTL::RR mag_P { NTL::conv<NTL::RR>(prime_size) };
+    NTL::RR l { NTL::conv<NTL::RR>(L) };
+    if ( l <= 0)
+        return NTL::conv<NTL::RR>(0);
+    else
+        return mag_P - NTL::log(L)/log2;
 }
 
-#endif

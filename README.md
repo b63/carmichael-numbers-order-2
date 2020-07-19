@@ -17,7 +17,7 @@ Directory Structure
    Program to generate Carmicheal number of order 2 using general Erdos construction.
    
    * `counting_factors.cpp`
-   Module that implements methods that get the factorization of an integer using a sieve.
+   Module that implements methods that computes the prime factorization of an integer using a sieve.
    
    * `gen_distributions.cpp`
    Prints out all possible exponents that could put on a list of provided numbers that still keeps the 

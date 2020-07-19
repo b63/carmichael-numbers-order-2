@@ -23,8 +23,8 @@ static void Method_2(benchmark::State &state)
     for (auto _ : state) 
     {
         std::map<const long, std::vector<NTL::ZZ> > factor_map{};
-        int id { start(-1) };
         lim = lim*lim;
+        int id { start(-1) };
         construct_primes_2(factor_map, L_P_primes, L_P_primes_powers, lim);
         time_metric times { end(id) };
         benchmark::DoNotOptimize(factor_map);
@@ -82,3 +82,4 @@ static void Method_1(benchmark::State &state)
 }
 
 BENCHMARK(Method_1)->Unit(benchmark::kMillisecond)->Range(1024, 1024<<15)->UseManualTime();
+BENCHMARK(Method_2)->Unit(benchmark::kMillisecond)->Range(1024, 1024<<15)->UseManualTime();

@@ -7,6 +7,7 @@
 #include <counting_factors.h>
 #include <timer.h>
 #include <util.h>
+#include <config.h>
 
 std::unique_ptr<Product[]> MAP;
 size_t PRODUCT_MAP_SIZE { 0 };
@@ -56,7 +57,9 @@ init(size_t max)
         }
     }
 
+#if LOG_LEVEL == 1
     std::cout << "finished prime-factorization lookup table of size " << max << "\n";
+#endif
 }
 
 
@@ -81,13 +84,14 @@ get_prime_factors(size_t n)
 
     std::unique_ptr<std::vector<long> > factors { std::make_unique<std::vector<long>>() };
     if (n < 2) return factors;
-    
-    bool log = (n == 185);
+
     while (true)
     {
         Product &prod = MAP[n];
-        if (log)
-            std::cout << prod.first_term << ", " << prod.second_term << "\n";
+
+#if LOG_LEVEL == 1
+        std::cout << prod.first_term << ", " << prod.second_term << "\n";
+#endif
         factors->push_back(prod.first_term);
 
         if (prod.second_term == 1 || prod.second_term == 0)

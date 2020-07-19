@@ -19,7 +19,7 @@
 #include <timer.h>
 
 typedef std::chrono::high_resolution_clock::time_point time_point;
-typedef std::chrono::duration<double> double_duration;
+typedef std::chrono::duration<double, std::milli> double_duration;
 
 std::vector<std::clock_t> cpu_clock_starts;
 std::vector<time_point> wall_clock_starts;
@@ -134,7 +134,7 @@ const time_metric end(int id)
     }
 
     // in POSIX CLOCKS_PER_SEC = 1 000 000
-    double elapsed_time_cpu { (cend-cpu_clock_starts[index])/1000000.0 };
+    double elapsed_time_cpu { (cend-cpu_clock_starts[index])/1000.0 };
     double elapsed_time_wall { std::chrono
         ::duration_cast<double_duration>(wend - wall_clock_starts[index]).count() };
 
@@ -143,6 +143,6 @@ const time_metric end(int id)
 
 void printTime(const time_metric &t)
 {
-    std::cout << "(cpu time " << t.cpu_time << "s, wall time " 
-        <<  t.wall_time << "s)\n";
+    std::cout << "(cpu time " << t.cpu_time << "ms, wall time " 
+        <<  t.wall_time << "ms)\n";
 }

@@ -39,5 +39,10 @@ void populate_cofactor_map(std::map<const long, std::vector<long> > &factor_map,
 void get_divisors(std::vector<NTL::ZZ> &divisors, 
         const std::vector<long> &prime_factors, const std::vector<long> &powers);
 
+void 
+test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers, size_t lim);
+
+void 
+test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers, size_t lim);
 
 #endif

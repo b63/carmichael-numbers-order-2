@@ -12,7 +12,9 @@
 #include <map>
 #include <cmath>
 #include <utility>
+#include <memory>
 #include <functional>
+
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
@@ -23,6 +25,7 @@
 #include <counting_factors.h>
 #include <construct_P.h>
 #include <primality.h>
+#include <config.h>
 
 void test_method_2(const std::vector<long> &L_P_primes, const std::vector<long> &L_P_primes_powers, size_t lim)
 {
@@ -64,77 +67,6 @@ void test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> 
     std::cout << "\nstats:\n";
     print_stats<long>(factor_map, L_P, 3);
 }
-
-
-
-int 
-main(int argc, char **argv)
-{
-    // naming note: L_P stands for L_PRIME -> L'
-    // prime factorization of the L' parameter
-    // prime factors  & corresponding powers
-    std::vector<long> L_P_primes  {}; 
-    std::vector<long> L_P_primes_powers {};
-
-    long factor, power;
-    size_t max;
-
-    int method {0}; // whether a method flag has been parsed or not
-    int limit {0};  // whether a limit flag has been parsed or not
-    for (int i {1};  i < argc; i++)
-    {
-        if (*argv[i] == '-')
-        {
-            if (!method && argv[i][1] == 'm')
-            {
-                /* parse method option */
-                char opt {argv[i][2]};
-                if (opt == '1' || opt == '2')
-                {
-                    method = opt - '0';
-                    continue;
-                }
-            }
-            else if (!limit && argv[i][1] == 'l')
-            {
-                size_t digits=0;
-                char *ptr = argv[i]+2;
-                for(; *ptr; digits++,ptr++)
-                    if(*ptr < '0' || *ptr > '9') break;
-
-                // at least 1 digits and no nondigit characters
-                if (digits && !*ptr)
-                {
-                    max = NTL::conv<size_t>(argv[i]+2);
-                    limit = 1;
-                    continue;
-                }
-            }
-        }
-
-
-        parse_factor_string<long>(factor, power, argv[i]);
-        L_P_primes.push_back(factor);
-        L_P_primes_powers.push_back(power);
-    }
-
-    if (L_P_primes.size() < 1)
-    {
-        return 0;
-    }
-
-    printf("max %lu\n", max);
-
-    // for timing
-    init_timer();
-    std::cout << std::fixed << std::setprecision(2);
-
-    if (!method || method == 1)
-        test_method_1(L_P_primes, L_P_primes_powers, max);
-    else
-        test_method_2(L_P_primes, L_P_primes_powers, max);
-}
-
 
 
 
@@ -180,9 +112,13 @@ construct_primes_2(
     std::vector<std::vector<long>> factors;
     std::vector<std::vector<long>> powers;
 
-    //std::cout << "(generating divisors...)"<< std::flush;
+#if LOG_LEVEL == 1
+    std::cout << "(generating divisors...)" << std::flush;
+#endif
     get_divisors_with_factors(divisors, factors, powers, L_P_primes, L_P_primes_powers);
+#if LOG_LEVEL == 1
     std::cout << divisors.size() << " divisors\n";
+#endif
 
     // skip the last divisor
     const size_t num_divisors {divisors.size()};
@@ -192,7 +128,7 @@ construct_primes_2(
         NTL::ZZ multiple { divisor };
         NTL::ZZ N;
 
-        for (long k {1}; multiple < MAX; k++, multiple += divisor)
+        for (long k {1}; k < MAX; k++, multiple += divisor)
         {
             if (!is_perfect_square(N, multiple+1)) continue;
             const std::unique_ptr<std::vector<long>> factors_k { get_prime_factors(k) };
@@ -223,9 +159,6 @@ construct_primes_2(
             if (prime)
                 factor_map[k].push_back(std::move(N));
         }
-
-        if (i & 0x100000)
-            std::cerr <<  "divisor " << i << "/" << num_divisors << "               \r";
     }
 }
 
@@ -279,7 +212,7 @@ get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
         return;
 
     // stack of exponents for each prime factor
-    int *stack {new int[primes]};
+    std::unique_ptr<int[]> stack = std::make_unique<int[]>(primes);
     size_t top { 0 };
     size_t max_top { primes - 1 };
     // keep track of the number of factors to call vector::reserve
@@ -341,8 +274,6 @@ get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
             }
         }
     }
-
-    delete[] stack;
 }
 
 
@@ -495,13 +426,17 @@ construct_primes(
     // get list of consecutive primes
     std::vector<long> primes;
     sieve_primes(primes, sieve_size);
+#if LOG_LEVEL == 1
     std::cout << "sieze size " << sieve_size << ", " << primes.size() << " primes\n";
+#endif
 
     std::vector<NTL::ZZ> divisors;
     get_divisors(divisors, L_P_primes, L_P_primes_powers);
+#if LOG_LEVEL == 1
     std::cout << divisors.size() << " divisors\n";
+    std::cout << "(filtering primes...)\n";
+#endif
 
-    //clrln(); std::cout << "(filtering primes...)";
     // populate map with lists of primes
     populate_cofactor_map(factor_map, divisors, primes);
 }
@@ -551,9 +486,6 @@ populate_cofactor_map(
             std::vector<long> &modprimes {factor_map[k]};
             modprimes.push_back(prime);
         }
-        // to track progress without dirtying output
-        if (j & 0x100000)
-            std::cerr << "divisor " << j << "/" << num_divisors << "               \r";
     }
 }
 
@@ -572,7 +504,7 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
         return;
 
     // stack of exponents for each prime factor
-    int *stack {new int[primes]};
+    std::unique_ptr<int[]> stack = std::make_unique<int[]>(primes);
     size_t top = 0;
     size_t max_top = primes - 1;
 
@@ -620,8 +552,6 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
             }
         }
     }
-
-    delete[] stack;
 }
 
 

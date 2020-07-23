@@ -12,6 +12,11 @@
 std::unique_ptr<Product[]> MAP;
 size_t PRODUCT_MAP_SIZE { 0 };
 
+size_t
+get_map_size()
+{
+    return PRODUCT_MAP_SIZE;
+}
 
 /**
  * Sieves an array the size of `max` so that subsequent calls

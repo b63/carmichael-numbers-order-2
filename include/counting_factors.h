@@ -13,5 +13,6 @@ void init(size_t max);
 std::unique_ptr<std::vector<long>> get_prime_factors(size_t n);
 void collapse_factors(std::vector<long> &factors, std::vector<long> &powers, 
         const std::vector<long> &uncollapsed_factors);
+size_t get_map_size();
 
 #endif

@@ -43,13 +43,15 @@ include_as_factor(const Factorization &n, const Factorization &factor)
     new_n.primes.reserve(count);
     new_n.powers.reserve(count);
 
+    // TODO: test if fater than building unordered list, then sorting using
+    //       algorithm of nlog(n) complexity?
     for (auto it = map.cbegin(), cend = map.cend(); it != cend; ++it)
     {
         long prime = it->first, power = it->second;
 
         size_t i = 0, nn_size = new_n.primes.size();
         for (; i < nn_size; ++i)
-            if (prime > new_n.primes[i])
+            if (prime < new_n.primes[i])
                 break;
 
         new_n.primes.insert(new_n.primes.cbegin()+i, prime);

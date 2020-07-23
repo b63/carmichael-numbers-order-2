@@ -69,13 +69,13 @@ operator<<(std::ostream &os, const Factorization &f)
         throw std::length_error("primes and powers vectors have unequal lengths");
     }
 
-    os << len << "\n";
     for (size_t k = 0; k < len; k++)
     {
-        os << "(" << k << ", " << (k <len) << ")";
         if (k > 0) os << " * ";
         os << f.primes[k] << "^" << f.powers[k];
     }
+
+    return os;
 }
 
 

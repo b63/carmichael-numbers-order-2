@@ -28,15 +28,20 @@ include_as_factor(const Factorization &n, const Factorization &factor)
     for(size_t i = 0; i < n_size; i++)
     {
         long power = n.powers[i];
-        if ( (map[n.primes[i]] += power) == power)
+        /* ignore primes with exponent 0 */
+        if ( power && (map[n.primes[i]] += power) == power)
             count++; /* this prime hasn't been encountered before */
     }
 
     for(size_t i = 0; i < factor_size; i++)
     {
         long power = factor.powers[i];
-        if ( (map[factor.primes[i]] += power) == power)
-            count++; /* this prime hasn't been encountered before */
+        long &cur_power = map[factor.primes[i]];
+        if (cur_power >= power)
+            continue; /* ignore zero exponent primes & those with high enough exponent */
+
+        if (!(cur_power = power)) 
+            ++count;
     }
 
     Factorization new_n;

@@ -5,7 +5,7 @@ CXX=g++
 override CPPFLAGS:=$(CPPFLAGS) -I ./include
 
 # Extra flags to give to the C++ compiler. 
-override CXXFLAGS:=$(CXXFLAGS) -Wall -pedantic -Werror -std=c++14 -O3
+override CXXFLAGS:=$(CXXFLAGS) -Wall -Werror -pedantic -std=c++14 -O0
 
 # Extra flags to give to compilers when they are supposed to invoke the linker, ‘ld’, such as -L. Libraries (-lfoo) should be added to the LDLIBS variable instead. 
 override LDFLAGS:=$(LDFLAGS)
@@ -23,10 +23,13 @@ SOURCES = timer.cpp util.cpp primality.cpp  counting_factors.cpp util.cpp
 SOURCES+= gen_distributions.cpp
 SOURCES+= generate_cprimes.cpp generate_cprimes_order_2.cpp
 SOURCES+= construct_P.cpp construct_P_main.cpp
+SOURCES+= nonrigid.cpp gen_nonrigid.cpp
 SOURCES+= bench_construct_P.cpp 
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
-BINARIES=generate_cprimes generate_cprimes_order_2 construct_P gen_distributions bench_construct_P
+BINARIES=generate_cprimes generate_cprimes_order_2 construct_P gen_distributions bench_construct_P \
+         gen_nonrigid
+
 
 DIR_GUARD = [ -d $(@D) ] || mkdir -p $(@D)
 
@@ -70,6 +73,11 @@ ${BUILD_DIR}/%.dd: ${BUILD_DIR}/%.d
 
 all: $(addprefix ${BUILD_DIR}/,$(BINARIES))
 
+dir:
+	@${DIR_GUARD}
+clean:
+	rm -f ${BUILD_DIR}/*
+
 ${BUILD_DIR}/generate_cprimes: $(addprefix ${BUILD_DIR}/,generate_cprimes.o)
 	$(LINK) $^ -o $@ $(LDLIBS)
 
@@ -86,14 +94,11 @@ ${BUILD_DIR}/bench_construct_P: $(addprefix ${BUILD_DIR}/,timer.o primality.o ut
 ${BUILD_DIR}/gen_distributions: $(addprefix ${BUILD_DIR}/,gen_distributions.o)
 	$(LINK) $^ -o $@ $(LDLIBS)
 
-include $(SOURCES:%.cpp=${BUILD_DIR}/%.d)
-include $(BINARIES:%=${BUILD_DIR}/%.dd)
-
-dir:
-	@${DIR_GUARD}
-clean:
-	rm -f ${BUILD_DIR}/*
+${BUILD_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,gen_nonrigid.o)
+	$(LINK) $^ -o $@ $(LDLIBS)
 
 
 
+-include $(SOURCES:%.cpp=${BUILD_DIR}/%.d)
+-include $(BINARIES:%=${BUILD_DIR}/%.dd)
 

@@ -1,17 +1,90 @@
 #include <iostream>
+#include <ostream>
 #include <stdio.h>
 #include <stdexcept>
 #include <map>
+#include <unordered_map>
 #include <NTL/ZZ.h>
 
 #include <util.h>
+
+/*
+ * Ensures that `n` includes a `factor` as a factor.
+ * Note: Assumes that the vectors in `n` are sorted from
+ * least to greatest.
+ * @param n       reference to Factorization object consisting of two sorted vectors
+ *                that contains n's prime factors and their powers
+ * @param factor  factorization of the factor that `n` must have
+ */
+Factorization
+include_as_factor(const Factorization &n, const Factorization &factor)
+{
+    const size_t factor_size = factor.primes.size();
+    const size_t n_size      = n.primes.size();
+
+    std::unordered_map<long, long> map {};
+
+    size_t count = 0;
+    for(size_t i = 0; i < n_size; i++)
+    {
+        long power = n.powers[i];
+        if ( (map[n.primes[i]] += power) == power)
+            count++; /* this prime hasn't been encountered before */
+    }
+
+    for(size_t i = 0; i < factor_size; i++)
+    {
+        long power = factor.powers[i];
+        if ( (map[factor.primes[i]] += power) == power)
+            count++; /* this prime hasn't been encountered before */
+    }
+
+    Factorization new_n;
+    new_n.primes.reserve(count);
+    new_n.powers.reserve(count);
+
+    for (auto it = map.cbegin(), cend = map.cend(); it != cend; ++it)
+    {
+        long prime = it->first, power = it->second;
+
+        size_t i = 0, nn_size = new_n.primes.size();
+        for (; i < nn_size; ++i)
+            if (prime > new_n.primes[i])
+                break;
+
+        new_n.primes.insert(new_n.primes.cbegin()+i, prime);
+        new_n.powers.insert(new_n.powers.cbegin()+i, power);
+    }
+
+    // TODO: check for copy-elision
+    return new_n;
+}
+
+std::ostream&
+operator<<(std::ostream &os, const Factorization &f)
+{
+    const size_t len = f.primes.size();
+    if (len != f.powers.size())
+    {
+        throw std::length_error("primes and powers vectors have unequal lengths");
+    }
+
+    os << len << "\n";
+    for (size_t k = 0; k < len; k++)
+    {
+        os << "(" << k << ", " << (k <len) << ")";
+        if (k > 0) os << " * ";
+        os << f.primes[k] << "^" << f.powers[k];
+    }
+}
 
 
 // generate list of primes using a sieve and store
 // them in `primes` vector.
 // @param primes vector instance where the primes will be stored
 // @param size   size of the sieve used to generate primes
-//               effectively limits the largest primes
+//               effectively limits the largest primes.
+//               The largest prime will be <= size
 void sieve_primes(std::vector<long> &primes, size_t size)
 {
     // list of integers that will be sieved

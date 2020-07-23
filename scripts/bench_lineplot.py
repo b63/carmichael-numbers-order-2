@@ -168,7 +168,7 @@ def main():
     #axes.set_ylim((ymin, ymax*1.5))
 
     lg = ax.legend(bbox_to_anchor=(1.05, 1))
-    plt.title('Benchmarks')
+    plt.title('Same Limit')
     plt.ylabel('Time/max|P| ({})'.format(time_units))
     plt.xlabel('Limit')
 

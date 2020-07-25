@@ -10,8 +10,8 @@
 #include <util.h>
 
 
-void filter_primes(const std::vector<long> &primes, std::vector<long> &dest);
-void subset_product(const std::vector<long>&, std::vector<std::vector<size_t> >&);
+void filter_primes(std::vector<long> &dest, const std::vector<long> &primes);
+void subset_product(std::vector<std::vector<size_t> >&, const std::vector<long>&);
 
 // order of the carmicheal number
 const int ORDER = 1;
@@ -57,14 +57,14 @@ int main() {
 
     // filter list of primes and store in this vector
     std::vector<long> filtered_primes;
-    filter_primes(primes, filtered_primes);
+    filter_primes(filtered_primes, primes);
 
     std::cout << filtered_primes.size() << " filtered primes" << "\n\n";
 
     // subset products of filetered_primes are possible carmicheal numbers
     // go over every subset of size factors, store results in cprime list
     std::vector< std::vector<size_t> > cprimes;
-    subset_product(filtered_primes, cprimes);
+    subset_product(cprimes, filtered_primes);
 
     size_t found = cprimes.size();
     std::cout << "found " << found << " carmicheal primes\n";
@@ -80,7 +80,7 @@ int main() {
 //     1. p must not divide L
 //     2. p^r - 1 must divide L for every r in 1,2,..,ORDER
 // the result is stored in the vector object dest
-void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
+void filter_primes( std::vector<long> &dest, const std::vector<long> &primes)
 {
     size_t len = primes.size();
     for (size_t i = 0; i < len; i++)
@@ -126,7 +126,7 @@ void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
 //
 // If the residue is what we want, the list of indicies
 // is stored in the vector cprimes.
-void subset_product(const std::vector<long> &primes, std::vector< std::vector<size_t> > &cprimes)
+void subset_product(std::vector< std::vector<size_t> > &cprimes, const std::vector<long> &primes)
 {
     size_t num_primes = primes.size();
     // go through all possible subset sizes starting from 2

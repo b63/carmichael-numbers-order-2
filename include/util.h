@@ -46,7 +46,8 @@ std::ostream& operator<<(std::ostream& os, const Factorization& f);
 void clrln(size_t width=80);
 
 // stores list of primes < size in `primes` vector
-void sieve_primes(std::vector<long> &primes, size_t size);
+void sieve_primes(std::vector<long> &primes, const size_t size, 
+        const std::function<bool(size_t, long)> *filter = nullptr);
 // sieves `arr` , and `size` is lenght of arr
 void sieve(long *arr, size_t size);
 

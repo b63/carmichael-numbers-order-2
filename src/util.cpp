@@ -2,6 +2,7 @@
 #include <ostream>
 #include <stdio.h>
 #include <stdexcept>
+#include <functional>
 #include <map>
 #include <unordered_map>
 #include <NTL/ZZ.h>
@@ -92,7 +93,8 @@ operator<<(std::ostream &os, const Factorization &f)
 // @param size   size of the sieve used to generate primes
 //               effectively limits the largest primes.
 //               The largest prime will be <= size
-void sieve_primes(std::vector<long> &primes, size_t size)
+void sieve_primes(std::vector<long> &primes, const size_t size, 
+        const std::function<bool(size_t, long)> *filter)
 {
     // list of integers that will be sieved
     long *sieve_array = new long[size];
@@ -103,15 +105,30 @@ void sieve_primes(std::vector<long> &primes, size_t size)
     sieve(sieve_array, size);
 
     // collect all the primes
-    for (size_t i = 1; i < size; i++)
+    if (filter == nullptr)
     {
-        long n = sieve_array[i];
-        if (n != 0)
+        for (size_t i = 1; i < size; i++)
         {
-            primes.push_back(n);
+            long n = sieve_array[i];
+            if (n != 0)
+            {
+                primes.push_back(n);
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 1; i < size; i++)
+        {
+            long n = sieve_array[i];
+            if (n != 0 && (*filter)(i, n))
+            {
+                primes.push_back(n);
+            }
         }
     }
 }
+
 
 
 // sieve an array of integers starting from 1 to create a  list of primes

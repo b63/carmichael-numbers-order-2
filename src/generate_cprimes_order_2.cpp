@@ -14,9 +14,8 @@
 #include <timer.h>
 #include <util.h>
 
-void filter_primes(const std::vector<long> &primes, std::vector<long> &dest);
-void subset_product_brute_force(const std::vector<long> &,
-                                std::vector<std::vector<size_t>> &);
+void filter_primes(std::vector<long> &dest, const std::vector<long> &primes);
+void subset_product_brute_force(std::vector<std::vector<size_t>> &, const std::vector<long> &);
 
 // order of the carmicheal number
 constexpr int ORDER = 2;
@@ -66,14 +65,14 @@ int main() {
 
     // filter list of primes and store in this vector
     std::vector<long> filtered_primes;
-    filter_primes(primes, filtered_primes);
+    filter_primes(filtered_primes, primes);
 
     std::cout << filtered_primes.size() << " filtered primes" << "\n";
 
     // subset products of filetered_primes are possible carmicheal numbers
     // go over every subset of size factors, store results in cprime list
     std::vector< std::vector<size_t> > cprimes;
-    subset_product_brute_force(filtered_primes, cprimes);
+    subset_product_brute_force(cprimes, filtered_primes);
 
     size_t found = cprimes.size();
     std::cout << "found " << found << " carmicheal primes\n";
@@ -89,7 +88,7 @@ int main() {
 //     1. p must not divide L
 //     2. p^2 - 1 must divide L
 // the result is stored in the vector object dest
-void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
+void filter_primes(std::vector<long> &dest, const std::vector<long> &primes)
 {
     size_t len = primes.size();
     for (size_t i = 0; i < len; i++)
@@ -125,7 +124,7 @@ void filter_primes(const std::vector<long> &primes, std::vector<long> &dest)
 //
 // If the residue is what we want, the list of indicies
 // is stored in the vector cprimes.
-void subset_product_brute_force(const std::vector<long> &primes, std::vector<std::vector<size_t>> &cprimes)
+void subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std::vector<long> &primes)
 {
     int timer_id = start(); // for timing with timer.h
     size_t num_primes = primes.size();

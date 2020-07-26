@@ -188,7 +188,8 @@ binary_search(
 
 template <typename T>
 void 
-print_stats(const std::map<const long, std::vector<T>> &factor_map, const NTL::ZZ &L_prime, size_t max_ranking)
+print_stats(const std::map<const long, std::vector<T>> &factor_map, const NTL::ZZ &L_prime, 
+        size_t max_ranking, size_t num_print_k = 5)
 {
 
     std::vector<CoFactorSet> ranking;
@@ -265,6 +266,8 @@ print_stats(const std::map<const long, std::vector<T>> &factor_map, const NTL::Z
             {
                 density = get_density(L, c.num_primes);
                 std::cout << "density = " << density << "\n";
+                std::cout << "L = " << L << "\n";
+                std::cout << "  = " << L_prime << " * " << k << "\n";
             }
             catch (std::exception &e)
             {
@@ -292,13 +295,18 @@ print_stats(const std::map<const long, std::vector<T>> &factor_map, const NTL::Z
         {
             std::cout << "num primes=" << it->num_primes << "\n";
             const std::vector<long> &cfs {it->cofactors};
-            for (size_t j = 0; j < cfs.size(); j++)
+            size_t j = 0;
+            for (; j < num_print_k && j < cfs.size(); j++)
             {
                 std::cout << "k=" << std::setw(w) << cfs[j] << " -> ";
                 const std::vector<T> &primes {factor_map.at(cfs[j])};
                 printVec<T>(primes);
                 std::cout << "\n";
             }
+
+            if (j < cfs.size())
+                std::cout << "(" << (cfs.size()-j) << " more...)\n";
+
             if (it+1 < ranking.crend())
                 std::cout << "\n";
         }

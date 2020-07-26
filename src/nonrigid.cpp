@@ -42,7 +42,7 @@ generate_nonrigid_cprimes(long p0, long p1,
         };
 
     sieve_primes(primes, sieve_size, &filter);
-#if LOG_LEVEL == 1
+#if LOG_LEVEL >= 1
     std::cout << "sieze size " << sieve_size << ", " << primes.size() << " primes\n";
 #endif
 
@@ -102,7 +102,7 @@ subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std:
                 /*            otherwise segfault  */
                 NTL::ZZ prod = products[top - 1] * primes[index_stack[top]];
 
-# if LOG_LEVEL == 1
+# if LOG_LEVEL >= 1
                 printVec<NTL::ZZ>(products);
                 printVec<size_t>(index_stack);
                 std::cout << " = " << prod << "\n";

@@ -101,29 +101,32 @@ dir:
 clean:
 	rm -rf ${BUILD_DIR}/*
 
+# template functions are defined in header file
+${BUILD_DIR}/construct_P.o: include/util.h
+
 ${BUILD_DIR}/generate_cprimes: $(addprefix ${BUILD_DIR}/,util.o generate_cprimes.o )
-	$(LINK) $^ -o $@ $(LDLIBS)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/generate_cprimes_order_2: $(addprefix ${BUILD_DIR}/,generate_cprimes_order_2.o \
             timer.o util.o)
-	$(LINK) $^ -o $@ $(LDLIBS)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/construct_P: $(addprefix ${BUILD_DIR}/,construct_P_main.o construct_P.o \
             timer.o util.o counting_factors.o primality.o)
-	$(LINK) $^ -o $@ $(LDLIBS)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/gen_distributions: $(addprefix ${BUILD_DIR}/,gen_distributions.o util.o)
-	$(LINK) $^ -o $@ $(LDLIBS)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o nonrigid.o gen_nonrigid.o)
-	$(LINK) $^ -o $@ $(LDLIBS)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/bench_construct_P: $(addprefix ${BUILD_DIR}/,timer.o primality.o util.o counting_factors.o \
 	    construct_P.o bench_construct_P.o)
-	$(LINK) $^ -o $@ -lbenchmark -lbenchmark_main $(LDLIBS) 
+	$(LINK) $(filter-out %.h,$^) -o $@ -lbenchmark -lbenchmark_main $(LDLIBS) 
 
 ${BUILD_DIR}/bench_prodcache: $(addprefix ${BUILD_DIR}/,bench_prodcache.o nonrigid.o util.o)
-	$(LINK) $^ -o $@ -lbenchmark -lbenchmark_main $(LDLIBS) 
+	$(LINK) $(filter-out %.h,$^) -o $@ -lbenchmark -lbenchmark_main $(LDLIBS) 
 
 include $(foreach src,$(SOURCES),$(BUILD_DIR)/deps/$(basename $(notdir $(src))).d )
 #include $(SOURCES:%.cpp=${BUILD_DIR}/deps/%.d)

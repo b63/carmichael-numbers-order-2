@@ -12,7 +12,7 @@ override LDFLAGS:=$(LDFLAGS)
 
 # Library flags or names given to compilers when they are supposed to invoke the linker, ‘ld’.
 #LDLIBS:=-lpthread -lm -lgmp -lntl
-LDLIBS:=/usr/local/lib/libgmp.a /home/bkoirala/lib/libntl.a -lm -pthread
+LDLIBS:=/home/bkoirala/lib/libntl.a /usr/local/lib/libgmp.a -lm -pthread
 
 COMPILE=$(CXX) -c $(CXXFLAGS) $(CPPFLAGS)
 LINK=$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) 
@@ -41,7 +41,7 @@ DIR_GUARD = [ -d $(@D) ] || mkdir -p $(@D)
 # STATIC PATTERN MATCHING RULES
 .SUFFIXES:
 .ONESHELL:
-SHELL=/usr/bin/bash
+SHELL=/bin/bash
 
 ${BUILD_DIR}/%.o: ${BENCHMARK_SRC_DIR}/%.cpp
 	$(COMPILE) $< -o $@

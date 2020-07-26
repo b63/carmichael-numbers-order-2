@@ -11,7 +11,8 @@ override CXXFLAGS:=$(CXXFLAGS) -Wall -Werror -pedantic -std=c++14 -O3
 override LDFLAGS:=$(LDFLAGS)
 
 # Library flags or names given to compilers when they are supposed to invoke the linker, ‘ld’.
-LDLIBS:=-lpthread -lm -lgmp -lntl
+#LDLIBS:=-lpthread -lm -lgmp -lntl
+LDLIBS:=/usr/local/lib/libgmp.a /home/bkoirala/lib/libntl.a -lm -pthread
 
 COMPILE=$(CXX) -c $(CXXFLAGS) $(CPPFLAGS)
 LINK=$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) 

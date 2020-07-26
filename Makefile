@@ -25,7 +25,7 @@ SOURCES+= gen_distributions.cpp
 SOURCES+= generate_cprimes.cpp generate_cprimes_order_2.cpp
 SOURCES+= construct_P.cpp construct_P_main.cpp
 SOURCES+= nonrigid.cpp gen_nonrigid.cpp
-SOURCES+= bench_construct_P.cpp 
+SOURCES+= benchmarks/bench_construct_P.cpp 
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
 BINARIES=generate_cprimes generate_cprimes_order_2 construct_P gen_distributions \
@@ -50,7 +50,19 @@ ${BUILD_DIR}/%.o: ${SRC_DIR}/%.cpp
 
 # automatically generate header dependencies using -MM preprocessor flag
 # http://www.gnu.org/software/make/manual/make.html#Automatic-Prerequisites
+# match .cpp files in src/ and in src/benchmarks/
 ${BUILD_DIR}/deps/%.d: ${SRC_DIR}/%.cpp
+	@set -e
+	$(DIR_GUARD)
+	rm -f $@
+	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$
+	sed 's,\($(basename $@)\)\.o[ :]*,\1.o $(basename $@).d : ,g' < $@.$$$$ > $@
+	rm -f $@.$$$$
+
+# do it agains for benchmark source files b/c they are not in src/
+# but in src/benchmarks/
+# TODO: better way to do this?
+${BUILD_DIR}/deps/%.d: ${BENCHMARK_SRC_DIR}/%.cpp
 	@set -e
 	$(DIR_GUARD)
 	rm -f $@
@@ -106,9 +118,12 @@ ${BUILD_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o nonrigid.o gen_nonri
 
 ${BUILD_DIR}/bench_construct_P: $(addprefix ${BUILD_DIR}/,timer.o primality.o util.o counting_factors.o \
 	    construct_P.o bench_construct_P.o)
-	$(LINK) $^ -o $@ -lbenchmark -lbenchmark_main $(LDLIBS)
+	$(LINK) $^ -o $@ -lbenchmark -lbenchmark_main $(LDLIBS) 
 
+${BUILD_DIR}/bench_prodcache: $(addprefix ${BUILD_DIR}/,bench_prodcache.o nonrigid.o util.o)
+	$(LINK) $^ -o $@ -lbenchmark -lbenchmark_main $(LDLIBS) 
 
-include $(SOURCES:%.cpp=${BUILD_DIR}/deps/%.d)
+include $(foreach src,$(SOURCES),$(BUILD_DIR)/deps/$(basename $(notdir $(src))).d )
+#include $(SOURCES:%.cpp=${BUILD_DIR}/deps/%.d)
 #include $(BINARIES:%=${BUILD_DIR}/%.dd)
 

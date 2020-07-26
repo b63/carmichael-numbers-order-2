@@ -26,6 +26,8 @@ SOURCES+= generate_cprimes.cpp generate_cprimes_order_2.cpp
 SOURCES+= construct_P.cpp construct_P_main.cpp
 SOURCES+= nonrigid.cpp gen_nonrigid.cpp
 SOURCES+= benchmarks/bench_construct_P.cpp 
+SOURCES+= benchmarks/bench_prodcache.cpp 
+SOURCES+= benchmarks/bench_lambda.cpp 
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
 BINARIES=generate_cprimes generate_cprimes_order_2 construct_P gen_distributions \

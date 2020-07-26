@@ -77,5 +77,5 @@ main(int argc, char **argv)
     if (!method || method == 1)
         test_method_1(L_P_primes, L_P_primes_powers, max);
     else
-        test_method_2(L_P_primes, L_P_primes_powers, max);
+        test_method_2(L_P_primes, L_P_primes_powers, max*max);
 }

@@ -5,6 +5,7 @@
 #include <map>
 #include <iomanip>
 #include <iostream>
+#include <ostream>
 #include <functional>
 
 #include <NTL/ZZ.h>
@@ -19,6 +20,7 @@ struct CoFactorSet
     std::vector<long> cofactors;
 };
 
+
 struct SizeCount
 {
     /* number of primes */
@@ -27,6 +29,14 @@ struct SizeCount
     size_t num_cofactors;
 };
 
+struct Factorization
+{
+    std::vector<long> primes;
+    std::vector<long> powers;
+
+};
+
+std::ostream& operator<<(std::ostream& os, const Factorization& f);
 
 /*************** FUNCTIONS ***********/
 
@@ -36,7 +46,8 @@ struct SizeCount
 void clrln(size_t width=80);
 
 // stores list of primes < size in `primes` vector
-void sieve_primes(std::vector<long> &primes, size_t size);
+void sieve_primes(std::vector<long> &primes, const size_t size, 
+        const std::function<bool(size_t, long)> *filter = nullptr);
 // sieves `arr` , and `size` is lenght of arr
 void sieve(long *arr, size_t size);
 
@@ -48,6 +59,8 @@ long get_nth_prime(size_t n);
 NTL::ZZ& multiply_factors(NTL::ZZ &prod, const std::vector<long> &factors, const std::vector<long> &powers);
 
 NTL::RR get_density(NTL::ZZ &L, size_t prime_size);
+
+Factorization include_as_factor(const Factorization &n, const Factorization &factor);
 
 
 /**************** TEMPLATE FUNCTIONS **************************/

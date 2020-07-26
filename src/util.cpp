@@ -1,18 +1,100 @@
 #include <iostream>
+#include <ostream>
 #include <stdio.h>
 #include <stdexcept>
+#include <functional>
 #include <map>
+#include <unordered_map>
 #include <NTL/ZZ.h>
 
 #include <util.h>
+
+/*
+ * Ensures that `n` includes a `factor` as a factor.
+ * Note: Assumes that the vectors in `n` are sorted from
+ * least to greatest.
+ * @param n       reference to Factorization object consisting of two sorted vectors
+ *                that contains n's prime factors and their powers
+ * @param factor  factorization of the factor that `n` must have
+ */
+Factorization
+include_as_factor(const Factorization &n, const Factorization &factor)
+{
+    const size_t factor_size = factor.primes.size();
+    const size_t n_size      = n.primes.size();
+
+    std::unordered_map<long, long> map {};
+
+    size_t count = 0;
+    for(size_t i = 0; i < n_size; i++)
+    {
+        long power = n.powers[i];
+        /* ignore primes with exponent 0 */
+        if ( power && (map[n.primes[i]] += power) == power)
+            count++; /* this prime hasn't been encountered before */
+    }
+
+    for(size_t i = 0; i < factor_size; i++)
+    {
+        long power = factor.powers[i];
+        long &cur_power = map[factor.primes[i]];
+        if (cur_power >= power)
+            continue; /* ignore zero exponent primes & those with high enough exponent */
+
+        if (!(cur_power = power)) 
+            ++count;
+    }
+
+    Factorization new_n;
+    new_n.primes.reserve(count);
+    new_n.powers.reserve(count);
+
+    // TODO: test if fater than building unordered list, then sorting using
+    //       algorithm of nlog(n) complexity?
+    for (auto it = map.cbegin(), cend = map.cend(); it != cend; ++it)
+    {
+        long prime = it->first, power = it->second;
+
+        size_t i = 0, nn_size = new_n.primes.size();
+        for (; i < nn_size; ++i)
+            if (prime < new_n.primes[i])
+                break;
+
+        new_n.primes.insert(new_n.primes.cbegin()+i, prime);
+        new_n.powers.insert(new_n.powers.cbegin()+i, power);
+    }
+
+    // TODO: check for copy-elision
+    return new_n;
+}
+
+std::ostream&
+operator<<(std::ostream &os, const Factorization &f)
+{
+    const size_t len = f.primes.size();
+    if (len != f.powers.size())
+    {
+        throw std::length_error("primes and powers vectors have unequal lengths");
+    }
+
+    for (size_t k = 0; k < len; k++)
+    {
+        if (k > 0) os << " * ";
+        os << f.primes[k] << "^" << f.powers[k];
+    }
+
+    return os;
+}
 
 
 // generate list of primes using a sieve and store
 // them in `primes` vector.
 // @param primes vector instance where the primes will be stored
 // @param size   size of the sieve used to generate primes
-//               effectively limits the largest primes
-void sieve_primes(std::vector<long> &primes, size_t size)
+//               effectively limits the largest primes.
+//               The largest prime will be <= size
+void sieve_primes(std::vector<long> &primes, const size_t size, 
+        const std::function<bool(size_t, long)> *filter)
 {
     // list of integers that will be sieved
     long *sieve_array = new long[size];
@@ -23,15 +105,30 @@ void sieve_primes(std::vector<long> &primes, size_t size)
     sieve(sieve_array, size);
 
     // collect all the primes
-    for (size_t i = 1; i < size; i++)
+    if (filter == nullptr)
     {
-        long n = sieve_array[i];
-        if (n != 0)
+        for (size_t i = 1; i < size; i++)
         {
-            primes.push_back(n);
+            long n = sieve_array[i];
+            if (n != 0)
+            {
+                primes.push_back(n);
+            }
+        }
+    }
+    else
+    {
+        for (size_t i = 1; i < size; i++)
+        {
+            long n = sieve_array[i];
+            if (n != 0 && (*filter)(i, n))
+            {
+                primes.push_back(n);
+            }
         }
     }
 }
+
 
 
 // sieve an array of integers starting from 1 to create a  list of primes

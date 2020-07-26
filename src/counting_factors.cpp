@@ -62,7 +62,7 @@ init(size_t max)
         }
     }
 
-#if LOG_LEVEL == 1
+#if LOG_LEVEL>= 1
     std::cout << "finished prime-factorization lookup table of size " << max << "\n";
 #endif
 }
@@ -94,7 +94,7 @@ get_prime_factors(size_t n)
     {
         Product &prod = MAP[n];
 
-#if LOG_LEVEL == 1
+#if LOG_LEVEL >= 1
         std::cout << prod.first_term << ", " << prod.second_term << "\n";
 #endif
         factors->push_back(prod.first_term);

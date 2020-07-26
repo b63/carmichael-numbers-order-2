@@ -106,6 +106,7 @@ construct_primes_2(
     )
 {
     // for get_prime_factors
+    std::cout << MAX << "\n";
     init(MAX);
 
     std::vector<NTL::ZZ> divisors;
@@ -123,12 +124,13 @@ construct_primes_2(
     // skip the last divisor
     const size_t num_divisors {divisors.size()};
     for (size_t i {0}; i+1 < num_divisors; i++)
+         
     {
         NTL::ZZ &divisor { divisors[i] };
         NTL::ZZ multiple { divisor };
         NTL::ZZ N;
 
-        for (long k {1}; k < MAX; k++, multiple += divisor)
+        for (long k {1}; multiple < MAX; k++, multiple += divisor)
         {
             if (!is_perfect_square(N, multiple+1)) continue;
             const std::unique_ptr<std::vector<long>> factors_k { get_prime_factors(k) };

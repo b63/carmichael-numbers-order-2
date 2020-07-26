@@ -82,5 +82,5 @@ static void Method_1(benchmark::State &state)
     state.counters["|P|"] = k_max_size;
 }
 
-//BENCHMARK(Method_1)->Unit(benchmark::kMillisecond)->Range(1024, 1024<<15)->UseManualTime();
+BENCHMARK(Method_1)->Unit(benchmark::kMillisecond)->Range(1024, 1024<<15)->UseManualTime();
 BENCHMARK(Method_2)->Unit(benchmark::kMillisecond)->Range(1024, 1024<<15)->UseManualTime();

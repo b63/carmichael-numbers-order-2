@@ -124,6 +124,7 @@ construct_primes_2(
     // skip the last divisor
     const size_t num_divisors {divisors.size()};
     for (size_t i {0}; i+1 < num_divisors; i++)
+         
     {
         NTL::ZZ &divisor { divisors[i] };
         NTL::ZZ multiple { divisor };

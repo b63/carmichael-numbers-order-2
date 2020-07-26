@@ -168,9 +168,11 @@ def main():
     #axes.set_ylim((ymin, ymax*1.5))
 
     lg = ax.legend(bbox_to_anchor=(1.05, 1))
-    plt.title('Same Limit')
-    plt.ylabel('Time/max|P| ({})'.format(time_units))
-    plt.xlabel('Limit')
+    plt.title('Caching Muliplication')
+    plt.ylabel('Time ({})'.format(time_units))
+    plt.xlabel('Size of Set')
+
+    plt.grid(True, linestyle='dotted')
 
 
     print('Saving figure to \'{}\'...'.format(image_output))

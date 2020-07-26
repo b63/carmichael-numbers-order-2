@@ -1,0 +1,6 @@
+Elements of each set of size n: {2^55 * 1, , 2^55 * 2, ..., 2^55 * n}
+Numbers are much larger, so mutliplication should take longer for larger subsets
+The difference in times with and without caching gets larger:
+    with smaller numbers, difference in time with size of set at 15 was ~1.7E7 ns
+    with larger  numbers, difference grows to ~2.8E7 ns
+compiled with optimizations on (-O3)

@@ -489,7 +489,7 @@ populate_cofactor_map(
             modprimes.push_back(prime);
         }
 #if LOG_LEVEL >= 2
-        if ((j&0xff) == 0)
+        if ((j&STEP_MASK) == 0)
             std::cout << std::setw(10) << j << "/" << num_divisors << "\r" << std::flush;
 #endif
     }
@@ -550,7 +550,7 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
                 {
                     divisors.push_back(std::move(prod));
 #if LOG_LEVEL >= 2
-                    if((count++ & 0xfffff) == 0)
+                    if((count++ & STEP_MASK) == 0)
                         std::cout << "generated " << count << " divisors...\r";
 #endif
                 }

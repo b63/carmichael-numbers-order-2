@@ -67,8 +67,6 @@ main(int argc, char **argv)
         return 0;
     }
 
-    printf("max %lu\n", max);
-
     // for timing
     init_timer();
     std::cout << std::fixed << std::setprecision(2);

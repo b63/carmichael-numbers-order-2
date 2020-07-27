@@ -12,7 +12,7 @@ override LDFLAGS:=$(LDFLAGS)
 
 # Library flags or names given to compilers when they are supposed to invoke the linker, ‘ld’.
 #LDLIBS:=-lpthread -lm -lgmp -lntl
-LDLIBS:=-static /home/bkoirala/lib/libntl.a /usr/local/lib/libgmp.a -lm -pthread
+LDLIBS:=-static /home/bkoirala/lib/libntl.a /home/bkoirala/lib/libgmp.a -lm -pthread
 
 COMPILE=$(CXX) -c $(CXXFLAGS) $(CPPFLAGS)
 LINK=$(CXX) $(CXXFLAGS) $(CPPFLAGS) $(LDFLAGS) 

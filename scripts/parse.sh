@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR=/home/hfl/tdata/rnd/edu/summer-2020-number-theory/summer-2020-research
+DIR=/home/bkoirala/repos/summer-2020-research
 DATADIR=$DIR/data/interpolation
 JOBDATADIR=$DIR/data/jobdata
 
@@ -11,16 +11,19 @@ tail -n +1 $JOBDATADIR/all | while read line; do
     [[ $line =~ ':' ]] || continue
     index=${line%:*}
     dist=${line#*:}
-    density=""
-    printf "$index"
+    printf "index=$index, "
+    density=$(tail -n 1 $DATADIR/out$index)
+    density=${density#*= }
 
-    while read line; do
-        if [[ $line =~ ^"density"  ]]; then
-            density=${line#*= }
-            break
-        fi
-    done < "$DATADIR/out$index"
-    printf ", $density\n"
+    #while read dline; do
+    #    echo $dline
+    #    if [[ $dline =~ ^"density"  ]]; then
+    #        density=${dline#*= }
+    #        break
+    #    fi
+    #done < "$DATADIR/out$index"
+
+    printf "density=$density\n"
     echo "$index,$dist,$density" >> $DATADIR/summary
 done
 

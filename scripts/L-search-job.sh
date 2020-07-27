@@ -37,7 +37,7 @@ do
     IFS=' ' read -r -a vals <<< "$line"
 
     params=("${PARAMS[@]}" "${vals[@]}")
-    stdbuf -e0 -o0 $BIN/construct_P "${params[@]}" > "$OUTPUT_DIR/out$PBS_ARRAYID-$i" 2>> $PROGRESS_DIR/job$PBS_ARRAYID
+    stdbuf -e0 -o0 $BIN/calc_density"${params[@]}" > "$OUTPUT_DIR/out$PBS_ARRAYID-$i" 2>> $PROGRESS_DIR/job$PBS_ARRAYID
 
     i=$(($i+1))
 done < "$INPUT_DATA/job$PBS_ARRAYID"

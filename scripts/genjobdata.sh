@@ -1,10 +1,10 @@
 #!/bin/bash
 
-DIR=/home/hfl/tdata/rnd/edu/summer-2020-number-theory/summer-2020-research
+DIR=/home/bkoirala/repos/summer-2020-research
 OUTPUT_DIR=$DIR/data/jobdata
 LOW=30
 HIGH=31
-BIN=$DIR
+BIN=$DIR/build
 JOBS=""
 
 OPTIND=1
@@ -43,7 +43,6 @@ if [[ -z $JOBS ]]; then
 fi
 
 [[ -f $OUTPUT_DIR ]] || mkdir -p $OUTPUT_DIR
-[[ -z $BIN ]] || cd $BIN
 
 # empty output directory
 rm -rfv $OUTPUT_DIR/job* "$OUTPUT_DIR/all"

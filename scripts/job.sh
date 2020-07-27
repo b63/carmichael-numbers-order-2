@@ -6,7 +6,7 @@
 #PBS -M bkoirala@iwu.edu
 #
 # Set up a job array
-#PBS -t 0-9
+#PBS -t 0-47
 #
 # store stderr and stdout in joboutput directory
 #PBS -e jobstreams/err
@@ -14,16 +14,16 @@
 
 
 
-DIR=/home/hfl/tdata/rnd/edu/summer-2020-number-theory/summer-2020-research
+DIR=/home/bkoirala/repos/summer-2020-research
 OUTPUT_DIR=$DIR/data/interpolation
 INPUT_DATA=$DIR/data/jobdata
-PROGRESS_DATA=$DIR/data/progress
-BIN=$DIR
+PROGRESS_DIR=$DIR/data/progress
+BIN=$DIR/build
 
-PARAMS=('-m1' '-l10000')
+PARAMS=('-l10000000')
 
 [[ -f $OUTPUT_DIR ]] || mkdir -p $OUTPUT_DIR
-[[ -f $PROGRESS_DATA ]] || mkdir -p $PROGRESS_DATA
+[[ -f $PROGRESS_DIR ]] || mkdir -p $PROGRESS_DIR
 
 if [[ ! -f "$INPUT_DATA/job$PBS_ARRAYID" ]]; then
     echo "no data found: $INPUT_DATA/job$PBS_ARRAYID" >&2
@@ -46,8 +46,8 @@ do
         params+=( "${primes[index]}^${array[index]}" )
     done
 
-    stdbuf -e0 -o0 echo "$dist_index, ${powers[@]}" >> "$PROGRESS_DATA/job$PBS_ARRAYID"
-    stdbuf -e0 -o0 $BIN/construct_P "${params[@]}" > "$OUTPUT_DIR/out$dist_index" 2>> "$PROGRESS_DATA/out$dist_index"
+    stdbuf -e0 -o0 echo "$dist_index, ${powers[@]}" >> "$PROGRESS_DIR/job$PBS_ARRAYID"
+    $BIN/calc_density "${params[@]}" > "$OUTPUT_DIR/out$dist_index" 2>/dev/null
 
     i=$(($i+1))
 done < "$INPUT_DATA/job$PBS_ARRAYID"

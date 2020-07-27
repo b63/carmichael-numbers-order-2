@@ -106,16 +106,12 @@ construct_primes_2(
     )
 {
     // for get_prime_factors
-    std::cout << MAX << "\n";
     init(MAX);
 
     std::vector<NTL::ZZ> divisors;
     std::vector<std::vector<long>> factors;
     std::vector<std::vector<long>> powers;
 
-#if LOG_LEVEL >= 1
-    std::cout << "(generating divisors...)" << std::flush;
-#endif
     get_divisors_with_factors(divisors, factors, powers, L_P_primes, L_P_primes_powers);
 #if LOG_LEVEL >= 1
     std::cout << divisors.size() << " divisors\n";
@@ -161,7 +157,14 @@ construct_primes_2(
             if (prime)
                 factor_map[k].push_back(std::move(N));
         }
+#if LOG_LEVEL >= 2
+        if ((i&0xff) == 0)
+            std::cerr << std::setw(10) << i << "/" << num_divisors << "\r";
+#endif
     }
+#if LOG_LEVEL >= 2
+    std::cerr << std::setw(10) << num_divisors << "/" << num_divisors << "\n";
+#endif
 }
 
 
@@ -209,6 +212,9 @@ get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
         std::vector<std::vector<long>> &div_factors, std::vector<std::vector<long>> &div_powers,
         const std::vector<long> &prime_factors, const std::vector<long> &powers)
 {
+#if LOG_LEVEL >= 2
+    size_t count { 0 };
+#endif
     size_t primes = prime_factors.size();
     if (primes == 0)
         return;
@@ -258,6 +264,10 @@ get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
                     divisors.push_back(std::move(prod));
                     div_factors.push_back(std::move(f));
                     div_powers.push_back(std::move(p));
+#if LOG_LEVEL >= 2
+                    if ( (count++ & 0xfffff) == 0 )
+                        std::cerr << "generated " << count << " divisors...\r";
+#endif
                 }
             }
         }
@@ -276,6 +286,10 @@ get_divisors_with_factors(std::vector<NTL::ZZ> &divisors,
             }
         }
     }
+
+#if LOG_LEVEL >= 2
+    std::cerr << "generated " << count << " divisors...\n";
+#endif
 }
 
 
@@ -490,12 +504,12 @@ populate_cofactor_map(
         }
 #if LOG_LEVEL >= 2
         if ((j&0xff) == 0)
-            std::cout << std::setw(10) << j << "/" << num_divisors << "\r" << std::flush;
+            std::cerr << std::setw(10) << j << "/" << num_divisors << "\r" << std::flush;
 #endif
     }
 
 #if LOG_LEVEL >= 2
-    std::cout << std::setw(10) << num_divisors << "/" << num_divisors << "\n";
+    std::cerr << std::setw(10) << num_divisors << "/" << num_divisors << "\n";
 #endif
 }
 
@@ -551,7 +565,7 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
                     divisors.push_back(std::move(prod));
 #if LOG_LEVEL >= 2
                     if((count++ & 0xfffff) == 0)
-                        std::cout << "generated " << count << " divisors...\r";
+                        std::cerr << "generated " << count << " divisors...\r";
 #endif
                 }
             }
@@ -572,7 +586,7 @@ get_divisors(std::vector<NTL::ZZ> &divisors,
         }
     }
 #if LOG_LEVEL >= 2
-    std::cout << "generated " << count << " divisors...\n";
+    std::cerr << "generated " << count << " divisors...\n";
 #endif
 }
 

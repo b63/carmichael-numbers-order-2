@@ -93,10 +93,6 @@ get_prime_factors(size_t n)
     while (true)
     {
         Product &prod = MAP[n];
-
-#if LOG_LEVEL >= 1
-        std::cout << prod.first_term << ", " << prod.second_term << "\n";
-#endif
         factors->push_back(prod.first_term);
 
         if (prod.second_term == 1 || prod.second_term == 0)

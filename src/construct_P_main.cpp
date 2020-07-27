@@ -57,7 +57,6 @@ main(int argc, char **argv)
             }
         }
 
-
         parse_factor_string<long>(factor, power, argv[i]);
         L_P_primes.push_back(factor);
         L_P_primes_powers.push_back(power);

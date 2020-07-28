@@ -8,5 +8,8 @@
 void generate_nonrigid_cprimes(long p0, long p1, const Factorization &L_fact,
         const Factorization &M_fact, long sieve_size);
 void subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std::vector<long> &primes);
+void get_nonrigid_factors(std::vector<std::array<long, 2> > nonrigid_factors, 
+        const NTL::ZZ &L_val, const NTL::ZZ &M_val,
+        size_t sieve_size=1000);
 
 #endif

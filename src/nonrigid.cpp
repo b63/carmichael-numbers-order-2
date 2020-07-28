@@ -7,6 +7,7 @@
 #include <nonrigid.h>
 #include <counting_factors.h>
 #include <util.h>
+#include <config.h>
 
 
 void
@@ -133,4 +134,62 @@ subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std:
 
     std::cout << "total count: " << count << "\n";
     std::cout << "op count: " << itrcount << "\n";
+}
+
+void
+get_nonrigid_factors(std::vector<std::array<long, 2> > nonrigid_factors, 
+        const NTL::ZZ &L_val, const NTL::ZZ &M_val,
+        size_t sieve_size)
+{
+#if LOG_LEVEL >= 1
+    std::cout << "sieve size " << sieve_size << ", filtering ...\n";
+#endif
+    std::vector<long> primes;
+    std::function<bool(size_t, long)> filter { [&L_val, &M_val](size_t index, long prime) -> bool {
+#if LOG_LEVEL >= 2
+            if ((index & STEP_MASK) == 0) std::cerr << std::setw(10) << index << "\r";
+#endif
+            if (NTL::divide(M_val, prime+1) && NTL::divide(L_val, prime-1))
+                return true;
+            else
+                return false;
+        }
+    };
+    sieve_primes(primes, sieve_size, &filter);
+#if LOG_LEVEL >= 2
+    std::cerr << std::setw(10) << sieve_size << "\n";
+#endif
+
+    const size_t num_primes { primes.size() };
+    printVec<long>(primes);
+    std::cout << "\n";
+
+#if LOG_LEVEL >= 1
+    std::cout << "filtering " << num_primes << " primes for possible nonrigid factors ...\n";
+#endif
+
+    for(size_t i { 0 }; i < num_primes; ++i)
+    {
+        const long p0 { primes[i] };
+        const NTL::ZZ p0_zz { p0 };
+        const NTL::ZZ p2_1 {NTL::sqr(p0_zz)-1};
+
+        const NTL::ZZ g1 { NTL::GCD(L_val, p2_1) };
+        const NTL::ZZ g2 { NTL::GCD(M_val, p2_1) };
+
+        for(size_t j {i+1}; j < num_primes; ++j)
+        {
+            const long p1 { primes[j] };
+            const NTL::ZZ p0p1 { p0_zz * p1 };
+            if (NTL::divide(p0p1-1, g1) && NTL::divide(p0p1+1, g2))
+                nonrigid_factors.push_back(std::move(std::array<long, 2>{p0, p1}));
+        }
+#if LOG_LEVEL >= 2
+        if((i&STEP_MASK) == 0) std::cerr << std::setw(10) << i << "/" << num_primes << "\r";
+#endif
+    }
+
+#if LOG_LEVEL >= 2
+    std::cerr << std::setw(10) << num_primes << "/" << num_primes << "\n";
+#endif
 }

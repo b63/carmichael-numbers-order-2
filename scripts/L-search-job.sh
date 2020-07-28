@@ -16,7 +16,7 @@ OUTPUT_DIR=$DIR/data/outputs
 INPUT_DATA=$DIR/L_values
 BIN=$DIR/build
 
-PARAMS=('-l1000000')
+PARAMS=('-l10000000')
 
 [[ -f $OUTPUT_DIR ]] || mkdir -p $OUTPUT_DIR
 

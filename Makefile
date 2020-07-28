@@ -103,7 +103,7 @@ clean:
 	rm -rf ${BUILD_DIR}/*
 
 # additional dependencies
-$(addprefix ${BUILD_DIR}/, construct_P.o calc_density.o) :  include/util.h include/config.h
+$(addprefix ${BUILD_DIR}/, construct_P.o calc_density.o nonrigid.o gen_nonrigid.o) :  include/util.h include/config.h
 
 
 ${BUILD_DIR}/generate_cprimes: $(addprefix ${BUILD_DIR}/,util.o generate_cprimes.o )

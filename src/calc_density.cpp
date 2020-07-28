@@ -147,6 +147,7 @@ main(int argc, char **argv)
 
     NTL::ZZ L_val;
     multiply_factors(L_val, L.primes, L.powers);
+    std::cout << "L = " << L_val << "\n";
 
     std::vector<long> primes;
     init_timer();
@@ -159,7 +160,7 @@ main(int argc, char **argv)
     std::cout << "\n";
 
     NTL::RR density { get_density(L_val, primes.size()) };
-    std::cout << "density = " << std::setprecision(10) << density;
+    std::cout << "density = " << std::setprecision(10) << density << "\n";
 }
 
 

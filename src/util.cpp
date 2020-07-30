@@ -178,7 +178,7 @@ std::ostream& operator<<(std::ostream &os, const std::array<long, 2> &array)
     os << "{";
     for(size_t i {0}; i < array.size(); ++i)
     {
-        if (!i) os << ", ";
+        if (i) os << ", ";
         os << array[i];
     }
     os << "}";

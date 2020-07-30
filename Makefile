@@ -25,14 +25,14 @@ SOURCES+= gen_distributions.cpp
 SOURCES+= generate_cprimes.cpp generate_cprimes_order_2.cpp
 SOURCES+= construct_P.cpp construct_P_main.cpp
 SOURCES+= nonrigid.cpp gen_nonrigid.cpp
-SOURCES+= calc_density.cpp
+SOURCES+= calc_density.cpp pnonrigid.cpp
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
 SOURCES+= benchmarks/bench_lambda.cpp 
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
 BINARIES=generate_cprimes generate_cprimes_order_2 construct_P gen_distributions \
-         gen_nonrigid calc_density
+         gen_nonrigid calc_density pnonrigid
 BENCHMARKS=bench_construct_P bench_prodcache
 
 
@@ -103,7 +103,8 @@ clean:
 	rm -rf ${BUILD_DIR}/*
 
 # additional dependencies
-$(addprefix ${BUILD_DIR}/, construct_P.o calc_density.o nonrigid.o gen_nonrigid.o) :  include/util.h include/config.h
+$(addprefix ${BUILD_DIR}/, construct_P.o calc_density.o nonrigid.o gen_nonrigid.o \
+    pnonrigid.o) :  include/util.h include/config.h
 
 
 ${BUILD_DIR}/generate_cprimes: $(addprefix ${BUILD_DIR}/,util.o generate_cprimes.o )
@@ -124,6 +125,9 @@ ${BUILD_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o nonrigid.o gen_nonri
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/calc_density: $(addprefix ${BUILD_DIR}/,util.o timer.o calc_density.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${BUILD_DIR}/pnonrigid: $(addprefix ${BUILD_DIR}/,util.o timer.o nonrigid.o pnonrigid.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/bench_construct_P: $(addprefix ${BUILD_DIR}/,timer.o primality.o util.o counting_factors.o \

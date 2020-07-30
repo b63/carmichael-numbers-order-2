@@ -11,6 +11,11 @@
 #include <config.h>
 
 
+/**
+ * Incomplete.
+ * Print carmicheal numbers of order 2 with two non-rigid factors p0 and p1
+ * using construction outlined under "Strategy 1."
+ */
 void
 generate_nonrigid_cprimes(long p0, long p1,
         const Factorization &L_fact, const Factorization &M_fact,
@@ -53,6 +58,7 @@ generate_nonrigid_cprimes(long p0, long p1,
 }
 
 
+// go through every subset of cprimes containing at least two elements
 void
 subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std::vector<long> &primes)
 {
@@ -133,12 +139,13 @@ subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std:
             }
         }
     }
-
-    std::cout << "total count: " << count << "\n";
-    std::cout << "op count: " << itrcount << "\n";
 }
 
 
+/**
+ * Populate `nonrigid_factors` with pairs of nonrigid factors based on construction of
+ * order-2 Carmicheal numbers outlined under "Strategy 1".
+ */
 void
 get_nonrigid_factors(std::vector<std::array<long, 2> > &nonrigid_factors, 
         const NTL::ZZ &L_val, const NTL::ZZ &M_val,
@@ -198,6 +205,9 @@ get_nonrigid_factors(std::vector<std::array<long, 2> > &nonrigid_factors,
 }
 
 
+/**
+ * Poupulate `possible_primes` with primes p such that p-1 | L but p does not divide L.
+ */
 void
 get_nonrigid_primes(std::vector<long> &possible_primes, const NTL::ZZ &L, long max)
 {
@@ -217,7 +227,7 @@ get_nonrigid_primes(std::vector<long> &possible_primes, const NTL::ZZ &L, long m
     long p { s.next() };
     while (p != 0 && p <= max)
     {
-        if (NTL::divide(L, p-1))
+        if (!NTL::divide(L, p) && NTL::divide(L, p-1))
             possible_primes.push_back(p);
 #if LOG_LEVEL >= 1
         last_p = p;
@@ -242,6 +252,14 @@ get_nonrigid_primes(std::vector<long> &possible_primes, const NTL::ZZ &L, long m
 }
 
 
+/*
+ * For strategy 1,
+ * apply the GCD constraints imposed by L, namely that for nonrigid factors p0 and p1,
+ * and the gcd's 
+ *             g1=gcd(p0^2-1,L) and g2=gcd(p1^2-1,L)
+ * we must have,
+ *	    g1 | p0p1-1   and    g2 | p0p1-1
+ */
 void
 get_gcd_Lfilter(std::vector<std::array<long, 2> > &pairs, std::vector<long> &factors, const NTL::ZZ &L_val)
 {

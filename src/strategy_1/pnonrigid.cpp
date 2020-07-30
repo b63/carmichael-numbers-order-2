@@ -5,7 +5,13 @@
 #include <util.h>
 #include <nonrigid.h>
 
-
+/**
+ * Takes the factorization of parameter L as the only cmdline argument,
+ * and prints out the set of possible non-rigid factors up to a limit.
+ * Then prints out the set of pairs of those factors that partly satisfy
+ * the GCD contraints (under "partial: "). Then, finally the set of
+ * pairs that satisfy all the GCD contraints imposed by L.
+ */
 int
 main(int argc, char **argv)
 {
@@ -30,8 +36,5 @@ main(int argc, char **argv)
     std::vector<std::array<long, 2> > pairs;
     get_gcd_Lfilter(pairs, factors, L_val);
     printVec<std::array<long, 2> >(pairs);
-
-
-
     std::cout << "\n";
 }

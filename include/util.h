@@ -37,7 +37,6 @@ struct Factorization
 {
     std::vector<long> primes;
     std::vector<long> powers;
-
 };
 
 std::ostream& operator<<(std::ostream& os, const Factorization& f);
@@ -71,6 +70,8 @@ std::ostream& operator<<(std::ostream &os, const std::array<long, 2> &array);
 const char * strchr_def(const char *str, int character);
 
 Factorization parse_factorization(const char *str);
+
+size_t parse_numbers(std::vector<long> &list, const char *str);
 
 int parse_args(int argc, char **argv, long &max, Factorization &f);
 /**************** TEMPLATE FUNCTIONS **************************/

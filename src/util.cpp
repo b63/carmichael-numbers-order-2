@@ -1,6 +1,7 @@
 #include <iostream>
 #include <ostream>
 #include <stdio.h>
+#include <cstdlib>
 #include <stdexcept>
 #include <functional>
 #include <map>
@@ -9,6 +10,12 @@
 
 #include <util.h>
 
+/**
+ * Convinience wrapper function for strchr.
+ * Returns a pointer to the first occurence of `character`
+ * in `str`. If not found, then pointer to end of null terminator
+ * of null-terminated string `str` is returned.
+ */
 const char *
 strchr_def(const char *str, int character)
 {
@@ -21,6 +28,11 @@ strchr_def(const char *str, int character)
 }
 
 
+/**
+ * Parse a string of the form:
+ *      "2^4 3^5  3^55 ... 10^5"
+ *  as a `Factorization` object and return it
+ */
 Factorization
 parse_factorization(const char *str)
 {
@@ -58,6 +70,48 @@ parse_factorization(const char *str)
     }
     /* TODO: check for NRVO */
     return f;
+}
+
+
+/**
+ * Parse a string of space separated integers containing up 50 digits
+ * and add them to `list`.
+ * Returns the number of integers added to `list`.
+ */
+size_t
+parse_numbers(std::vector<long> &list, const char *str)
+{
+    constexpr size_t BUF_SIZE { 51 };
+    const char *prev { str };
+    const char *ptr { strchr_def(str, ' ') };
+    char buf[BUF_SIZE];
+
+    size_t count { 0 };
+    while (prev && *prev)
+    {
+        if (*prev != ' ')
+        {
+            /* copy string to buffer */
+            size_t diff { (size_t) MAX(0, ptr-prev) };
+            strncpy(buf, prev, MIN(BUF_SIZE, diff+1));
+            buf[MIN(BUF_SIZE-1,diff)] = '\0';
+
+	    list.push_back(atol(buf));
+	    count++;
+        }
+
+        if (*ptr)
+        {
+            prev = ptr + 1;
+            ptr = strchr_def(ptr+1, ' ');
+        }
+        else
+        {
+            prev = nullptr;
+        }
+    }
+
+    return count;
 }
 
 int

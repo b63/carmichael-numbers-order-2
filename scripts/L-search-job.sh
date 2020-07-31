@@ -21,7 +21,7 @@ PROGRESS_DIR=$DIR/data/progress
 INPUT_DATA=$DIR/data/jobdata
 BIN=$DIR/build
 
-PARAMS=('-m1' '-l10000')
+PARAMS=('-l10000')
 
 [[ -f $OUTPUT_DIR ]] || mkdir -p $OUTPUT_DIR
 [[ -f $PROGRESS_DIR ]] || mkdir -p $PROGRESS_DIR

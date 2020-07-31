@@ -1,15 +1,21 @@
 #include <iostream>
 #include <vector>
 #include <functional>
+#include <climits>
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
-#include <nonrigid.h>
+#include <strategy_1/nonrigid.h>
 #include <counting_factors.h>
 #include <util.h>
 #include <config.h>
 
 
+/**
+ * Incomplete.
+ * Print carmicheal numbers of order 2 with two non-rigid factors p0 and p1
+ * using construction outlined under "Strategy 1."
+ */
 void
 generate_nonrigid_cprimes(long p0, long p1,
         const Factorization &L_fact, const Factorization &M_fact,
@@ -51,6 +57,8 @@ generate_nonrigid_cprimes(long p0, long p1,
     subset_product_brute_force(cprimes, primes);
 }
 
+
+// go through every subset of cprimes containing at least two elements
 void
 subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std::vector<long> &primes)
 {
@@ -131,13 +139,15 @@ subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std:
             }
         }
     }
-
-    std::cout << "total count: " << count << "\n";
-    std::cout << "op count: " << itrcount << "\n";
 }
 
+
+/**
+ * Populate `nonrigid_factors` with pairs of nonrigid factors based on construction of
+ * order-2 Carmicheal numbers outlined under "Strategy 1".
+ */
 void
-get_nonrigid_factors(std::vector<std::array<long, 2> > nonrigid_factors, 
+get_nonrigid_factors(std::vector<std::array<long, 2> > &nonrigid_factors, 
         const NTL::ZZ &L_val, const NTL::ZZ &M_val,
         size_t sieve_size)
 {
@@ -192,4 +202,105 @@ get_nonrigid_factors(std::vector<std::array<long, 2> > nonrigid_factors,
 #if LOG_LEVEL >= 2
     std::cerr << std::setw(10) << num_primes << "/" << num_primes << "\n";
 #endif
+}
+
+
+/**
+ * Poupulate `possible_primes` with primes p such that p-1 | L but p does not divide L.
+ */
+void
+get_nonrigid_primes(std::vector<long> &possible_primes, const NTL::ZZ &L, long max)
+{
+    const NTL::ZZ max_p_zz { L/2 };
+    long max_p { max_p_zz > LLONG_MAX ? LLONG_MAX : NTL::conv<long>(max_p_zz) };
+
+#if LOG_LEVEL >= 1
+    long last_p { 0 }; 
+    std::cout << "filtering primes <= " << max_p << " with limit " << max << " ...\n"; 
+#if LOG_LEVEL >= 2
+    size_t count { 0 };
+#endif
+#endif
+
+    max = max ? MIN(max, max_p) : max_p; 
+    NTL::PrimeSeq s;
+    long p { s.next() };
+    while (p != 0 && p <= max)
+    {
+        if (!NTL::divide(L, p) && NTL::divide(L, p-1))
+            possible_primes.push_back(p);
+#if LOG_LEVEL >= 1
+        last_p = p;
+#endif
+        p = s.next();
+#if LOG_LEVEL >= 2
+        if ((count++ & STEP_MASK) == 0)
+            std::cerr << "  count: " << count << "\r";
+#endif
+    }
+
+#if LOG_LEVEL >= 2
+    std::cerr << "  count: " << count << "\n";
+#endif
+
+    const size_t size { possible_primes.size() };
+
+#if LOG_LEVEL >= 1
+    if (p == 0 && size && last_p < max)
+        std::cerr << "reached small prime limit at " << last_p << "\n";
+#endif
+}
+
+
+/*
+ * For strategy 1,
+ * apply the GCD constraints imposed by L, namely that for nonrigid factors p0 and p1,
+ * and the gcd's 
+ *             g1=gcd(p0^2-1,L) and g2=gcd(p1^2-1,L)
+ * we must have,
+ *	    g1 | p0p1-1   and    g2 | p0p1-1
+ */
+void
+get_gcd_Lfilter(std::vector<std::array<long, 2> > &pairs, std::vector<long> &factors, const NTL::ZZ &L_val)
+{
+    const size_t size { factors.size() };
+    std::vector<std::array<long,2> > partial_pairs;
+
+#if LOG_LEVEL >= 1
+    std::cout << "\nfiltering " << size << " primes with gcd condition, L=" << L_val << "...\n";
+#endif
+
+    for (size_t i { 0 }; i < size; ++i)
+    {
+        const NTL::ZZ p0_zz { factors[i] };
+        const NTL::ZZ p02_1 { NTL::sqr(p0_zz) -1 };
+        const NTL::ZZ g1 { NTL::GCD(L_val, p02_1) };
+
+        for(size_t j { i + 1 }; j < size; ++j)
+        {
+            const NTL::ZZ p1_zz { factors[j] };
+            const NTL::ZZ p12_1 { NTL::sqr(p1_zz) -1 };
+            const NTL::ZZ g2 { NTL::GCD(L_val, p12_1) };
+            const NTL::ZZ p0p1 { p0_zz * p1_zz };
+
+            const long c1 {NTL::divide(p0p1-1, g1)};
+            const long c2 {NTL::divide(p0p1-1, g2)};
+            if ( c1 && c2)
+                pairs.push_back(std::move(std::array<long, 2>{factors[i], factors[j]}));
+            else if (c1)
+                partial_pairs.push_back(std::move(std::array<long, 2>{factors[i], factors[j]}));
+            else if (c2)
+                partial_pairs.push_back(std::move(std::array<long, 2>{factors[j], factors[i]}));
+        }
+#if LOG_LEVEL >= 2
+        if((i&STEP_MASK) == 0) std::cerr << std::setw(10) << i << "/" << size << "\r";
+#endif
+    }
+#if LOG_LEVEL >= 2
+    std::cerr << std::setw(10) << size << "/" << size << "\n";
+#endif
+
+    std::cout << "partial: ";
+    printVec<std::array<long,2> >(partial_pairs);
+    std::cout << "\n";
 }

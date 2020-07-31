@@ -25,29 +25,31 @@ SOURCES = timer.cpp util.cpp primality.cpp  counting_factors.cpp util.cpp
 SOURCES+= gen_distributions.cpp
 SOURCES+= generate_cprimes.cpp generate_cprimes_order_2.cpp
 SOURCES+= construct_P.cpp construct_P_main.cpp
-SOURCES+= nonrigid.cpp gen_nonrigid.cpp
-SOURCES+= calc_density.cpp
+SOURCES+= calc_density.cpp calc_density_batch.cpp
+SOURCES+= $(addprefix strategy_1/, nonrigid.cpp gen_nonrigid.cpp pnonrigid.cpp)
+SOURCES+= $(addprefix strategy_2/, nonrigid.cpp gen_nonrigid.cpp, all_possible_nonrigid_pairs.cpp)
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
 SOURCES+= benchmarks/bench_lambda.cpp 
 
-OBJECTS=$(SOURCES:%.cpp=%.o)
-BINARIES=generate_cprimes generate_cprimes_order_2 construct_P gen_distributions \
-         gen_nonrigid calc_density
-BENCHMARKS=bench_construct_P bench_prodcache
 
+OBJECTS=$(SOURCES:%.cpp=%.o)
+
+BINARIES = generate_cprimes generate_cprimes_order_2 construct_P gen_distributions
+BINARIES+= calc_density calc_density_batch
+BINARIES+= $(addprefix strategy_1/, gen_nonrigid pnonrigid)
+BINARIES+= $(addprefix strategy_2/, gen_nonrigid all_nonrigid_pairs)
+
+BENCHMARKS = $(addprefix benchmarks/, bench_construct_P bench_prodcache)
 
 DIR_GUARD = [ -d $(@D) ] || mkdir -p $(@D)
 
 # STATIC PATTERN MATCHING RULES
 .SUFFIXES:
-.ONESHELL:
-SHELL=/bin/bash
-
-${BUILD_DIR}/%.o: ${BENCHMARK_SRC_DIR}/%.cpp
-	$(COMPILE) $< -o $@
+SHELL=/usr/bin/bash
 
 ${BUILD_DIR}/%.o: ${SRC_DIR}/%.cpp
+	@$(DIR_GUARD)
 	$(COMPILE) $< -o $@
 
 
@@ -56,23 +58,12 @@ ${BUILD_DIR}/%.o: ${SRC_DIR}/%.cpp
 # http://www.gnu.org/software/make/manual/make.html#Automatic-Prerequisites
 # match .cpp files in src/ and in src/benchmarks/
 ${BUILD_DIR}/deps/%.d: ${SRC_DIR}/%.cpp
-	@set -e
-	$(DIR_GUARD)
-	rm -f $@
-	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$
-	sed 's,\($(basename $@)\)\.o[ :]*,\1.o $(basename $@).d : ,g' < $@.$$$$ > $@
-	rm -f $@.$$$$
-
-# do it agains for benchmark source files b/c they are not in src/
-# but in src/benchmarks/
-# TODO: better way to do this?
-${BUILD_DIR}/deps/%.d: ${BENCHMARK_SRC_DIR}/%.cpp
-	@set -e
-	$(DIR_GUARD)
-	rm -f $@
-	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$
-	sed 's,\($(basename $@)\)\.o[ :]*,\1.o $(basename $@).d : ,g' < $@.$$$$ > $@
-	rm -f $@.$$$$
+	@set -e;\
+	$(DIR_GUARD);\
+	rm -f $@;\
+	$(CXX) -MM $(CPPFLAGS) $< > $@.$$$$;\
+	sed 's,\($(basename $(notdir $@))\)\.o[ :]*,${BUILD_DIR}/$*\.o $(basename $@)\.d : ,g' < $@.$$$$ > $@;\
+	rm -f $@.$$$$;
 
 # automatically generate some of the .o dependencies for binary xx
 # * for every included .h file in xx.h, checks if correspoding .o files
@@ -92,49 +83,79 @@ ${BUILD_DIR}/%.dd: ${BUILD_DIR}/%.d
 	done < $@.$$$$
 	rm -f $@.$$$$
 
-.PHONY: all benchmarks clean dir
+.PHONY: all benchmarks clean
 
 all: $(addprefix ${BUILD_DIR}/,$(BINARIES))
 
 benchmarks: $(addprefix ${BUILD_DIR}/,$(BENCHMARKS))
 
-dir:
-	@${DIR_GUARD}
 clean:
 	rm -rf ${BUILD_DIR}/*
-
-# additional dependencies
-$(addprefix ${BUILD_DIR}/, construct_P.o calc_density.o) :  include/util.h include/config.h
 
 
 ${BUILD_DIR}/generate_cprimes: $(addprefix ${BUILD_DIR}/,util.o generate_cprimes.o )
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/generate_cprimes_order_2: $(addprefix ${BUILD_DIR}/,generate_cprimes_order_2.o \
-            timer.o util.o)
+	    timer.o util.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/construct_P: $(addprefix ${BUILD_DIR}/,construct_P_main.o construct_P.o \
-            timer.o util.o counting_factors.o primality.o)
+	    timer.o util.o counting_factors.o primality.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/gen_distributions: $(addprefix ${BUILD_DIR}/,gen_distributions.o util.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
-${BUILD_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o nonrigid.o gen_nonrigid.o)
-	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
-
 ${BUILD_DIR}/calc_density: $(addprefix ${BUILD_DIR}/,util.o timer.o calc_density.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
-${BUILD_DIR}/bench_construct_P: $(addprefix ${BUILD_DIR}/,timer.o primality.o util.o counting_factors.o \
-	    construct_P.o bench_construct_P.o)
+${BUILD_DIR}/calc_density_batch: $(addprefix ${BUILD_DIR}/,util.o timer.o calc_density_batch.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+
+# STRATEGY 1 TARGETS
+# =============================
+
+S1_DIR = ${BUILD_DIR}/strategy_1
+
+${S1_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${S1_DIR}/, nonrigid.o gen_nonrigid.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${S1_DIR}/pnonrigid: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
+		$(addprefix ${S1_DIR}/, nonrigid.o pnonrigid.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+
+# STRATEGY 2 TARGETS
+# =============================
+
+S2_DIR = ${BUILD_DIR}/strategy_2
+
+${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${S2_DIR}/, nonrigid.o gen_nonrigid.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${S2_DIR}/, nonrigid.o all_possible_nonrigid_pairs.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+# BENCHMARK TARGETS
+# =============================
+
+${BUILD_DIR}/benchmarks/bench_construct_P: $(addprefix ${BUILD_DIR}/,timer.o primality.o \
+		util.o counting_factors.o construct_P.o) \
+		$(addprefix ${BUILD_DIR}/benchmarks/, bench_construct_P.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ -lbenchmark -lbenchmark_main $(LDLIBS) 
 
-${BUILD_DIR}/bench_prodcache: $(addprefix ${BUILD_DIR}/,bench_prodcache.o nonrigid.o util.o)
+${BUILD_DIR}/benchmarks/bench_prodcache: $(addprefix ${BUILD_DIR}/, util.o) \
+	    $(addprefix ${BUILD_DIR}/benchmarks/, bench_prodcache.o) \
+	    $(addprefix ${BUILD_DIR}/strategy_1/, nonrigid.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ -lbenchmark -lbenchmark_main $(LDLIBS) 
 
-include $(foreach src,$(SOURCES),$(BUILD_DIR)/deps/$(basename $(notdir $(src))).d )
+
+include $(foreach src,$(SOURCES),$(BUILD_DIR)/deps/$(basename ${src}).d )
 #include $(SOURCES:%.cpp=${BUILD_DIR}/deps/%.d)
 #include $(BINARIES:%=${BUILD_DIR}/%.dd)
 

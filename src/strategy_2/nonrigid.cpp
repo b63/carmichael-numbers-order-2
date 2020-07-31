@@ -233,6 +233,11 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
                     for(size_t i = 0; i < index_size; i++)
                         prod *= primes[index_stack[i]];
 
+                    std::cout << "{";
+                    for(auto it=index_stack.cbegin(), end=index_stack.cend();
+                            it != end; it++)
+                        std::cout << primes[*it] << " ";
+                    std::cout << "} " << prod << "\n";
                     if(NTL::IsOne(prod))
                     {
                         std::vector<long> a_primes;

@@ -32,7 +32,7 @@ main(int argc, char **argv)
     std::cout << "\n";
 
     std::vector<std::vector<long>> a_values;
-    generate_a_values(a_values, primes_set, nonrigid_factors, 1000);
+    generate_a_values(a_values, primes_set, nonrigid_factors, 2);
     std::cout << "size: " << a_values.size() << "\n";
     printVec<std::vector<long>>(a_values);
 }

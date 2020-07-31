@@ -5,7 +5,7 @@
 
 #include <NTL/ZZ.h>
 #include <NTL/ZZ_p.h>
-#include <nonrigid.h>
+#include <strategy_1/nonrigid.h>
 #include <counting_factors.h>
 #include <util.h>
 #include <config.h>

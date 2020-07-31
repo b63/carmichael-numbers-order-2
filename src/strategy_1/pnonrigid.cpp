@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include <util.h>
-#include <nonrigid.h>
+#include <strategy_1/nonrigid.h>
 
 /**
  * Takes the factorization of parameter L as the only cmdline argument,

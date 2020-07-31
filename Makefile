@@ -46,7 +46,7 @@ DIR_GUARD = [ -d $(@D) ] || mkdir -p $(@D)
 
 # STATIC PATTERN MATCHING RULES
 .SUFFIXES:
-SHELL=/usr/bin/bash
+SHELL=/bin/bash
 
 ${BUILD_DIR}/%.o: ${SRC_DIR}/%.cpp
 	@$(DIR_GUARD)
@@ -140,6 +140,7 @@ ${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o) \
 ${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o) \
 		$(addprefix ${S2_DIR}/, nonrigid.o all_possible_nonrigid_pairs.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
 
 # BENCHMARK TARGETS
 # =============================

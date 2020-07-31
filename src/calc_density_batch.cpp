@@ -11,21 +11,28 @@
 #include <util.h>
 #include <config.h>
 
-void
-construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factorization &L, long max = 0)
+#define PRE_LOAD 100
+
+size_t
+get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 {
     NTL::ZZ p_max {NTL::SqrRoot(L_val+1)};
+
+#if LOG_LEVEL >= 1
+    size_t count { 0 };
     std::cout << "upper bound on prime <= " << p_max << "\n";
     if (max)
         std::cout << "filtering primes <= " << max << " ...\n";
     else
         std::cout << "filtering primes <= " << p_max << " ...\n";
+#endif
 
     NTL::PrimeSeq s;
     const size_t num_factors { L.primes.size() };
-    size_t count = 0;
+    size_t num_primes { 0 };
     size_t i { 0 };
 
+    long p_prev { 0 };
     long p = s.next();
     while ( p != 0 && p <= p_max && (!max || p <= max))
     {
@@ -39,8 +46,9 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
         {
             NTL::ZZ p2_1 { NTL::sqr(NTL::ZZ{p})-1 };
             if(NTL::divide(L_val, p2_1))
-                primes.push_back(p);
+                num_primes++;
         }
+        p_prev = p;
         p = s.next();
 #if LOG_LEVEL >= 2
         if((count++ & STEP_MASK) == 0)
@@ -53,10 +61,10 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
     while(p != 0 && p <= p_max && (!max || p <= max))
     {
         if(NTL::divide(L_val, NTL::sqr(NTL::ZZ{p})-1))
-        {
-            primes.push_back(p);
-        }
+            num_primes++;
+        p_prev = p;
         p = s.next();
+
 #if LOG_LEVEL >= 2
         if((count++ & STEP_MASK) == 0) std::cerr << "count: " << count << "\r";
 #endif
@@ -68,10 +76,12 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
 
     if (p == 0 && p < p_max)
     {
-        std::cout << "reached small prime limit, starting from p=" << primes[primes.size()-1] << " ...\n";
+#if LOG_LEVEL >= 1
+        std::cout << "reached small prime limit at p=" << p_prev << "\n";
+#endif
 
         /* maxed out PrimeSeq, use NextPrime */
-        NTL::ZZ p_zz {primes[primes.size()-1]};
+        NTL::ZZ p_zz {p_prev};
         NextPrime(p_zz, p_zz);
         while (p_zz < p_max && (!max || p_zz <= max))
         {
@@ -80,7 +90,7 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
             if (i >= num_factors) 
                 break;
             else if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
-                primes.push_back(NTL::conv<long>(p_zz));
+                num_primes++;
 
             NextPrime(p_zz, p_zz);
 #if LOG_LEVEL >= 2
@@ -92,7 +102,7 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
         while (p_zz < p_max && (!max || p_zz <= max))
         {
             if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
-                primes.push_back(NTL::conv<long>(p_zz));
+                num_primes++;
 
             NextPrime(p_zz, p_zz);
 
@@ -105,11 +115,13 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
         std::cerr << "count: " << count << "\n";
 #endif
     }
+
+    return num_primes;
 }
 
 
 template <typename T>
-void check_is_open(T stream, const char *name)
+int check_is_open(const T &stream, const char *name)
 {
     if (!stream.is_open())
     {
@@ -121,28 +133,41 @@ void check_is_open(T stream, const char *name)
 }
 
 
+/**
+ *
+ */
 int 
 main(int argc, char **argv)
 {
-    const char *IN_FILE { argv[2] };
-    const char *ALL_IN_FILE { argv[3] };
-    const char *OUT_FILE { argv[4] };
+    if (argc != 5)
+    {
+        std::cerr << "not enough arguments\n";
+        return 1;
+    }
 
-    long max { NTL::conv<long>(argv[1]);
+    const long max           { NTL::conv<long>(argv[1]) };
+    const char *IN_FILE      { argv[2] };
+    const char *ALL_IN_FILE  { argv[3] };
+    const char *OUT_FILE     { argv[4] };
+
     std::ifstream in  {IN_FILE, std::ios::in};
     std::ifstream all_in  {ALL_IN_FILE, std::ios::in};
     std::ofstream out {OUT_FILE, std::ios::out | std::ios::trunc};
 
-    if (!(check_is_open(in, IN_FILE) && check_is_open(all_in, ALL_IN_FILE)
-            && check_is_open(out, OUT_FILE))
+    if (!(check_is_open<std::ifstream>(in, IN_FILE) && check_is_open<std::ifstream>(all_in, ALL_IN_FILE)
+            && check_is_open<std::ofstream>(out, OUT_FILE)))
+    {
         return 1;
+    }
 
 
     std::string line;
     std::vector<long> primes;
 
     // first line contains the primes
-    std::getline(in, line);
+    std::getline(all_in, line);
+    all_in.close();
+
     size_t prev { 0 };
     while(1)
     {
@@ -150,7 +175,7 @@ main(int argc, char **argv)
         bool end = (pos == std::string::npos);
         std::string num { end ? line.substr(prev) : line.substr(prev, pos-prev) };
         if (num != " ")
-            primes.push_back(NTL::conv<long>(num));
+            primes.push_back(NTL::conv<long>(num.c_str()));
 
         if (end)
             break;
@@ -158,13 +183,55 @@ main(int argc, char **argv)
             prev = pos+1;
     }
 
-    while (std::getline(in, line))
+    const size_t num_primes { primes.size() };
+    std::string lines_buffer[PRE_LOAD];
+
+    while (in)
     {
-        size_t pos { line.find(':') };
-        if (pos == std::string::npos) continue;
-        std::string index_str { line.substr(0, pos) };
-        std::string dist_str { line.substr(pos+1) };
+        size_t i { 0 };
+        for(; i < PRE_LOAD && std::getline(in, lines_buffer[i]); i++)
+            ;
+
+        for( size_t j { 0 }; j < i; ++j)
+        {
+            size_t pos { lines_buffer[j].find(':') };
+            if (pos == std::string::npos)
+                continue;
+
+            std::string index_str { lines_buffer[j].substr(0, pos) };
+            std::string dist_str { lines_buffer[j].substr(pos+1) };
+
+            std::vector<long> powers;
+            parse_numbers(powers, dist_str.c_str());
+
+            if (num_primes != powers.size())
+            {
+                std::cerr << "unequal size, " << index_str << "\n";
+                continue;
+            }
+
+            std::vector<long> primes_cpy { primes };
+            Factorization L { std::move(primes_cpy), std::move(powers) };
+            std::cout << index_str << ": " << L << "\n";
+
+            NTL::ZZ L_val;
+            multiply_factors(L_val, L.primes, L.powers);
+            size_t P_size { get_P_size(L_val, L, max) };
+
+            NTL::RR density { get_density(L_val, P_size) };
+            
+            out << index_str << ",";
+            for(size_t k {0}; k < num_primes; ++k)
+            {
+                if (k) out << " ";
+                out << L.powers[k];
+            }
+            out << dist_str << "," << density << "\n";
+        }
     }
+
+    in.close();
+    out.close();
 }
 
 

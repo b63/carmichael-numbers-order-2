@@ -24,7 +24,7 @@ SOURCES = timer.cpp util.cpp primality.cpp  counting_factors.cpp util.cpp
 SOURCES+= gen_distributions.cpp
 SOURCES+= generate_cprimes.cpp generate_cprimes_order_2.cpp
 SOURCES+= construct_P.cpp construct_P_main.cpp
-SOURCES+= calc_density.cpp 
+SOURCES+= calc_density.cpp calc_density_batch.cpp
 SOURCES+= $(addprefix strategy_1/, nonrigid.cpp gen_nonrigid.cpp pnonrigid.cpp)
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
@@ -33,7 +33,8 @@ SOURCES+= benchmarks/bench_lambda.cpp
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
 
-BINARIES = generate_cprimes generate_cprimes_order_2 construct_P gen_distributions calc_density 
+BINARIES = generate_cprimes generate_cprimes_order_2 construct_P gen_distributions
+BINARIES+= calc_density calc_density_batch
 BINARIES+= $(addprefix strategy_1/, gen_nonrigid pnonrigid)
 
 BENCHMARKS = $(addprefix benchmarks/, bench_construct_P bench_prodcache)
@@ -106,6 +107,8 @@ ${BUILD_DIR}/gen_distributions: $(addprefix ${BUILD_DIR}/,gen_distributions.o ut
 ${BUILD_DIR}/calc_density: $(addprefix ${BUILD_DIR}/,util.o timer.o calc_density.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
+${BUILD_DIR}/calc_density_batch: $(addprefix ${BUILD_DIR}/,util.o timer.o calc_density_batch.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 
 # STRATEGY 1 TARGETS

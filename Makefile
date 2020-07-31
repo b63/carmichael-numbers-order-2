@@ -26,6 +26,7 @@ SOURCES+= generate_cprimes.cpp generate_cprimes_order_2.cpp
 SOURCES+= construct_P.cpp construct_P_main.cpp
 SOURCES+= calc_density.cpp calc_density_batch.cpp
 SOURCES+= $(addprefix strategy_1/, nonrigid.cpp gen_nonrigid.cpp pnonrigid.cpp)
+SOURCES+= $(addprefix strategy_2/, nonrigid.cpp gen_nonrigid.cpp, all_possible_nonrigid_pairs.cpp)
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
 SOURCES+= benchmarks/bench_lambda.cpp 
@@ -36,6 +37,7 @@ OBJECTS=$(SOURCES:%.cpp=%.o)
 BINARIES = generate_cprimes generate_cprimes_order_2 construct_P gen_distributions
 BINARIES+= calc_density calc_density_batch
 BINARIES+= $(addprefix strategy_1/, gen_nonrigid pnonrigid)
+BINARIES+= $(addprefix strategy_2/, gen_nonrigid all_nonrigid_pairs)
 
 BENCHMARKS = $(addprefix benchmarks/, bench_construct_P bench_prodcache)
 
@@ -125,7 +127,18 @@ ${S1_DIR}/pnonrigid: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 
+# STRATEGY 2 TARGETS
+# =============================
 
+S2_DIR = ${BUILD_DIR}/strategy_2
+
+${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${S2_DIR}/, nonrigid.o gen_nonrigid.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${S2_DIR}/, nonrigid.o all_possible_nonrigid_pairs.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 # BENCHMARK TARGETS
 # =============================

@@ -11,7 +11,6 @@ tail -n +1 $JOBDATADIR/all | while read line; do
     [[ $line =~ ':' ]] || continue
     index=${line%:*}
     dist=${line#*:}
-    printf "index=$index, "
     density=$(tail -n 1 $DATADIR/out$index)
     density=${density#*= }
 
@@ -23,7 +22,7 @@ tail -n +1 $JOBDATADIR/all | while read line; do
     #    fi
     #done < "$DATADIR/out$index"
 
-    printf "density=$density\n"
     echo "$index,$dist,$density" >> $DATADIR/summary
+    printf "$index\r"
 done
 

@@ -6,7 +6,7 @@
 #PBS -M bkoirala@iwu.edu
 #
 # Set up a job array
-#PBS -t 0-47
+#PBS -t 0-49
 #
 # store stderr and stdout in joboutput directory
 #PBS -e jobstreams/err

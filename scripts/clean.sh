@@ -14,6 +14,8 @@ done
 
 echo -e "Cleaning data/interpolation ..."
 rm -fv data/interpolation/*
+echo -e "Cleaning data/outputs ..."
+rm -fv data/outputs/*
 echo -e "\nCleaning data/progress ..."
 rm -fv data/progress/*
 

@@ -11,6 +11,10 @@
 #include <NTL/ZZ.h>
 #include <NTL/RR.h>
 
+#define MIN(x,y) ((x) < (y) ? (x) : (y))
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+
+
 /* Structures used for generating statistics at the end */
 struct CoFactorSet
 {
@@ -33,7 +37,6 @@ struct Factorization
 {
     std::vector<long> primes;
     std::vector<long> powers;
-
 };
 
 std::ostream& operator<<(std::ostream& os, const Factorization& f);
@@ -62,7 +65,17 @@ NTL::RR get_density(NTL::ZZ &L, size_t prime_size);
 
 Factorization include_as_factor(const Factorization &n, const Factorization &factor);
 
+std::ostream& operator<<(std::ostream &os, const std::array<long, 2> &array);
 
+std::ostream& operator<<(std::ostream &os, const std::vector<long> &array);
+
+const char * strchr_def(const char *str, int character);
+
+Factorization parse_factorization(const char *str);
+
+size_t parse_numbers(std::vector<long> &list, const char *str);
+
+int parse_args(int argc, char **argv, long &max, Factorization &f);
 /**************** TEMPLATE FUNCTIONS **************************/
 
 // prints the integers in arr specified by the array of indices ind 
@@ -77,6 +90,7 @@ void printProd(const std::vector<size_t> &ind, const std::vector<T> &arr)
         std::cout << arr[ind[k]];
     }
 }
+
 
 /**
  * prints a vector of type T as a formatted list
@@ -188,7 +202,8 @@ binary_search(
 
 template <typename T>
 void 
-print_stats(const std::map<const long, std::vector<T>> &factor_map, const NTL::ZZ &L_prime, size_t max_ranking)
+print_stats(const std::map<const long, std::vector<T>> &factor_map, const NTL::ZZ &L_prime, 
+        size_t max_ranking, size_t num_print_k = 5)
 {
 
     std::vector<CoFactorSet> ranking;
@@ -265,6 +280,8 @@ print_stats(const std::map<const long, std::vector<T>> &factor_map, const NTL::Z
             {
                 density = get_density(L, c.num_primes);
                 std::cout << "density = " << density << "\n";
+                std::cout << "L = " << L << "\n";
+                std::cout << "  = " << L_prime << " * " << k << "\n";
             }
             catch (std::exception &e)
             {
@@ -292,13 +309,18 @@ print_stats(const std::map<const long, std::vector<T>> &factor_map, const NTL::Z
         {
             std::cout << "num primes=" << it->num_primes << "\n";
             const std::vector<long> &cfs {it->cofactors};
-            for (size_t j = 0; j < cfs.size(); j++)
+            size_t j = 0;
+            for (; j < num_print_k && j < cfs.size(); j++)
             {
                 std::cout << "k=" << std::setw(w) << cfs[j] << " -> ";
                 const std::vector<T> &primes {factor_map.at(cfs[j])};
                 printVec<T>(primes);
                 std::cout << "\n";
             }
+
+            if (j < cfs.size())
+                std::cout << "(" << (cfs.size()-j) << " more...)\n";
+
             if (it+1 < ranking.crend())
                 std::cout << "\n";
         }

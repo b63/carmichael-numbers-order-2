@@ -1,6 +1,7 @@
 #include <iostream>
 #include <ostream>
 #include <stdio.h>
+#include <cstdlib>
 #include <stdexcept>
 #include <functional>
 #include <map>
@@ -8,6 +9,145 @@
 #include <NTL/ZZ.h>
 
 #include <util.h>
+
+/**
+ * Convinience wrapper function for strchr.
+ * Returns a pointer to the first occurence of `character`
+ * in `str`. If not found, then pointer to end of null terminator
+ * of null-terminated string `str` is returned.
+ */
+const char *
+strchr_def(const char *str, int character)
+{
+    const char *rv { strchr(str, character) };
+    if (rv) return rv;
+
+    /* find end of str */
+    for (rv=str; *rv; ++rv);
+    return rv;
+}
+
+
+/**
+ * Parse a string of the form:
+ *      "2^4 3^5  3^55 ... 10^5"
+ *  as a `Factorization` object and return it
+ */
+Factorization
+parse_factorization(const char *str)
+{
+    constexpr size_t BUF_SIZE { 50 };
+    const char *prev { str };
+    const char *ptr { strchr_def(str, ' ') };
+    char buf[BUF_SIZE];
+
+    long factor, power;
+    Factorization f;
+
+    while (prev && *prev)
+    {
+        if (*prev != ' ')
+        {
+            /* copy string to buffer */
+            size_t diff { (size_t) MAX(0, ptr-prev) };
+            strncpy(buf, prev, MIN(BUF_SIZE, diff+1));
+            buf[MIN(BUF_SIZE-1,diff)] = '\0';
+
+            parse_factor_string<long>(factor, power, buf);
+            f.primes.push_back(factor);
+            f.powers.push_back(power);
+        }
+
+        if (*ptr)
+        {
+            prev = ptr + 1;
+            ptr = strchr_def(ptr+1, ' ');
+        }
+        else
+        {
+            prev = nullptr;
+        }
+    }
+    /* TODO: check for NRVO */
+    return f;
+}
+
+
+/**
+ * Parse a string of space separated integers containing up 50 digits
+ * and add them to `list`.
+ * Returns the number of integers added to `list`.
+ */
+size_t
+parse_numbers(std::vector<long> &list, const char *str)
+{
+    constexpr size_t BUF_SIZE { 51 };
+    const char *prev { str };
+    const char *ptr { strchr_def(str, ' ') };
+    char buf[BUF_SIZE];
+
+    size_t count { 0 };
+    while (prev && *prev)
+    {
+        if (*prev != ' ')
+        {
+            /* copy string to buffer */
+            size_t diff { (size_t) MAX(0, ptr-prev) };
+            strncpy(buf, prev, MIN(BUF_SIZE, diff+1));
+            buf[MIN(BUF_SIZE-1,diff)] = '\0';
+
+	    list.push_back(atol(buf));
+	    count++;
+        }
+
+        if (*ptr)
+        {
+            prev = ptr + 1;
+            ptr = strchr_def(ptr+1, ' ');
+        }
+        else
+        {
+            prev = nullptr;
+        }
+    }
+
+    return count;
+}
+
+int
+parse_args(int argc, char **argv, long &max, Factorization &f)
+{
+    long factor, power;
+    int limit { 0 };
+    for (int i {1};  i < argc; i++)
+    {
+        if (*argv[i] == '-')
+        {
+            if (!limit && argv[i][1] == 'l')
+            {
+                size_t digits=0;
+                char *ptr = argv[i]+2;
+                for(; *ptr; digits++,ptr++)
+                    if(*ptr < '0' || *ptr > '9') break;
+
+                // at least 1 digits and no nondigit characters
+                if (digits && !*ptr)
+                {
+                    max = NTL::conv<long>(argv[i]+2);
+                    limit = 1;
+                    continue;
+                }
+            }
+        }
+        parse_factor_string<long>(factor, power, argv[i]);
+        f.primes.push_back(factor);
+        f.powers.push_back(power);
+    }
+
+    if (f.primes.size() < 1)
+        return 0;
+    return 1;
+}
 
 /*
  * Ensures that `n` includes a `factor` as a factor.
@@ -83,6 +223,32 @@ operator<<(std::ostream &os, const Factorization &f)
         os << f.primes[k] << "^" << f.powers[k];
     }
 
+    return os;
+}
+
+
+std::ostream& operator<<(std::ostream &os, const std::array<long, 2> &array)
+{
+    os << "{";
+    for(size_t i {0}; i < array.size(); ++i)
+    {
+        if (i) os << ", ";
+        os << array[i];
+    }
+    os << "}";
+    return os;
+}
+
+std::ostream& operator<<(std::ostream &os, const std::vector<long> &array)
+{
+    os << "{";
+    const size_t size { array.size() };
+    for(size_t i {0}; i < size; ++i)
+    {
+        if (i) os << ", ";
+        os << array[i];
+    }
+    os << "}";
     return os;
 }
 

@@ -28,6 +28,9 @@ get_map_size()
 void
 init(size_t max)
 {
+#if LOG_LEVEL>= 1
+    std::cout << "building prime-factorization lookup table of size " << max << "... ";
+#endif
     MAP =  std::make_unique<Product[]>(max+1);
     PRODUCT_MAP_SIZE = max+1;
 
@@ -62,8 +65,8 @@ init(size_t max)
         }
     }
 
-#if LOG_LEVEL == 1
-    std::cout << "finished prime-factorization lookup table of size " << max << "\n";
+#if LOG_LEVEL>= 1
+    std::cout << "done"<< "\n";
 #endif
 }
 
@@ -93,10 +96,6 @@ get_prime_factors(size_t n)
     while (true)
     {
         Product &prod = MAP[n];
-
-#if LOG_LEVEL == 1
-        std::cout << prod.first_term << ", " << prod.second_term << "\n";
-#endif
         factors->push_back(prod.first_term);
 
         if (prod.second_term == 1 || prod.second_term == 0)

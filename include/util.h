@@ -67,6 +67,8 @@ Factorization include_as_factor(const Factorization &n, const Factorization &fac
 
 std::ostream& operator<<(std::ostream &os, const std::array<long, 2> &array);
 
+std::ostream& operator<<(std::ostream &os, const std::vector<long> &array);
+
 const char * strchr_def(const char *str, int character);
 
 Factorization parse_factorization(const char *str);

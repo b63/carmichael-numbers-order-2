@@ -43,14 +43,24 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
             if (NTL::divide(L_val, p1_zz)) 
                 continue;
 
-            const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
             if (NTL::divide(L_val, p12_1)) 
                 continue;
 
-            if (NTL::GCD(p0_zz, p12_1) == 1 && NTL::GCD(p1_zz, p02_1) == 1)
-            {
-                factors.push_back(std::move(std::array<long, 2>{p0, p1}));
-            }
+            const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
+            if (NTL::GCD(p0_zz, p12_1) != 1 || NTL::GCD(p1_zz, p02_1) != 1)
+                continue;
+
+            const NTL::ZZ p0_inv { NTL::InvMod(p0_zz, p02_1) };
+            const NTL::ZZ p1_inv { NTL::InvMod(p1_zz, p12_1) };
+            const NTL::ZZ gcd { NTL::GCD(p02_1, p12_1) };
+
+            NTL::ZZ r1, r2;
+            NTL::rem(r1, p0_inv, gcd);
+            NTL::rem(r2, p1_inv, gcd);
+            if (r1 != r2)
+                continue;
+
+            factors.push_back(std::move(std::array<long, 2>{p0, p1}));
         }
     }
 }
@@ -233,11 +243,11 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
                     for(size_t i = 0; i < index_size; i++)
                         prod *= primes[index_stack[i]];
 
-                    std::cout << "{";
-                    for(auto it=index_stack.cbegin(), end=index_stack.cend();
-                            it != end; it++)
-                        std::cout << primes[*it] << " ";
-                    std::cout << "} " << prod << "\n";
+                    //std::cout << "{";
+                    //for(auto it=index_stack.cbegin(), end=index_stack.cend();
+                    //        it != end; it++)
+                    //    std::cout << primes[*it] << " ";
+                    //std::cout << "} " << prod << "\n";
                     if(NTL::IsOne(prod))
                     {
                         std::vector<long> a_primes;
@@ -245,7 +255,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
                         for(auto it=index_stack.cbegin(), end=index_stack.cend();
                                 it != end; it++)
                             a_primes.push_back(primes[*it]);
-                        std::cout << a_primes << "\n";
+                        std::cout << "found: " << a_primes << "\n";
                         a_values.push_back(std::move(a_primes));
                     }
                 }

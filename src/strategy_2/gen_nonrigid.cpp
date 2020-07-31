@@ -29,10 +29,10 @@ main(int argc, char **argv)
 
     std::cout << "P = ";
     printVec<long>(primes_set);
-    std::cout << "\n";
+    std::cout << "\nsize = " << primes_set.size() << "\n";
 
     std::vector<std::vector<long>> a_values;
-    generate_a_values(a_values, primes_set, nonrigid_factors, 2);
+    generate_a_values(a_values, primes_set, nonrigid_factors, 10000);
     std::cout << "size: " << a_values.size() << "\n";
     printVec<std::vector<long>>(a_values);
 }

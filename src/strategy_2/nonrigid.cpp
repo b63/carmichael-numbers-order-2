@@ -80,7 +80,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
 #if LOG_LEVEL >= 1
     size_t count = 0;
     std::cout << "upper bound on prime <= " << p_max << "\n";
-    if (max)
+    if (max && max <= p_max)
         std::cout << "filtering primes <= " << max << " ...\n";
     else
         std::cout << "filtering primes <= " << p_max << " ...\n";
@@ -188,7 +188,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
 // TODO: cache partial products
 void
 generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<long> &primes,
-        const std::array<long,2> &nonrigid_factors, const size_t max_terms)
+        const std::array<long,2> &nonrigid_factors, size_t min_terms, size_t max_terms)
 {
     const long p0 { nonrigid_factors[0] };
     const long p1 { nonrigid_factors[1] };
@@ -206,9 +206,13 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
     std::cout << "1/p1 = " << NTL::inv(p1_zzp) << " (mod " << p02_1 << ")\n";
 
     size_t num_primes = primes.size();
+    if (max_terms > 0)
+        max_terms = MIN(num_primes, max_terms);
+    else
+        max_terms = num_primes;
+
     // go through all possible subset sizes starting from 2
-    for (size_t t = 1, terms = num_primes > 0 ? MIN(num_primes, max_terms) : 0; 
-            t <= terms; t++) 
+    for (size_t t {MIN(min_terms,1)}; t <= max_terms; t++) 
     {
         size_t factors = t;
         std::vector<size_t> index_stack = {0};
@@ -279,7 +283,8 @@ void
 generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long> primes, 
         const std::array<long, 2> &nonrigid_factors, 
         const NTL::ZZ &a_val, const std::vector<long> &a_primes,
-        const NTL::ZZ &L_val, const Factorization &L)
+        const NTL::ZZ &L_val, const Factorization &L,
+        size_t min_terms, size_t max_terms)
 {
     const long p0 { nonrigid_factors[0] };
     const long p1 { nonrigid_factors[1] };
@@ -292,9 +297,15 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
     constexpr size_t num_bases { 3 };
     const std::array<NTL::ZZ, num_bases> prod_base {p02_1, p12_1, L_val};
 
-    size_t num_primes = primes.size();
+    const size_t num_primes = primes.size();
+    min_terms = MAX(min_terms, 2);
+    if (max_terms > 0)
+        max_terms = MIN(num_primes, max_terms);
+    else
+        max_terms = num_primes;
+
     // go through all possible subset sizes starting from 2
-    for (size_t factors = 2; factors <= num_primes; factors++) 
+    for (size_t factors {min_terms}; factors <= max_terms; factors++) 
     {
         std::vector<size_t> index_stack = {0};
 #if LOG_LEVEL >= 1

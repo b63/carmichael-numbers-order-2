@@ -1,6 +1,7 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <fstream>
 #include <algorithm>
 
 #include <util.h>
@@ -10,7 +11,7 @@
 int
 main(int argc, char **argv)
 {
-    if (argc != 5)
+    if (argc <  5)
         return 0;
 
     long max { NTL::conv<long>(argv[1]) };
@@ -33,7 +34,25 @@ main(int argc, char **argv)
     std::cout << "\nsize = " << primes_set.size() << "\n";
 
     std::vector<std::vector<long>> a_values;
-    generate_a_values(a_values, primes_set, nonrigid_factors, 4);
+    if (argc >= 6)
+    {
+        std::ifstream file { argv[5], std::ios::in};
+        std::string line;
+        while(std::getline(file, line))
+        {
+            std::vector<long> vals;
+            if (parse_numbers(vals, line.c_str()) > 0)
+                a_values.push_back(std::move(vals));
+            else
+                std::cout << "ignoring line, '" << line << "'\n";
+        }
+        file.close();
+    }
+    else
+    {
+        generate_a_values(a_values, primes_set, nonrigid_factors, 7, 0);
+    }
+
     std::cout << "size: " << a_values.size() << "\n\n";
 
 
@@ -51,6 +70,6 @@ main(int argc, char **argv)
                 a_factors.cbegin(), a_factors.cend(),
                 std::inserter(primes_set_a, primes_set_a.begin()));
         std::cout << primes_set_a.size() << ") trying a = " << a_val << ", " << a_factors << "\n";
-        generate_cprimes(cprimes, primes_set, nonrigid_factors, a_val, a_factors, L_val, L);
+        generate_cprimes(cprimes, primes_set, nonrigid_factors, a_val, a_factors, L_val, L, 8, 0);
     }
 }

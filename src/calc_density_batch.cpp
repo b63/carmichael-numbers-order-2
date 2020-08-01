@@ -42,7 +42,7 @@ get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 
         if (i >= num_factors)
             break;
-        else if (p != L.primes[i])
+        else if (p != L.primes[i] || L.powers[i] == 0)
         {
             NTL::ZZ p2_1 { NTL::sqr(NTL::ZZ{p})-1 };
             if(NTL::divide(L_val, p2_1))
@@ -89,7 +89,7 @@ get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
             for(; i < num_factors && L.primes[i] < p_zz; ++i); /* NOP */
             if (i >= num_factors) 
                 break;
-            else if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
+            else if((p_zz != L.primes[i] || L.powers[i] == 0 ) && NTL::divide(L_val, NTL::sqr(p_zz)-1))
                 num_primes++;
 
             NextPrime(p_zz, p_zz);

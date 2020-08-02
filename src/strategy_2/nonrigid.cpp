@@ -36,6 +36,10 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
         if (NTL::divide(L_val, p02_1)) 
             continue;
 
+        const NTL::ZZ g0 { NTL::GCD(L_val, p02_1) };
+        if (!NTL::divide(p0_zz-1, g0))
+            continue;
+
         for (size_t j {i+1}; j < num_primes; ++j)
         {
             const long p1 { primes[j] };
@@ -45,6 +49,10 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
 
             const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
             if (NTL::divide(L_val, p12_1)) 
+                continue;
+
+            const NTL::ZZ g1 { NTL::GCD(L_val, p12_1) };
+            if (!NTL::divide(p1_zz-1, g1))
                 continue;
 
             if (NTL::GCD(p0_zz, p12_1) != 1 || NTL::GCD(p1_zz, p02_1) != 1)
@@ -80,7 +88,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
 #if LOG_LEVEL >= 1
     size_t count = 0;
     std::cout << "upper bound on prime <= " << p_max << "\n";
-    if (max)
+    if (max && max <= p_max)
         std::cout << "filtering primes <= " << max << " ...\n";
     else
         std::cout << "filtering primes <= " << p_max << " ...\n";
@@ -188,7 +196,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
 // TODO: cache partial products
 void
 generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<long> &primes,
-        const std::array<long,2> &nonrigid_factors, const size_t max_terms)
+        const std::array<long,2> &nonrigid_factors, size_t min_terms, size_t max_terms)
 {
     const long p0 { nonrigid_factors[0] };
     const long p1 { nonrigid_factors[1] };
@@ -206,9 +214,13 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
     std::cout << "1/p1 = " << NTL::inv(p1_zzp) << " (mod " << p02_1 << ")\n";
 
     size_t num_primes = primes.size();
+    if (max_terms > 0)
+        max_terms = MIN(num_primes, max_terms);
+    else
+        max_terms = num_primes;
+
     // go through all possible subset sizes starting from 2
-    for (size_t t = 1, terms = num_primes > 0 ? MIN(num_primes, max_terms) : 0; 
-            t <= terms; t++) 
+    for (size_t t {MAX(min_terms,1)}; t <= max_terms; t++) 
     {
         size_t factors = t;
         std::vector<size_t> index_stack = {0};
@@ -279,7 +291,8 @@ void
 generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long> primes, 
         const std::array<long, 2> &nonrigid_factors, 
         const NTL::ZZ &a_val, const std::vector<long> &a_primes,
-        const NTL::ZZ &L_val, const Factorization &L)
+        const NTL::ZZ &L_val, const Factorization &L,
+        size_t min_terms, size_t max_terms)
 {
     const long p0 { nonrigid_factors[0] };
     const long p1 { nonrigid_factors[1] };
@@ -292,13 +305,24 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
     constexpr size_t num_bases { 3 };
     const std::array<NTL::ZZ, num_bases> prod_base {p02_1, p12_1, L_val};
 
-    size_t num_primes = primes.size();
+    const size_t num_primes = primes.size();
+    min_terms = MAX(min_terms, 2);
+    if (max_terms > 0)
+        max_terms = MIN(num_primes, max_terms);
+    else
+        max_terms = num_primes;
+
     // go through all possible subset sizes starting from 2
-    for (size_t factors = 2; factors <= num_primes; factors++) 
+    for (size_t factors {min_terms}; factors <= max_terms; factors++) 
     {
         std::vector<size_t> index_stack = {0};
 #if LOG_LEVEL >= 1
-        std::cout << "checking subsets of size " << factors << " ...\n";
+        if (max_terms > min_terms)
+            std::cout << "checking subsets of size " << factors << " ...\n";
+#if LOG_LEVEL >= 2
+        size_t count { 0 };
+        size_t cond[3] { 0, 0, 0 };
+#endif
 #endif
 
         /* cache of products */
@@ -334,6 +358,14 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
                     index_stack.push_back(index_stack[top]+1);
                     continue;
                 }
+
+#if LOG_LEVEL >= 2
+                if ((count++ & STEP_MASK) == 0)
+                    std::cerr << std::setw(10) << "count: " << count 
+                        << ", cond: " << cond[0] 
+                        << ", " << cond[1]
+                        << ", " << cond[2] << "\r";
+#endif
                 /* IMPORTANT: must have at least TWO factors */
                 /*            otherwise segfault  */
                 std::array<NTL::ZZ, num_bases> &prods { products[top-1] };
@@ -344,15 +376,24 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
                 NTL::MulMod(n0, prods[0], p_zz, prod_base[0]);
                 if (NTL::IsOne(n0))
                 {
+#if LOG_LEVEL >= 2
+                    cond[0]++;
+#endif
                     /* check n0 = 1 (mod p1^2-1) */
                     NTL::MulMod(n0, prods[1], p_zz, prod_base[1]);
                     if (NTL::IsOne(n0))
                     {
+#if LOG_LEVEL >= 2
+                        cond[1]++;
+#endif
                         /* check n0 * p0 * p1 * a = 1 (mod L) */
                         NTL::MulMod(n0, prods[1], p_zz, prod_base[2]);
                         NTL::MulMod(n0, n0, p0p1a, prod_base[2]);
                         if (NTL::IsOne(n0))
                         {
+#if LOG_LEVEL >= 2
+                            cond[2]++;
+#endif
                             std::vector<long> n;
                             n.reserve(factors);
                             for(auto it=index_stack.cbegin(), end=index_stack.cend();
@@ -370,25 +411,15 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
             {
                 index_stack.pop_back();
                 if (top > 0) {
-                    const size_t i = ++index_stack[top - 1];
+                    ++index_stack[top - 1];
                     products.pop_back();
-                    if (i < num_primes) 
-                    {
-                        NTL::ZZ p_zz {primes[i]};
-                        std::array<NTL::ZZ, num_bases> prods;
-                        for(size_t j { 0 }; j < num_bases; ++j)
-                        {
-                            NTL::ZZ prod { 1 };
-                            if (prod_size > 1)
-                                prod = products[prod_top-1][j];
-                            NTL::MulMod(prods[j], prod, p_zz, prod_base[j]);
-                        }
-                        products.push_back(std::move(prods));
-                    }
                 }
 
                 continue;
             }
         }
+#if LOG_LEVEL >= 2
+        std::cerr << std::setw(10) << "count: " << count << "\n";
+#endif
     }
 }

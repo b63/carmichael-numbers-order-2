@@ -358,6 +358,32 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
                     index_stack.push_back(index_stack[top]+1);
                     continue;
                 }
+
+
+
+                for(auto it=index_stack.cbegin(), end=index_stack.cend();
+                        it != end; ++it)
+                {
+                    std::cout << primes[*it];
+                    std::cout << "*";
+                }
+                std::cout << " = ";
+                for(auto it=products.cbegin(), end=products.cend();
+                        it != end; ++it)
+                {
+                    std::cout << "{";
+                    for(auto it2=it->cbegin(), end2=it->cend();
+                            it2 != end2; ++it2)
+                    {
+                        std::cout << *it2;
+                        if (it2!=end2) std::cout << ", ";
+                    }
+                    std::cout << "}";
+                    std::cout << ", ";
+                }
+                std::cout << "\n\n";
+
+
 #if LOG_LEVEL >= 2
                 if ((count++ & STEP_MASK) == 0)
                     std::cerr << std::setw(10) << "count: " << count 

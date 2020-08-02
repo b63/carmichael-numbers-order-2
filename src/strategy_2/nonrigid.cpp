@@ -436,21 +436,8 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
             {
                 index_stack.pop_back();
                 if (top > 0) {
-                    const size_t i = ++index_stack[top - 1];
+                    ++index_stack[top - 1];
                     products.pop_back();
-                    if (i < num_primes) 
-                    {
-                        NTL::ZZ p_zz {primes[i]};
-                        std::array<NTL::ZZ, num_bases> prods;
-                        for(size_t j { 0 }; j < num_bases; ++j)
-                        {
-                            NTL::ZZ prod { 1 };
-                            if (prod_size > 1)
-                                prod = products[prod_top-1][j];
-                            NTL::MulMod(prods[j], prod, p_zz, prod_base[j]);
-                        }
-                        products.push_back(std::move(prods));
-                    }
                 }
 
                 continue;

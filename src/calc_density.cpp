@@ -26,6 +26,7 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
 #if LOG_LEVEL >= 2
     size_t count = 0;
 #endif
+#endif
 
     NTL::PrimeSeq s;
     const size_t num_factors { L.primes.size() };

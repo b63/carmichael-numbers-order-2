@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR=/home/hfl/tdata/rnd/edu/summer-2020-number-theory/summer-2020-research
+DIR=/home/bkoirala/repos/summer-2020-research
 jobdata=0
 
 OPTIND=1
@@ -29,3 +29,11 @@ if [[ $jobdata -eq 1 ]]; then
     rm -fr data/jobdata
     mkdir data/jobdata
 fi
+
+echo -e "\nCleaning jobstreams/err ..."
+rm -fr jobstreams/err
+[[ -d jobstreams ]] && mkdir -p jobstreams/err
+
+echo -e "\nCleaning jobstreams/out ..."
+rm -fr jobstreams/out
+[[ -d jobstreams ]] && mkdir -p jobstreams/out

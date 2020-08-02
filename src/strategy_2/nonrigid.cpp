@@ -317,7 +317,12 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
     {
         std::vector<size_t> index_stack = {0};
 #if LOG_LEVEL >= 1
-        std::cout << "checking subsets of size " << factors << " ...\n";
+        if (max_terms > min_terms)
+            std::cout << "checking subsets of size " << factors << " ...\n";
+#if LOG_LEVEL >= 2
+        size_t count { 0 };
+        size_t cond[3] { 0, 0, 0 };
+#endif
 #endif
 
         /* cache of products */
@@ -353,6 +358,13 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
                     index_stack.push_back(index_stack[top]+1);
                     continue;
                 }
+#if LOG_LEVEL >= 2
+                if ((count++ & STEP_MASK) == 0)
+                    std::cerr << std::setw(10) << "count: " << count 
+                        << ", cond: " << cond[0] 
+                        << ", " << cond[1]
+                        << ", " << cond[2] << "\r";
+#endif
                 /* IMPORTANT: must have at least TWO factors */
                 /*            otherwise segfault  */
                 std::array<NTL::ZZ, num_bases> &prods { products[top-1] };
@@ -363,15 +375,24 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
                 NTL::MulMod(n0, prods[0], p_zz, prod_base[0]);
                 if (NTL::IsOne(n0))
                 {
+#if LOG_LEVEL >= 2
+                    cond[0]++;
+#endif
                     /* check n0 = 1 (mod p1^2-1) */
                     NTL::MulMod(n0, prods[1], p_zz, prod_base[1]);
                     if (NTL::IsOne(n0))
                     {
+#if LOG_LEVEL >= 2
+                        cond[1]++;
+#endif
                         /* check n0 * p0 * p1 * a = 1 (mod L) */
                         NTL::MulMod(n0, prods[1], p_zz, prod_base[2]);
                         NTL::MulMod(n0, n0, p0p1a, prod_base[2]);
                         if (NTL::IsOne(n0))
                         {
+#if LOG_LEVEL >= 2
+                            cond[2]++;
+#endif
                             std::vector<long> n;
                             n.reserve(factors);
                             for(auto it=index_stack.cbegin(), end=index_stack.cend();
@@ -409,5 +430,8 @@ generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long
                 continue;
             }
         }
+#if LOG_LEVEL >= 2
+        std::cerr << std::setw(10) << "count: " << count << "\n";
+#endif
     }
 }

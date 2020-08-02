@@ -45,7 +45,7 @@ fi
 [[ -f $OUTPUT_DIR ]] || mkdir -p $OUTPUT_DIR
 
 # empty output directory
-rm -rfv $OUTPUT_DIR/job* "$OUTPUT_DIR/all"
+rm -rf $OUTPUT_DIR/job* "$OUTPUT_DIR/all"
 
 echo "Generating distributions: $LOW<=magnitude<$HIGH, primes=" "$@" "..."
 $BIN/gen_distributions "-l$LOW" "-h$HIGH" "$@" > $OUTPUT_DIR/all

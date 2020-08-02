@@ -220,7 +220,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
         max_terms = num_primes;
 
     // go through all possible subset sizes starting from 2
-    for (size_t t {MIN(min_terms,1)}; t <= max_terms; t++) 
+    for (size_t t {MAX(min_terms,1)}; t <= max_terms; t++) 
     {
         size_t factors = t;
         std::vector<size_t> index_stack = {0};

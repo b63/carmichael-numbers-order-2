@@ -16,7 +16,6 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
     NTL::ZZ p_max {NTL::SqrRoot(L_val+1)};
 
 #if LOG_LEVEL >= 1
-    size_t count = 0;
     std::cout << "upper bound on prime <= " << p_max << "\n";
     if (max)
         std::cout << "filtering primes <= " << max << " ...\n";

@@ -13,11 +13,9 @@ while getopts ":j" opt; do
 done
 
 echo -e "Cleaning data/interpolation ..."
-rm -fr data/interpolation
-mkdir data/interpolation
+rm -fv data/interpolation/*
 echo -e "Cleaning data/outputs ..."
-rm -fr data/outputs
-mkdir data/outputs
+rm -fv data/outputs/*
 echo -e "\nCleaning data/progress ..."
 rm -fr data/progress
 mkdir  data/progress

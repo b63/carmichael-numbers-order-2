@@ -2,8 +2,8 @@
 
 DIR=/home/bkoirala/repos/summer-2020-research
 OUTPUT_DIR=$DIR/data/jobdata
-LOW=30
-HIGH=31
+LOW=20
+HIGH=21
 BIN=$DIR/build
 JOBS=""
 
@@ -49,6 +49,10 @@ rm -rfv $OUTPUT_DIR/job* "$OUTPUT_DIR/all"
 
 echo "Generating distributions: $LOW<=magnitude<$HIGH, primes=" "$@" "..."
 $BIN/gen_distributions "-l$LOW" "-h$HIGH" "$@" > $OUTPUT_DIR/all
+if [ $? != 0 ]; then
+    exit $?
+fi
+
 total=$(wc -l $OUTPUT_DIR/all | cut -d ' ' -f 1)
 each=$((total/JOBS))
 each=$((each<1 ? 1 : each))

@@ -13,15 +13,18 @@ void
 construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 {
     NTL::ZZ p_max {NTL::SqrRoot(L_val+1)};
+
+#if LOG_LEVEL >= 1
+    size_t count = 0;
     std::cout << "upper bound on prime <= " << p_max << "\n";
     if (max)
         std::cout << "filtering primes <= " << max << " ...\n";
     else
         std::cout << "filtering primes <= " << p_max << " ...\n";
+#endif
 
     NTL::PrimeSeq s;
     const size_t num_factors { L.primes.size() };
-    size_t count = 0;
     size_t i { 0 };
 
     long p = s.next();
@@ -147,6 +150,7 @@ main(int argc, char **argv)
 
     NTL::ZZ L_val;
     multiply_factors(L_val, L.primes, L.powers);
+    std::cout << "L = " << L_val << "\n";
 
     std::vector<long> primes;
     init_timer();
@@ -159,7 +163,7 @@ main(int argc, char **argv)
     std::cout << "\n";
 
     NTL::RR density { get_density(L_val, primes.size()) };
-    std::cout << "density = " << std::setprecision(10) << density;
+    std::cout << "density = " << std::setprecision(10) << density << "\n";
 }
 
 

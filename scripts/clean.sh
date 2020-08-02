@@ -12,9 +12,9 @@ while getopts ":j" opt; do
     esac
 done
 
-echo -e "Cleaning data/interpolation ..."
-rm -fr data/interpolation
-mkdir data/interpolation
+echo -e "Cleaning data/intrp ..."
+rm -fr data/intrp
+mkdir data/intrp
 echo -e "Cleaning data/outputs ..."
 rm -fr data/outputs
 mkdir data/outputs

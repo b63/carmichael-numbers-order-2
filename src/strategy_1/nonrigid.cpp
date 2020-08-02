@@ -243,10 +243,9 @@ get_nonrigid_primes(std::vector<long> &possible_primes, const NTL::ZZ &L, long m
     std::cerr << "  count: " << count << "\n";
 #endif
 
-    const size_t size { possible_primes.size() };
 
 #if LOG_LEVEL >= 1
-    if (p == 0 && size && last_p < max)
+    if (p == 0 && possible_primes.size() && last_p < max)
         std::cerr << "reached small prime limit at " << last_p << "\n";
 #endif
 }

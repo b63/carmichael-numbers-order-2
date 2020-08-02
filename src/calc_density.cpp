@@ -9,6 +9,7 @@
 #include <util.h>
 #include <config.h>
 
+// notes: assumes L.primes does not have prime factors raised to the 0 power
 void
 construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 {
@@ -21,6 +22,9 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
         std::cout << "filtering primes <= " << max << " ...\n";
     else
         std::cout << "filtering primes <= " << p_max << " ...\n";
+
+#if LOG_LEVEL >= 2
+    size_t count = 0;
 #endif
 
     NTL::PrimeSeq s;
@@ -139,8 +143,11 @@ main(int argc, char **argv)
             }
         }
         parse_factor_string<long>(factor, power, argv[i]);
-        L.primes.push_back(factor);
-        L.powers.push_back(power);
+        if (power > 0)
+        {
+            L.primes.push_back(factor);
+            L.powers.push_back(power);
+        }
     }
 
     if (L.primes.size() < 1)

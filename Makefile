@@ -140,6 +140,7 @@ ${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o) \
 		$(addprefix ${S2_DIR}/, nonrigid.o all_possible_nonrigid_pairs.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
+
 # BENCHMARK TARGETS
 # =============================
 

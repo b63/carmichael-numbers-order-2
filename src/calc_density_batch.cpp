@@ -42,7 +42,7 @@ get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 
         if (i >= num_factors)
             break;
-        else if (p != L.primes[i])
+        else if (p != L.primes[i] || L.powers[i] == 0)
         {
             NTL::ZZ p2_1 { NTL::sqr(NTL::ZZ{p})-1 };
             if(NTL::divide(L_val, p2_1))
@@ -89,7 +89,7 @@ get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
             for(; i < num_factors && L.primes[i] < p_zz; ++i); /* NOP */
             if (i >= num_factors) 
                 break;
-            else if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
+            else if((p_zz != L.primes[i] || L.powers[i] == 0 ) && NTL::divide(L_val, NTL::sqr(p_zz)-1))
                 num_primes++;
 
             NextPrime(p_zz, p_zz);
@@ -132,6 +132,16 @@ int check_is_open(const T &stream, const char *name)
     return 1;
 }
 
+void
+write_to_prog_file(const char *name, size_t count)
+{
+    std::ofstream prog {name, std::ios::out | std::ios::trunc};
+    if (check_is_open<std::ofstream>(prog, name))
+    {
+        prog << count << "\n" << std::flush;
+        prog.close();
+    }
+}
 
 /**
  *
@@ -139,7 +149,7 @@ int check_is_open(const T &stream, const char *name)
 int 
 main(int argc, char **argv)
 {
-    if (argc != 5)
+    if (argc != 6)
     {
         std::cerr << "not enough arguments\n";
         return 1;
@@ -149,6 +159,7 @@ main(int argc, char **argv)
     const char *IN_FILE      { argv[2] };
     const char *ALL_IN_FILE  { argv[3] };
     const char *OUT_FILE     { argv[4] };
+    const char *PROGRESS_FILE{ argv[5] };
 
     std::ifstream in  {IN_FILE, std::ios::in};
     std::ifstream all_in  {ALL_IN_FILE, std::ios::in};
@@ -186,6 +197,7 @@ main(int argc, char **argv)
     const size_t num_primes { primes.size() };
     std::string lines_buffer[PRE_LOAD];
 
+    size_t count { 0 };
     while (in)
     {
         size_t i { 0 };
@@ -212,24 +224,28 @@ main(int argc, char **argv)
 
             std::vector<long> primes_cpy { primes };
             Factorization L { std::move(primes_cpy), std::move(powers) };
-            std::cout << index_str << ": " << L << "\n";
 
             NTL::ZZ L_val;
             multiply_factors(L_val, L.primes, L.powers);
             size_t P_size { get_P_size(L_val, L, max) };
 
             NTL::RR density { get_density(L_val, P_size) };
-            
+
             out << index_str << ",";
             for(size_t k {0}; k < num_primes; ++k)
             {
                 if (k) out << " ";
                 out << L.powers[k];
             }
-            out << dist_str << "," << density << "\n";
+            out << "," << density << "\n";
+
+            if ( (count++ & STEP_MASK) == 0)
+                write_to_prog_file(PROGRESS_FILE, count);
+
         }
     }
 
+    write_to_prog_file(PROGRESS_FILE, count);
     in.close();
     out.close();
 }

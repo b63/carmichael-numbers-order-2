@@ -36,6 +36,10 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
         if (NTL::divide(L_val, p02_1)) 
             continue;
 
+        const NTL::ZZ g0 { NTL::GCD(L_val, p02_1) };
+        if (!NTL::divide(p0_zz-1, g0))
+            continue;
+
         for (size_t j {i+1}; j < num_primes; ++j)
         {
             const long p1 { primes[j] };
@@ -45,6 +49,10 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
 
             const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
             if (NTL::divide(L_val, p12_1)) 
+                continue;
+
+            const NTL::ZZ g1 { NTL::GCD(L_val, p12_1) };
+            if (!NTL::divide(p1_zz-1, g1))
                 continue;
 
             if (NTL::GCD(p0_zz, p12_1) != 1 || NTL::GCD(p1_zz, p02_1) != 1)

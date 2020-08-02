@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DIR=/home/hfl/tdata/rnd/edu/summer-2020-number-theory/summer-2020-research
+DIR=/home/bkoirala/repos/summer-2020-research
 jobdata=0
 
 OPTIND=1
@@ -15,9 +15,11 @@ done
 echo -e "Cleaning data/intrp ..."
 rm -fr data/intrp
 mkdir data/intrp
+
 echo -e "Cleaning data/outputs ..."
 rm -fr data/outputs
 mkdir data/outputs
+
 echo -e "\nCleaning data/progress ..."
 rm -fr data/progress
 mkdir  data/progress

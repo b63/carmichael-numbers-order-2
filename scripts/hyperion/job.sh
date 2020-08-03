@@ -23,10 +23,24 @@ BIN=$DIR/build
 
 [[ -f $OUTPUT_DIR ]] || mkdir -p $OUTPUT_DIR
 
-if [[ ! -f "$INPUT_DATA/job$PBS_ARRAYID" ]]; then
-    echo "no data found: $INPUT_DATA/job$PBS_ARRAYID" >&2
-    exit 1
-fi
+i=0
+while read line
+do
+    if [ $i -lt $line ]; then
+        i=$((i+1))
+        continue
+    elif [$i -gt $line ]; then
+        break
+    fi
 
-PARAMS=("10000000" "$INPUT_DATA/job$PBS_ARRAYID" "$INPUT_DATA/all" "$OUTPUT_DIR/out$PBS_ARRAYID" "$PROGRESS_DIR/job$PBS_ARRAYID")
-$BIN/calc_density_batch "${PARAMS[@]}"
+    export PBS_ARRAYID=$line
+    echo "PBS_ARRAYID=$PBS_ARRAYID"
+    break
+    if [[ ! -f "$INPUT_DATA/job$PBS_ARRAYID" ]]; then
+        echo "no data found: $INPUT_DATA/job$PBS_ARRAYID" >&2
+        exit 1
+    fi
+
+    PARAMS=("10000000" "$INPUT_DATA/job$PBS_ARRAYID" "$INPUT_DATA/all" "$OUTPUT_DIR/out$PBS_ARRAYID" "$PROGRESS_DIR/job$PBS_ARRAYID")
+    $BIN/calc_density_batch "${PARAMS[@]}"
+done < $DIR/pbs_ids

@@ -60,7 +60,7 @@ main(int argc, char **argv)
     std::vector<std::vector<long>> cprimes;
 
     const size_t num_a { a_values.size() };
-    for (size_t j { 30 }; j < primes_set_size; ++j)
+    for (size_t j { 40 }; j < primes_set_size; ++j)
     {
         std::cout << "searching for subsets of size " << j << "\n";
         for(size_t i { 0 }; i < num_a; ++i)

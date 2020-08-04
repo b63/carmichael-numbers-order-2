@@ -6,7 +6,7 @@
 #PBS -M bkoirala@iwu.edu
 #
 # Set up a job array
-#PBS -t 0-71
+#PBS -t 0-2
 #
 # store stderr and stdout in joboutput directory
 #PBS -e jobstreams/err
@@ -19,7 +19,6 @@ OUTPUT_DIR=$DIR/data/intrp
 INPUT_DATA=$DIR/data/jobdata
 PROGRESS_DIR=$DIR/data/progress
 BIN=$DIR/build
-
 
 [[ -f $OUTPUT_DIR ]] || mkdir -p $OUTPUT_DIR
 

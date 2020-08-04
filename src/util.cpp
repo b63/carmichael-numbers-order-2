@@ -227,32 +227,6 @@ operator<<(std::ostream &os, const Factorization &f)
 }
 
 
-std::ostream& operator<<(std::ostream &os, const std::array<long, 2> &array)
-{
-    os << "{";
-    for(size_t i {0}; i < array.size(); ++i)
-    {
-        if (i) os << ", ";
-        os << array[i];
-    }
-    os << "}";
-    return os;
-}
-
-std::ostream& operator<<(std::ostream &os, const std::vector<long> &array)
-{
-    os << "{";
-    const size_t size { array.size() };
-    for(size_t i {0}; i < size; ++i)
-    {
-        if (i) os << ", ";
-        os << array[i];
-    }
-    os << "}";
-    return os;
-}
-
-
 // generate list of primes using a sieve and store
 // them in `primes` vector.
 // @param primes vector instance where the primes will be stored

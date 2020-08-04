@@ -65,10 +65,6 @@ NTL::RR get_density(NTL::ZZ &L, size_t prime_size);
 
 Factorization include_as_factor(const Factorization &n, const Factorization &factor);
 
-std::ostream& operator<<(std::ostream &os, const std::array<long, 2> &array);
-
-std::ostream& operator<<(std::ostream &os, const std::vector<long> &array);
-
 const char * strchr_def(const char *str, int character);
 
 Factorization parse_factorization(const char *str);
@@ -112,6 +108,46 @@ void printVec(const std::vector<T> &arr)
     }
 
     std::cout << "}";
+}
+
+
+template <typename T>
+std::ostream& operator<<(std::ostream &os, const std::vector<T> &arr) 
+{
+    size_t size = arr.size();
+    os << "{";
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i > 0) 
+        {
+            os << ", ";
+        }
+        os << arr[i];
+    }
+
+    os << "}";
+    return os;
+}
+
+
+template <typename T, long unsigned int N>
+std::ostream& operator<<(std::ostream &os, const std::array<T,N> &arr) 
+{
+    size_t size = arr.size();
+    os << "{";
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i > 0) 
+        {
+            os << ", ";
+        }
+        os << arr[i];
+    }
+
+    os << "}";
+    return os;
 }
 
 

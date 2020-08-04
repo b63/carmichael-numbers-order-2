@@ -5,7 +5,7 @@ CXX=g++
 override CPPFLAGS:=$(CPPFLAGS) -I ./include
 
 # Extra flags to give to the C++ compiler. 
-override CXXFLAGS:=$(CXXFLAGS) -Wall -Werror -pedantic -std=c++14 -OFast -march=native
+override CXXFLAGS:=$(CXXFLAGS) -Wall -Werror -pedantic -std=c++14 -Ofast -march=native
 
 # Extra flags to give to compilers when they are supposed to invoke the linker, ‘ld’, such as -L. Libraries (-lfoo) should be added to the LDLIBS variable instead. 
 override LDFLAGS:=$(LDFLAGS)
@@ -30,6 +30,7 @@ SOURCES+= $(addprefix strategy_2/, nonrigid.cpp gen_nonrigid.cpp, all_possible_n
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
 SOURCES+= benchmarks/bench_lambda.cpp 
+SOURCES+= tests/test_subsetprod_mod.cpp 
 
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
@@ -40,6 +41,7 @@ BINARIES+= $(addprefix strategy_1/, gen_nonrigid pnonrigid)
 BINARIES+= $(addprefix strategy_2/, gen_nonrigid all_nonrigid_pairs)
 
 BENCHMARKS = $(addprefix benchmarks/, bench_construct_P bench_prodcache)
+TESTS = $(addprefix tests/, test_subsetprod_mod)
 
 DIR_GUARD = [ -d $(@D) ] || mkdir -p $(@D)
 
@@ -87,6 +89,8 @@ ${BUILD_DIR}/%.dd: ${BUILD_DIR}/%.d
 all: $(addprefix ${BUILD_DIR}/,$(BINARIES))
 
 benchmarks: $(addprefix ${BUILD_DIR}/,$(BENCHMARKS))
+
+tests: $(addprefix ${BUILD_DIR}/,$(TESTS))
 
 clean:
 	rm -rf ${BUILD_DIR}/*
@@ -138,6 +142,17 @@ ${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o) \
 
 ${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o) \
 		$(addprefix ${S2_DIR}/, nonrigid.o all_possible_nonrigid_pairs.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+
+# TEST TARGETS
+# =============================
+
+TEST_DIR = ${BUILD_DIR}/tests
+
+${TEST_DIR}/test_subsetprod_mod: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${S2_DIR}/, subset_product.o ) \
+		$(addprefix ${TEST_DIR}/, test_subsetprod_mod.o )
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 

@@ -60,7 +60,7 @@ main(int argc, char **argv)
     }
     else
     {
-        generate_a_values(a_values, primes_set, nonrigid_factors, 15, 0);
+        generate_a_values(a_values, primes_set, nonrigid_factors, 20, 0);
     }
 
     const size_t num_a { a_values.size() };

@@ -21,13 +21,23 @@ get_map_size()
 /**
  * Sieves an array the size of `max` so that subsequent calls
  * to `get_prime_factors` can compute the prime factorization
- * of a  number <= max quickly.
+ * of a  number <= max quickly. If this function was already called
+ * with an arugment <= max then, nothing will be done.
  * @param max size of sieve, arguments to subsequent calls of `get_prime_factors`
  *            must be <= `max`
  */
 void
 init(size_t max)
 {
+    if (PRODUCT_MAP_SIZE && (PRODUCT_MAP_SIZE-1 >= max))
+    {
+#if LOG_LEVEL>= 1
+        std::cout << "prime-factorization lookup table of size " 
+            << PRODUCT_MAP_SIZE-1<< " already exists\n";
+#endif
+        return;
+    }
+
 #if LOG_LEVEL>= 1
     std::cout << "building prime-factorization lookup table of size " << max << "... ";
 #endif

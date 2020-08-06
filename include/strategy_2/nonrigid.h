@@ -15,7 +15,6 @@ void construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &
 
 void generate_cprimes(std::vector<std::vector<long>> &cprimes, const std::vector<long> primes, 
         const std::array<long, 2> &nonrigid_factors, 
-        const NTL::ZZ &a_val, const std::vector<long> &a_primes,
-        const NTL::ZZ &L_val, const Factorization &L,
+        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_terms, size_t max_terms);
 #endif

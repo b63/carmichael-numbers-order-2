@@ -11,7 +11,7 @@ check_set_base(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
 
     int retv {1};
     subsetprod_mod<num_bases>(set, bases, 
-            [&](std::array<NTL::ZZ, num_bases>& prod, const std::vector<size_t>& indices) -> void {
+            [&](std::array<NTL::ZZ, num_bases>& prod, const std::vector<size_t>& indices, size_t insert_index) -> bool {
                 NTL::ZZ p {1};
                 for(auto it {indices.cbegin()};it!=indices.cend(); ++it)
                 {
@@ -45,6 +45,7 @@ check_set_base(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
                 }
                 if(verbose && ok)
                     std::cout << " PASS\n";
+            return false;
             }, 1, 0);
     return 1;
 }

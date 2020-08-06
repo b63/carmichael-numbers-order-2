@@ -1,11 +1,14 @@
 #include <iostream>
 #include <vector>
 #include <cstring>
+#include <cmath>
 #include <fstream>
 #include <algorithm>
 
 #include <util.h>
+#include <counting_factors.h>
 #include <strategy_2/nonrigid.h>
+#include <strategy_2/subset_product.h>
 
 
 int
@@ -14,9 +17,12 @@ main(int argc, char **argv)
     if (argc <  5)
         return 0;
 
-    long max { NTL::conv<long>(argv[1]) };
-    long p0 { NTL::conv<long>(argv[2]) };
-    long p1 { NTL::conv<long>(argv[3]) };
+    const long max { NTL::conv<long>(argv[1]) };
+    const long p0 { NTL::conv<long>(argv[2]) };
+    const long p1 { NTL::conv<long>(argv[3]) };
+    const long p02_1 { p0*p0 - 1};
+    const long p12_1 { p1*p1 - 1};
+
     Factorization L { parse_factorization(argv[4]) };
 
     NTL::ZZ L_val;
@@ -24,6 +30,7 @@ main(int argc, char **argv)
     std::cout << "L = " << L_val << "\n";
 
     std::cout << "p0 = " << p0 << ", p1 = " << p1 << "\n";
+    std::cout << "p0^2-1 = " << p02_1 << ", p1^2-1 = " << p12_1 << "\n";
 
     const std::array<long,2> nonrigid_factors { p0, p1 };
     std::vector<long> primes_set;
@@ -34,6 +41,8 @@ main(int argc, char **argv)
     const size_t primes_set_size { primes_set.size() };
     std::cout << "\n|P| = " << primes_set_size << "\n";
 
+
+    /* read-in/generate values for parameter a */
     std::vector<std::vector<long>> a_values;
     if (argc >= 6)
     {
@@ -54,33 +63,24 @@ main(int argc, char **argv)
         generate_a_values(a_values, primes_set, nonrigid_factors, 12, 0);
     }
 
-    std::cout << "size: " << a_values.size() << "\n\n";
-
-
-    std::vector<std::vector<long>> cprimes;
-
     const size_t num_a { a_values.size() };
-    for (size_t j { 40 }; j < primes_set_size; ++j)
+    std::cout << "number of a values: " << num_a << "\n\n";
+
+    for(size_t i { 0 }; i < num_a; ++i)
     {
-        std::cout << "searching for subsets of size " << j << "\n";
-        for(size_t i { 0 }; i < num_a; ++i)
-        {
-            NTL::ZZ a_val { 1 };
-            std::vector<long> &a_factors { a_values[i] };
-            for(auto it = a_factors.cbegin(), end=a_factors.cend();
-                    it != end; ++it)
-                a_val *= *it;
-            std::vector<long> primes_set_a;
-            std::set_difference(primes_set.cbegin(), primes_set.cend(), 
-                    a_factors.cbegin(), a_factors.cend(),
-                    std::inserter(primes_set_a, primes_set_a.begin()));
+        NTL::ZZ a_val { 1 };
+        std::vector<long> &a_factors { a_values[i] };
+        for(auto it = a_factors.cbegin(), end=a_factors.cend();
+                it != end; ++it)
+            a_val *= *it;
+        std::vector<long> primes_set_a;
+        std::set_difference(primes_set.cbegin(), primes_set.cend(), 
+                a_factors.cbegin(), a_factors.cend(),
+                std::inserter(primes_set_a, primes_set_a.begin()));
 
-            std::cout << "(|P| = " << primes_set_a.size() << ") trying a = " 
-                    << a_val << ", " << a_factors << "\n";
-            generate_cprimes(cprimes, primes_set_a, nonrigid_factors, 
-                    a_val, a_factors, L_val, L, j, j);
-        }
-
-        std::cout << "\n";
+        std::cout << "(|P| = " << primes_set_a.size() << ") trying a = " 
+                << a_val << ", " << a_factors << "\n";
+        gen_cprimes_2way_all(primes_set_a, nonrigid_factors, a_val, L_val, 1, 0);
+        std::cout << "\n\n";
     }
 }

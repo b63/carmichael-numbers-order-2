@@ -8,9 +8,6 @@
 
 #include <util.h>
 
-size_t calc_max_subsets(size_t set_size, size_t min_size, size_t max_size);
-size_t binomial(unsigned long n, unsigned long m);
-
 void gen_cprimes_2way_all(
         const std::vector<long> &primes, 
         const std::array<long, 2> &nonrigid_factors,

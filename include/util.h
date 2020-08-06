@@ -72,6 +72,12 @@ Factorization parse_factorization(const char *str);
 size_t parse_numbers(std::vector<long> &list, const char *str);
 
 int parse_args(int argc, char **argv, long &max, Factorization &f);
+
+size_t calc_max_subsets(size_t set_size, size_t min_size, size_t max_size);
+
+size_t binomial(unsigned long n, unsigned long m);
+
+
 /**************** TEMPLATE FUNCTIONS **************************/
 
 // prints the integers in arr specified by the array of indices ind 

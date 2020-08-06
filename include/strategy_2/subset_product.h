@@ -3,25 +3,63 @@
 
 #include <functional>
 #include <vector>
+#include <memory>
 #include <NTL/ZZ.h>
 
-/* TEMPLATE FUNCTIONS */
+#include <util.h>
+
+size_t calc_max_subsets(size_t set_size, size_t min_size, size_t max_size);
+size_t binomial(unsigned long n, unsigned long m);
+
+void gen_cprimes_2way_all(
+        const std::vector<long> &primes, 
+        const std::array<long, 2> &nonrigid_factors,
+        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
+        size_t min_size, size_t max_size);
+
+
+/* TEMPLATE FUNCTIONS/CLASSES */
+
 template <unsigned long int N>
-void
+struct ZZHasher
+{
+    size_t
+    operator()(const std::array<NTL::ZZ, N> &arr) const
+    {
+        size_t hash {0};
+        for (auto v : arr)
+            hash ^= std::hash<unsigned long>{}(NTL::conv<unsigned long>(v))  
+                        + 0x9e3779b9 + (hash << 6) + (hash >> 2);
+        return hash;
+    }
+};
+
+template <unsigned long int N>
+std::unique_ptr<std::vector<std::vector<size_t>>>
 subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases,
-        const std::function<void(std::array<NTL::ZZ, N>&, const std::vector<size_t>&)> &callback,
+        const std::function<int(std::array<NTL::ZZ, N>&, const std::vector<size_t>&, size_t)> &callback,
         size_t min_terms=2, size_t max_terms=0)
 {
     constexpr size_t num_bases { N };
 
     const size_t set_size { set.size() };
-    min_terms = MAX(min_terms, 2);
+    min_terms = MAX(min_terms, 1);
     max_terms = max_terms > 0 ? MIN(set_size, max_terms) : set_size;
 
     std::array<NTL::ZZ, num_bases> default_prod;
     std::fill(default_prod.begin(), default_prod.end(), 1);
 
     // go through all possible subset sizes starting from 2
+    std::unique_ptr<std::vector<std::vector<size_t>>> subsets_ptr 
+        {std::make_unique<std::vector<std::vector<size_t>>>()};
+    const size_t max_num_subsets {calc_max_subsets(set_size, min_terms, max_terms)};
+    subsets_ptr->reserve(max_num_subsets);
+
+#if LOG_LEVEL >= 1
+    std::cout << "checking " << max_num_subsets << " subsets ...\n";
+#endif
+
+    size_t subset_count {0};
     for (size_t factors {min_terms}; factors <= max_terms; factors++) 
     {
         std::vector<size_t> index_stack = {0};
@@ -69,7 +107,13 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
                 for(size_t j {0}; j < num_bases; ++j)
                     NTL::MulMod(mod_prod[j], prods[j], p_zz, bases[j]);
 
-                callback(mod_prod, index_stack);
+                int ret {callback(mod_prod, index_stack, subset_count)};
+                if(ret == 1)
+                {
+                    subsets_ptr->push_back(index_stack);
+                    subset_count++;
+                }
+
                 index_stack[top]++;
             }
             else
@@ -84,6 +128,7 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
             }
         }
     }
+    return subsets_ptr;
 }
 
 #endif

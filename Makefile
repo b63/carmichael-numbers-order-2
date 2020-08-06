@@ -30,7 +30,7 @@ SOURCES+= $(addprefix strategy_2/, nonrigid.cpp gen_nonrigid.cpp, all_possible_n
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
 SOURCES+= benchmarks/bench_lambda.cpp 
-SOURCES+= $(addprefix tests/, test_subsetprod_mod.cpp test_binomial.cpp )
+SOURCES+= $(addprefix tests/, test_subsetprod_mod.cpp test_binomial.cpp test_rand_subset.cpp)
 
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
@@ -41,7 +41,7 @@ BINARIES+= $(addprefix strategy_1/, gen_nonrigid pnonrigid)
 BINARIES+= $(addprefix strategy_2/, gen_nonrigid all_nonrigid_pairs)
 
 BENCHMARKS = $(addprefix benchmarks/, bench_construct_P bench_prodcache)
-TESTS = $(addprefix tests/, test_subsetprod_mod test_binomial)
+TESTS = $(addprefix tests/, test_subsetprod_mod test_binomial test_rand_subset)
 
 DIR_GUARD = [ -d $(@D) ] || mkdir -p $(@D)
 
@@ -156,10 +156,12 @@ ${TEST_DIR}/test_subsetprod_mod: $(addprefix ${BUILD_DIR}/,util.o) \
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${TEST_DIR}/test_binomial: $(addprefix ${BUILD_DIR}/,util.o) \
-		$(addprefix ${S2_DIR}/, subset_product.o ) \
 		$(addprefix ${TEST_DIR}/, test_binomial.o )
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
+${TEST_DIR}/test_rand_subset: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${TEST_DIR}/, test_rand_subset.o )
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 # BENCHMARK TARGETS
 # =============================

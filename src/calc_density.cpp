@@ -169,6 +169,7 @@ main(int argc, char **argv)
     printVec<long>(primes);
     std::cout << "\n";
 
+    std::cout << "size = " << primes.size() << "\n";
     NTL::RR density { get_density(L_val, primes.size()) };
     std::cout << "density = " << std::setprecision(10) << density << "\n";
 }

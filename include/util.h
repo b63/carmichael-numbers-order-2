@@ -2,11 +2,20 @@
 #define UTIL_H
 
 #include <vector>
-#include <map>
-#include <iomanip>
 #include <iostream>
+#include <iomanip>
 #include <ostream>
+#include <random>
+#include <climits>
+#include <chrono>
+#include <stdio.h>
+#include <cstdlib>
+#include <climits>
+#include <stdexcept>
 #include <functional>
+#include <map>
+#include <unordered_map>
+#include <memory>
 
 #include <NTL/ZZ.h>
 #include <NTL/RR.h>
@@ -77,8 +86,37 @@ size_t calc_max_subsets(size_t set_size, size_t min_size, size_t max_size);
 
 size_t binomial(unsigned long n, unsigned long m);
 
+std::unique_ptr<std::vector<size_t>> random_subset(size_t set_size);
 
 /**************** TEMPLATE FUNCTIONS **************************/
+
+template <typename T, typename V>
+V product(T iterable)
+{
+    V ret {1};
+    for (auto v : iterable)
+        ret *= v;
+    return ret;
+}
+
+
+/**
+ * Get the lcm of a container of ZZ's.
+ * Must have at least one element.
+ */
+template <typename T>
+NTL::ZZ get_lcm(const T &arr, size_t size)
+{
+    if (size < 2)
+        return arr[0];
+
+    NTL::ZZ gcd {NTL::GCD(arr[0], arr[1])};
+    for(size_t i=2; i < size; ++i)
+        GCD(gcd, gcd, arr[i]);
+    NTL::ZZ lcm {product<T, NTL::ZZ>(arr)/gcd};
+    return lcm;
+}
+
 
 // prints the integers in arr specified by the array of indices ind 
 // with a '*' as separator

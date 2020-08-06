@@ -1,13 +1,3 @@
-#include <iostream>
-#include <ostream>
-#include <stdio.h>
-#include <cstdlib>
-#include <stdexcept>
-#include <functional>
-#include <map>
-#include <unordered_map>
-#include <NTL/ZZ.h>
-
 #include <util.h>
 
 /**
@@ -26,6 +16,38 @@ strchr_def(const char *str, int character)
     for (rv=str; *rv; ++rv);
     return rv;
 }
+
+
+std::unique_ptr<std::vector<size_t>>
+random_subset(size_t set_size)
+{
+    static constexpr size_t bits {sizeof(unsigned long)<<3};
+    static const unsigned long seed {(unsigned long)std::chrono::system_clock::now().time_since_epoch().count()};
+    static std::mt19937_64 generator(seed);
+    static std::uniform_int_distribution<unsigned long> dist(1, ULONG_MAX);
+
+    std::unique_ptr<std::vector<size_t>> indicies { std::make_unique<std::vector<size_t>>() };
+    while (indicies->size() == 0)
+    {
+        for(size_t k{0}; k < set_size; k += bits)
+        {
+            unsigned long rand_num {dist(generator)};
+            while (rand_num)
+            {
+                int n {__builtin_ctzl(rand_num)};
+                size_t index {n+k};
+                if (index >= set_size)
+                    break;
+
+                indicies->push_back(index);
+                rand_num &= rand_num-1;
+            }
+        }
+    }
+
+    return indicies;
+}
+
 
 /*
  * Returns the number of subsets of sizes ranging from 

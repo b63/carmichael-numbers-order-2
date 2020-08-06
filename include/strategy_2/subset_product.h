@@ -14,6 +14,14 @@ void gen_cprimes_2way_all(
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_size, size_t max_size);
 
+void
+gen_cprimes_2way_prob(
+        const std::vector<long> &primes, 
+        const std::array<long, 2> &nonrigid_factors,
+        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
+        size_t min_size, size_t max_size);
+
+
 
 /* TEMPLATE FUNCTIONS/CLASSES */
 

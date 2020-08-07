@@ -120,6 +120,29 @@ NTL::ZZ get_lcm(const T &arr, size_t size)
 }
 
 
+/**
+ * Splits the elements of vector<T> `set` into two halves.
+ * If n is the number of elements in `set`, the first
+ * floor(n/2) elements will be appended to `first`, and
+ * the rest will be appended to `second`.
+ */
+template <typename T>
+void split_half(std::vector<T> &first, std::vector<T> &second,
+        const std::vector<T> set)
+{
+    const size_t set_size {set.size()};
+    size_t first_size {first.size()};
+    first.reserve(first_size + set_size/2);
+    for(auto it{set.cbegin()},end=it+set_size/2; it != end; ++it)
+        first.push_back(*it);
+
+    first_size = first.size() - first_size;
+    second.reserve(second.size() + set_size-first_size);
+    for(auto it{set.cbegin()+first_size},end=set.cend(); it != end; ++it)
+        second.push_back(*it);
+}
+
+
 // prints the integers in arr specified by the array of indices ind 
 // with a '*' as separator
 template <typename T>

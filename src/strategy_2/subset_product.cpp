@@ -32,16 +32,9 @@ gen_cprimes_2way_all(
     const NTL::ZZ lcm {get_lcm<std::array<NTL::ZZ, num_bases> >(prod_base, num_bases)};
 
     /* split primes into two vectors */
-    const size_t num_primes {primes.size()};
     std::vector<long> h1_primes, h2_primes;
-    h1_primes.reserve(num_primes/2);
-    for(auto it{primes.cbegin()},end=it+num_primes/2; it != end; ++it)
-        h1_primes.push_back(*it);
-
+    split_half(h1_primes, h2_primes, primes);
     const size_t h1_primes_size {h1_primes.size()};
-    h2_primes.reserve(num_primes-h1_primes_size);
-    for(auto it{primes.cbegin()+h1_primes_size},end=primes.cend(); it != end; ++it)
-        h2_primes.push_back(*it);
 
 #if LOG_LEVEL >= 1
     std::cout << "|G| = " << lcm << "\n";

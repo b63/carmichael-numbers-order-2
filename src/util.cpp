@@ -18,6 +18,55 @@ strchr_def(const char *str, int character)
 }
 
 
+/**
+ * Factorize `n` and append prime factors to `primes` and their correspoding powers to
+ * `powers using trial division.` **Really slow**, useful only for one-time pre-computation.
+ * Prime factors are of type NTL::ZZ so that even extremely large `n` can be factored.
+ * Uses the NTL::NextPrime function.
+ * @param  primes   vector to append primes factors to
+ * @param  powers   vector to append correspoding power of the
+ *                  prime factors to
+ * @param  n        number  >= 1 to factorize. If n <= 1, then function
+ *                  does nothing.
+ */
+void
+factorize_slow(std::vector<NTL::ZZ> &primes, std::vector<long> &powers, const NTL::ZZ &n)
+{
+    if (n <= 1)
+        return;
+
+    Factorization f;
+    NTL::ZZ p { 2 };
+    NTL::ZZ m {n};
+    NTL::ZZ sqrt {NTL::SqrRoot(m)};
+
+    while (1)
+    {
+        long power {0};
+        while (NTL::divide(m, m, p))
+        {
+            NTL::SqrRoot(sqrt, m);
+            power++;
+        }
+
+        if(power)
+        {
+            primes.push_back(p);
+            powers.push_back(power);
+        }
+        else if(p >= sqrt)
+        {
+            primes.push_back(m);
+            powers.push_back(1);
+            break;
+        }
+
+        if (NTL::IsOne(m)) break;
+        NTL::NextPrime(p, p+1);
+    }
+}
+
+
 std::unique_ptr<std::vector<size_t>>
 random_subset(size_t set_size)
 {

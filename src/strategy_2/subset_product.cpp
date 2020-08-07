@@ -54,7 +54,7 @@ gen_cprimes_2way_all(
                 for(size_t i {0}; i < num_bases; ++i)
                    invs[i] = NTL::InvMod(prod_cache[i], prod_base[i]);
                 std::vector<size_t> &vec {map[invs]};
-                map[invs].push_back(insert_index);
+                vec.push_back(insert_index);
 
 #if LOG_LEVEL >= 1
                 if(vec.size() == 1)
@@ -76,17 +76,17 @@ gen_cprimes_2way_all(
     std::cout << "checking for inverse subset products of second half (size " << h2_primes.size() << ") ...\n";
 #endif
     /* go through second half, check whether inverses exist in the hashmap */
-    subsetprod_mod<3>(h2_primes, prod_base, 
+    subsetprod_mod<3>(h2_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
-                const std::vector<size_t> ret {map[std::move(prod_cache)]};
+                const std::vector<size_t> &ret {map[std::move(prod_cache)]};
                 if (ret.size() > 0)
                 {
                     for (auto ind : ret)
                     {
                         std::vector<long> cprimes;
-                        std::vector<size_t> other_half {(*subsets)[ind]};
+                        const std::vector<size_t> &other_half {(*subsets)[ind]};
                         for(auto i : other_half) cprimes.push_back(h1_primes[i]);
                         for(auto i : indicies)   cprimes.push_back(h2_primes[i]);
                         std::cout << "found: " << cprimes << "\n";
@@ -129,17 +129,10 @@ gen_cprimes_2way_prob(
     const NTL::ZZ lcm {get_lcm<std::array<NTL::ZZ, num_bases> >(prod_base, num_bases)};
 
     /* split primes into two vectors */
-    const size_t num_primes {primes.size()};
     std::vector<long> h1_primes, h2_primes;
-    h1_primes.reserve(num_primes/2);
-    for(auto it{primes.cbegin()},end=it+num_primes/2; it != end; ++it)
-        h1_primes.push_back(*it);
-
+    split_half(h1_primes, h2_primes, primes);
     const size_t h1_primes_size {h1_primes.size()};
-    const size_t h2_primes_size {num_primes-h1_primes_size};
-    h2_primes.reserve(h2_primes_size);
-    for(auto it{primes.cbegin()+h1_primes_size},end=primes.cend(); it != end; ++it)
-        h2_primes.push_back(*it);
+    const size_t h2_primes_size {h2_primes.size()};
 
     const size_t sqrt_g {NTL::conv<size_t>(NTL::SqrRoot(lcm))};
     const size_t max_num_subsets {calc_max_subsets(h1_primes_size, 1, 0)};
@@ -223,13 +216,13 @@ gen_cprimes_2way_prob(
         }
 
         /* check if match exists in map */
-        std::vector<size_t> &vec {map[std::move(prods)]};
+        const std::vector<size_t> &vec {map[std::move(prods)]};
         if (vec.size() > 0)
         {
             for (auto ind : vec)
             {
                 std::vector<long> cprimes;
-                std::vector<size_t> other_half {subsets[ind]};
+                const std::vector<size_t> &other_half {subsets[ind]};
                 for(auto i : other_half) cprimes.push_back(h1_primes[i]);
                 for(auto i : indicies)   cprimes.push_back(h2_primes[i]);
                 std::cout << "found: " << cprimes << "\n";

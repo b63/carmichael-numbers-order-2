@@ -19,15 +19,29 @@ typedef std::unordered_map<std::array<NTL::ZZ, 2>, std::vector<size_t>, ZZHasher
 void
 generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::ZZ &L_val, const long max)
 {
-    NTL::PrimeSeq s;
     std::vector<long> primes;
+#if LOG_LEVEL >= 1
+    std::cout << "generating primes up to " << max << " ...\n";
+#if LOG_LEVEL >= 2
+    size_t count {0};
 
-    long p { s.next() };
-    while (p != 0 && (!max || p < max))
+#endif
+#endif
+
+    NTL::ZZ p { 2 };
+    while (!max || p < max)
     {
-        primes.push_back(p);
-        p = s.next();
+        primes.push_back(NTL::conv<long>(p));
+        NTL::NextPrime(p, p+1);
+#if LOG_LEVEL >= 2
+        if ((count++ & STEP_MASK) == 0)
+            std::cerr << " count: " << count << "\r";
+#endif
     }
+
+#if LOG_LEVEL >= 1
+    std::cout << "filtering pairs of primes from list of size " << primes.size() << " ...\n";
+#endif
 
     const size_t num_primes { primes.size() };
     for(size_t i { 0 }; i < num_primes; ++i)
@@ -73,11 +87,11 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
             if (r1 != r2)
                 continue;
 
+            std::cout << "found: " << p0 << " " << p1 << "\n";
             factors.push_back(std::move(std::array<long, 2>{p0, p1}));
         }
     }
 }
-
 
 
 void

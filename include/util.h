@@ -90,6 +90,8 @@ std::unique_ptr<std::vector<size_t>> random_subset(size_t set_size);
 
 void factorize_slow(std::vector<NTL::ZZ> &primes, std::vector<long> &powers, const NTL::ZZ &n);
 
+NTL::ZZ eulers_toitent(const NTL::ZZ &n);
+
 /**************** TEMPLATE FUNCTIONS **************************/
 
 template <typename T, typename V>

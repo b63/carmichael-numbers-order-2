@@ -19,6 +19,31 @@ strchr_def(const char *str, int character)
 
 
 /**
+ * Calculate the value for φ(n) where φ is Euler's Toitent function.
+ * Computes the prime factorization of `n`, then calculates φ(n) using
+ * its multiplicative properties.
+ * Note: really slow for very large n
+ * @param   n    an integer >= 1
+ */
+NTL::ZZ
+eulers_toitent(const NTL::ZZ &n)
+{
+    std::vector<NTL::ZZ> primes;
+    std::vector<long>    powers;
+    factorize_slow(primes, powers, n);
+
+    NTL::ZZ phi {1};
+    const size_t num_primes {primes.size()};
+    for(size_t i {0}; i < num_primes; ++i)
+    {
+        phi *= NTL::power(primes[i], powers[i]-1)*(primes[i]-1);
+    }
+    // TODO: check NVRO
+    return phi;
+}
+
+
+/**
  * Factorize `n` and append prime factors to `primes` and their correspoding powers to
  * `powers using trial division.` **Really slow**, useful only for one-time pre-computation.
  * Prime factors are of type NTL::ZZ so that even extremely large `n` can be factored.

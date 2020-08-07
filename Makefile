@@ -30,7 +30,8 @@ SOURCES+= $(addprefix strategy_2/, nonrigid.cpp gen_nonrigid.cpp, all_possible_n
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
 SOURCES+= benchmarks/bench_lambda.cpp 
-SOURCES+= $(addprefix tests/, test_subsetprod_mod.cpp test_binomial.cpp test_rand_subset.cpp)
+SOURCES+= $(addprefix tests/, test_subsetprod_mod.cpp test_binomial.cpp test_rand_subset.cpp \
+                test_factorize_slow.cpp test_eulers_toitent.cpp)
 
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
@@ -41,7 +42,8 @@ BINARIES+= $(addprefix strategy_1/, gen_nonrigid pnonrigid)
 BINARIES+= $(addprefix strategy_2/, gen_nonrigid all_nonrigid_pairs)
 
 BENCHMARKS = $(addprefix benchmarks/, bench_construct_P bench_prodcache)
-TESTS = $(addprefix tests/, test_subsetprod_mod test_binomial test_rand_subset)
+TESTS = $(addprefix tests/, test_subsetprod_mod test_binomial test_rand_subset \
+            test_factorize_slow test_eulers_toitent)
 
 DIR_GUARD = [ -d $(@D) ] || mkdir -p $(@D)
 
@@ -136,11 +138,11 @@ ${S1_DIR}/pnonrigid: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
 
 S2_DIR = ${BUILD_DIR}/strategy_2
 
-${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/, counting_factors.o util.o) \
+${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/, counting_factors.o util.o timer.o) \
 		$(addprefix ${S2_DIR}/, nonrigid.o gen_nonrigid.o subset_product.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
-${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o) \
+${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
 		$(addprefix ${S2_DIR}/, nonrigid.o all_possible_nonrigid_pairs.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
@@ -162,6 +164,15 @@ ${TEST_DIR}/test_binomial: $(addprefix ${BUILD_DIR}/,util.o) \
 ${TEST_DIR}/test_rand_subset: $(addprefix ${BUILD_DIR}/,util.o) \
 		$(addprefix ${TEST_DIR}/, test_rand_subset.o )
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${TEST_DIR}/test_factorize_slow: $(addprefix ${BUILD_DIR}/,util.o counting_factors.o) \
+		$(addprefix ${TEST_DIR}/, test_factorize_slow.o )
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${TEST_DIR}/test_eulers_toitent: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
+		$(addprefix ${TEST_DIR}/, test_eulers_toitent.o )
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
 
 # BENCHMARK TARGETS
 # =============================

@@ -20,8 +20,8 @@ main(int argc, char **argv)
     const long max { NTL::conv<long>(argv[1]) };
     const long p0 { NTL::conv<long>(argv[2]) };
     const long p1 { NTL::conv<long>(argv[3]) };
-    const long p02_1 { p0*p0 - 1};
-    const long p12_1 { p1*p1 - 1};
+    const NTL::ZZ p0_zz {p0}, p1_zz {p1};
+    const NTL::ZZ p02_1 {NTL::sqr(p0_zz)-1}, p12_1 {NTL::sqr(p1_zz)-1};
 
     Factorization L { parse_factorization(argv[4]) };
 
@@ -51,16 +51,14 @@ main(int argc, char **argv)
         while(std::getline(file, line))
         {
             std::vector<long> vals;
-            if (parse_numbers(vals, line.c_str()) > 0)
+            if (line.size() && line[0] != '#' && parse_numbers(vals, line.c_str()) > 0)
                 a_values.push_back(std::move(vals));
-            else
-                std::cout << "ignoring line, '" << line << "'\n";
         }
         file.close();
     }
     else
     {
-        generate_a_values(a_values, primes_set, nonrigid_factors, 20, 0);
+        generate_a_values(a_values, primes_set, nonrigid_factors, L_val, 5, 6);
     }
 
     const size_t num_a { a_values.size() };
@@ -73,6 +71,7 @@ main(int argc, char **argv)
         for(auto it = a_factors.cbegin(), end=a_factors.cend();
                 it != end; ++it)
             a_val *= *it;
+
         std::vector<long> primes_set_a;
         std::set_difference(primes_set.cbegin(), primes_set.cend(), 
                 a_factors.cbegin(), a_factors.cend(),

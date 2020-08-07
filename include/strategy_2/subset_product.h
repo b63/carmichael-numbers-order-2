@@ -7,6 +7,7 @@
 #include <NTL/ZZ.h>
 
 #include <util.h>
+#include <config.h>
 
 void gen_cprimes_2way_all(
         const std::vector<long> &primes, 
@@ -58,16 +59,16 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
     std::unique_ptr<std::vector<std::vector<size_t>>> subsets_ptr 
         {std::make_unique<std::vector<std::vector<size_t>>>()};
     const size_t max_num_subsets {calc_max_subsets(set_size, min_terms, max_terms)};
-    subsets_ptr->reserve(max_num_subsets);
 
 #if LOG_LEVEL >= 1
     std::cout << "checking " << max_num_subsets << " subsets ...\n";
 #endif
 
     size_t subset_count {0};
+    subsets_ptr->reserve(max_num_subsets);
     for (size_t factors {min_terms}; factors <= max_terms; factors++) 
     {
-        std::vector<size_t> index_stack = {0};
+        std::vector<size_t> index_stack {0};
 
         /* cache of products */
         std::vector<std::array<NTL::ZZ, num_bases> > products; 
@@ -133,6 +134,10 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
             }
         }
     }
+
+#if LOG_LEVEL >= 1
+    std::cout << "stored  " << subsets_ptr->size() << " subsets \n";
+#endif
     return subsets_ptr;
 }
 

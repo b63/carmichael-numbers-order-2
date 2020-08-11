@@ -94,6 +94,15 @@ NTL::ZZ eulers_toitent(const NTL::ZZ &n);
 
 /**************** TEMPLATE FUNCTIONS **************************/
 
+template <typename T>
+inline void bound(T &val, const T &min, const T &max)
+{
+    if (val < min)
+        val = min;
+    else if (val > max)
+        val = max;
+}
+
 template <typename T, typename V>
 V product(T iterable)
 {
@@ -116,7 +125,7 @@ NTL::ZZ get_lcm(const T &arr, size_t size)
 
     NTL::ZZ gcd {NTL::GCD(arr[0], arr[1])};
     for(size_t i=2; i < size; ++i)
-        GCD(gcd, gcd, arr[i]);
+        NTL::GCD(gcd, gcd, arr[i]);
     NTL::ZZ lcm {product<T, NTL::ZZ>(arr)/gcd};
     return lcm;
 }
@@ -142,6 +151,25 @@ void split_half(std::vector<T> &first, std::vector<T> &second,
     second.reserve(second.size() + set_size-first_size);
     for(auto it{set.cbegin()+first_size},end=set.cend(); it != end; ++it)
         second.push_back(*it);
+}
+
+
+
+/*
+ * Returns the number of bytes storing subsets of sizes ranging from
+ * `min_size` to `max_size` (both inclusive) would take when drawing
+ * from a set of size `set_size` if each element takes sizeof(T) bytes,
+ * where T is the template parameter.
+ */
+template <typename T>
+size_t estimate_subsets_size(size_t set_size, size_t min_size, size_t max_size)
+{
+    const size_t per_T {sizeof(T)};
+    size_t ret {0};
+    max_size = max_size > 0 ? MIN(set_size, max_size) : set_size;
+    for(; min_size <= max_size; min_size++)
+        ret += per_T * binomial(set_size, min_size) * min_size;
+    return ret;
 }
 
 

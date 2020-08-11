@@ -92,7 +92,7 @@ subset_product_brute_force(std::vector<std::vector<size_t>> &cprimes, const std:
             size_t top = index_size - 1;
             size_t prod_top = prod_size - 1;
 
-            if (index_stack[top] < num_primes) 
+            if (index_stack[top] < num_primes - (factors - index_size)) 
             {
                 if (prod_size+1 < factors) 
                 {
@@ -286,10 +286,8 @@ get_gcd_Lfilter(std::vector<std::array<long, 2> > &pairs, std::vector<long> &fac
             const long c2 {NTL::divide(p0p1-1, g2)};
             if ( c1 && c2)
                 pairs.push_back(std::move(std::array<long, 2>{factors[i], factors[j]}));
-            else if (c1)
+            else
                 partial_pairs.push_back(std::move(std::array<long, 2>{factors[i], factors[j]}));
-            else if (c2)
-                partial_pairs.push_back(std::move(std::array<long, 2>{factors[j], factors[i]}));
         }
 #if LOG_LEVEL >= 2
         if((i&STEP_MASK) == 0) std::cerr << std::setw(10) << i << "/" << size << "\r";
@@ -299,7 +297,5 @@ get_gcd_Lfilter(std::vector<std::array<long, 2> > &pairs, std::vector<long> &fac
     std::cerr << std::setw(10) << size << "/" << size << "\n";
 #endif
 
-    std::cout << "partial: ";
-    printVec<std::array<long,2> >(partial_pairs);
-    std::cout << "\n";
+    std::cout << "partial: " << partial_pairs.size() << "\n";
 }

@@ -63,7 +63,7 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
 
 #if LOG_LEVEL >= 1
     std::cout << "checking " << max_num_subsets << " subsets ...\n";
-    std::cout << "estimated memory usage (storing all subsets):" <<
+    std::cout << "estimated memory usage (storing all subsets): " <<
         estimate_subsets_size<size_t>(set_size, min_terms, max_num_subsets)
         + max_num_subsets*sizeof(std::vector<size_t>) << " bytes\n";
 #endif
@@ -169,7 +169,10 @@ void subsetprod_2way_all(
 
     /* clip min_size and max_size */
     bound<size_t>(min_size, 1, first_half_size);
-    bound<size_t>(max_size, min_size, first_half_size);
+    if (max_size)
+        bound<size_t>(max_size, min_size, first_half_size);
+    else
+        max_size = first_half_size;
 
     /* reserve space in hashmap */
     size_t num_subsets {calc_max_subsets(first_half_size, min_size, max_size)};

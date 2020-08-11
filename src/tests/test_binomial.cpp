@@ -1,4 +1,4 @@
-#include <strategy_2/subset_product.h>
+#include <subset_product.h>
 
 int
 test_example_1()

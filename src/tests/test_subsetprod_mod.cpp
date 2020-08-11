@@ -1,6 +1,6 @@
 
 #include <util.h>
-#include <strategy_2/subset_product.h>
+#include <subset_product.h>
 
 
 template <unsigned long int N>

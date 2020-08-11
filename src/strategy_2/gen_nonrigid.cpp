@@ -7,14 +7,43 @@
 
 #include <util.h>
 #include <counting_factors.h>
+#include <subset_product.h>
 #include <strategy_2/nonrigid.h>
-#include <strategy_2/subset_product.h>
 
+
+void
+read_a_values_from_file(std::vector<std::vector<long> > &vec, const char *filename)
+{
+    std::ifstream file { filename, std::ios::in};
+    std::string line;
+    while(std::getline(file, line))
+    {
+        std::vector<long> vals;
+        if (line.size() && line[0] != '#' && parse_numbers(vals, line.c_str()) > 0)
+            vec.push_back(std::move(vals));
+    }
+    file.close();
+}
+
+
+void
+read_primes_from_file(std::vector<long> &vec, const char *filename)
+{
+    std::ifstream file { filename, std::ios::in};
+    std::string line;
+    while(std::getline(file, line))
+    {
+        if (line.size() && line[0] != '#')
+            vec.push_back(NTL::conv<long>(line.c_str()));
+    }
+
+    file.close();
+}
 
 int
 main(int argc, char **argv)
 {
-    if (argc <  5)
+    if (argc <  7)
         return 0;
 
     const long max { NTL::conv<long>(argv[1]) };
@@ -23,7 +52,10 @@ main(int argc, char **argv)
     const NTL::ZZ p0_zz {p0}, p1_zz {p1};
     const NTL::ZZ p02_1 {NTL::sqr(p0_zz)-1}, p12_1 {NTL::sqr(p1_zz)-1};
 
-    Factorization L { parse_factorization(argv[4]) };
+    const size_t min_terms { NTL::conv<size_t>(argv[4]) };
+    const size_t max_terms { NTL::conv<size_t>(argv[5]) };
+
+    Factorization L { parse_factorization(argv[6]) };
 
     NTL::ZZ L_val;
     multiply_factors(L_val, L.primes, L.powers);
@@ -34,31 +66,29 @@ main(int argc, char **argv)
 
     const std::array<long,2> nonrigid_factors { p0, p1 };
     std::vector<long> primes_set;
-    construct_primes_set(primes_set, nonrigid_factors, L_val, L, max);
+    if (argc >= 9 && strcmp(argv[7], "-"))
+    {
+        read_primes_from_file(primes_set, argv[7]);
+    }
+    else
+    {
+        construct_primes_set(primes_set, nonrigid_factors, L_val, L, max);
+        std::cout << "P = " << primes_set << "\n";
+    }
 
-    std::cout << "P = ";
-    printVec<long>(primes_set);
     const size_t primes_set_size { primes_set.size() };
-    std::cout << "\n|P| = " << primes_set_size << "\n";
+    std::cout << "|P| = " << primes_set_size << "\n";
 
 
     /* read-in/generate values for parameter a */
     std::vector<std::vector<long>> a_values;
-    if (argc >= 6)
+    if (argc >= 9 && strcmp(argv[8], "-"))
     {
-        std::ifstream file { argv[5], std::ios::in};
-        std::string line;
-        while(std::getline(file, line))
-        {
-            std::vector<long> vals;
-            if (line.size() && line[0] != '#' && parse_numbers(vals, line.c_str()) > 0)
-                a_values.push_back(std::move(vals));
-        }
-        file.close();
+        read_a_values_from_file(a_values, argv[8]);
     }
     else
     {
-        generate_a_values(a_values, primes_set, nonrigid_factors, L_val, 5, 6);
+        generate_a_values(a_values, primes_set, nonrigid_factors, L_val, 1, 3);
     }
 
     const size_t num_a { a_values.size() };
@@ -79,7 +109,7 @@ main(int argc, char **argv)
 
         std::cout << "(|P| = " << primes_set_a.size() << ") trying a = " 
                 << a_val << ", " << a_factors << "\n";
-        gen_cprimes_2way_all(primes_set_a, nonrigid_factors, a_val, L_val, 1, 0);
+        gen_cprimes_2way_prob(primes_set_a, nonrigid_factors, a_val, L_val, 1000000, min_terms, max_terms);
         std::cout << "\n\n";
     }
 }

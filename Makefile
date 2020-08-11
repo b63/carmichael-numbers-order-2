@@ -5,7 +5,7 @@ CXX=g++
 override CPPFLAGS:=$(CPPFLAGS) -I ./include
 
 # Extra flags to give to the C++ compiler. 
-override CXXFLAGS:=$(CXXFLAGS) -Wall -Werror -pedantic -std=c++14 -Ofast -march=native
+override CXXFLAGS:=$(CXXFLAGS) -Wall -Werror -pedantic -std=c++14 -Ofast -march=native -flto
 
 # Extra flags to give to compilers when they are supposed to invoke the linker, ‘ld’, such as -L. Libraries (-lfoo) should be added to the LDLIBS variable instead. 
 override LDFLAGS:=$(LDFLAGS)
@@ -139,7 +139,7 @@ ${S1_DIR}/pnonrigid: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
 S2_DIR = ${BUILD_DIR}/strategy_2
 
 ${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/, counting_factors.o util.o timer.o) \
-		$(addprefix ${S2_DIR}/, nonrigid.o gen_nonrigid.o subset_product.o)
+		$(addprefix ${S2_DIR}/, nonrigid.o gen_nonrigid.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o timer.o) \

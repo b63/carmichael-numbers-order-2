@@ -1,6 +1,7 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
+#include <cmath>
 
 #include <NTL/ZZ.h>
 #include <NTL/RR.h>
@@ -14,13 +15,12 @@ void
 construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 {
     NTL::ZZ p_max {NTL::SqrRoot(L_val+1)};
+    if (max && max < p_max)
+        p_max = max;
 
 #if LOG_LEVEL >= 1
-    std::cout << "upper bound on prime <= " << p_max << "\n";
-    if (max)
-        std::cout << "filtering primes <= " << max << " ...\n";
-    else
-        std::cout << "filtering primes <= " << p_max << " ...\n";
+    std::cout << "upper bound on prime <= " << NTL::SqrRoot(L_val+1) << "\n";
+    std::cout << "filtering primes <= " << p_max << " ...\n";
 
 #if LOG_LEVEL >= 2
     size_t count = 0;
@@ -32,7 +32,7 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
     size_t i { 0 };
 
     long p = s.next();
-    while ( p != 0 && p <= p_max && (!max || p <= max))
+    while ( p != 0 && p <= p_max)
     {
         /* check to make sure p is not a factor of L */
         for(; i < num_factors && L.primes[i] < p; ++i)
@@ -55,7 +55,7 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
 
     /* NOTE: assming L does not contain a factor larger than what NTL::PrimeSeq supports */
     /* don't bother checking if p is a factor of L */
-    while(p != 0 && p <= p_max && (!max || p <= max))
+    while(p != 0 && p <= p_max)
     {
         if(NTL::divide(L_val, NTL::sqr(NTL::ZZ{p})-1))
         {
@@ -77,8 +77,8 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
 
         /* maxed out PrimeSeq, use NextPrime */
         NTL::ZZ p_zz {primes[primes.size()-1]};
-        NextPrime(p_zz, p_zz);
-        while (p_zz < p_max && (!max || p_zz <= max))
+        NextPrime(p_zz, p_zz+1);
+        while (p_zz < p_max)
         {
             /* check to make sure p is not a factor of L */
             for(; i < num_factors && L.primes[i] < p_zz; ++i); /* NOP */
@@ -87,22 +87,24 @@ construct_primes(std::vector<long> &primes, const NTL::ZZ &L_val, const Factoriz
             else if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
                 primes.push_back(NTL::conv<long>(p_zz));
 
-            NextPrime(p_zz, p_zz);
+            NextPrime(p_zz, p_zz+1);
 #if LOG_LEVEL >= 2
             if((count++ & STEP_MASK) == 0) std::cerr << "count: " << count << "\r";
 #endif
         }
 
         /* don't bother checking if p_zz is a factor of L */
-        while (p_zz < p_max && (!max || p_zz <= max))
+        while (p_zz < p_max)
         {
             if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
                 primes.push_back(NTL::conv<long>(p_zz));
 
-            NextPrime(p_zz, p_zz);
+            NextPrime(p_zz, p_zz+1);
 
 #if LOG_LEVEL >= 2
-            if((count++ & STEP_MASK) == 0) std::cerr << "count: " << count << "\r";
+            if((count++ & STEP_MASK) == 0) 
+                std::cerr << "count: " << count 
+                    << ", size: " << primes.size() << "\r";
 #endif
         }
 
@@ -157,7 +159,7 @@ main(int argc, char **argv)
 
     NTL::ZZ L_val;
     multiply_factors(L_val, L.primes, L.powers);
-    std::cout << "L = " << L_val << "\n";
+    std::cout << "L = " << L_val << "(" << ceil(NTL::log(L_val)/log(2)) << ")\n";
 
     std::vector<long> primes;
     init_timer();

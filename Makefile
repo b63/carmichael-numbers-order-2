@@ -102,7 +102,7 @@ ${BUILD_DIR}/generate_cprimes: $(addprefix ${BUILD_DIR}/,util.o generate_cprimes
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/generate_cprimes_order_2: $(addprefix ${BUILD_DIR}/,generate_cprimes_order_2.o \
-	    timer.o util.o)
+	    timer.o util.o construct_P.o subset_product.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/construct_P: $(addprefix ${BUILD_DIR}/,construct_P_main.o construct_P.o \

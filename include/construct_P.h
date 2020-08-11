@@ -25,6 +25,11 @@ void factor_n_1(std::vector<long>  &factors_n_1, std::vector<long> &powers_n_1,
 bool is_perfect_square(NTL::ZZ &n, const NTL::ZZ &n2);
 
 
+void construct_primes_standard(
+        std::vector<long> &primes,
+        const NTL::ZZ &L_val,
+        const Factorization &L,
+        size_t max = 0);
 
 void construct_primes(
         std::map<const long, std::vector<long> > &factor_map,

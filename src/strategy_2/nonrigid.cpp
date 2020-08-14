@@ -256,7 +256,6 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
     /* split primes into two vectors */
     std::vector<long> h1_primes, h2_primes;
     split_half(h1_primes, h2_primes, primes);
-    const size_t h1_primes_size {h1_primes.size()};
     const size_t num_primes {primes.size()};
 
 #if LOG_LEVEL >= 1
@@ -266,6 +265,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
     std::cout << "p1^-1 = " << inv_p1 << " (mod " << p02_1 << ")\n";
     std::cout << "gcd(p0^2-1,p1^2-1,L) = " << gcd << "\n";
 
+    const size_t h1_primes_size {h1_primes.size()};
     std::cout << "storing inverse subset products of first half (size " << h1_primes_size << ") " << " ...\n";
     size_t inv_count {0};
 #if LOG_LEVEL >= 2

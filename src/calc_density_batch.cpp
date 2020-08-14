@@ -17,14 +17,13 @@ size_t
 get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 {
     NTL::ZZ p_max {NTL::SqrRoot(L_val+1)};
+    if(max && max < p_max)
+        p_max = max;
 
 #if LOG_LEVEL >= 1
     size_t count { 0 };
-    std::cout << "upper bound on prime <= " << p_max << "\n";
-    if (max)
-        std::cout << "filtering primes <= " << max << " ...\n";
-    else
-        std::cout << "filtering primes <= " << p_max << " ...\n";
+    std::cout << "upper bound on prime <= " << NTL::SqrRoot(L_val+1) << "\n";
+    std::cout << "filtering primes <= " << p_max << " ...\n";
 #endif
 
     NTL::PrimeSeq s;
@@ -34,7 +33,7 @@ get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 
     long p_prev { 0 };
     long p = s.next();
-    while ( p != 0 && p <= p_max && (!max || p <= max))
+    while ( p != 0 && p <= p_max)
     {
         /* check to make sure p is not a factor of L */
         for(; i < num_factors && L.primes[i] < p; ++i)
@@ -58,7 +57,7 @@ get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 
     /* NOTE: assming L does not contain a factor larger than what NTL::PrimeSeq supports */
     /* don't bother checking if p is a factor of L */
-    while(p != 0 && p <= p_max && (!max || p <= max))
+    while(p != 0 && p <= p_max)
     {
         if(NTL::divide(L_val, NTL::sqr(NTL::ZZ{p})-1))
             num_primes++;
@@ -82,8 +81,8 @@ get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
 
         /* maxed out PrimeSeq, use NextPrime */
         NTL::ZZ p_zz {p_prev};
-        NextPrime(p_zz, p_zz);
-        while (p_zz < p_max && (!max || p_zz <= max))
+        NextPrime(p_zz, p_zz+1);
+        while (p_zz < p_max)
         {
             /* check to make sure p is not a factor of L */
             for(; i < num_factors && L.primes[i] < p_zz; ++i); /* NOP */
@@ -92,19 +91,19 @@ get_P_size(const NTL::ZZ &L_val, const Factorization &L, long max = 0)
             else if((p_zz != L.primes[i] || L.powers[i] == 0 ) && NTL::divide(L_val, NTL::sqr(p_zz)-1))
                 num_primes++;
 
-            NextPrime(p_zz, p_zz);
+            NextPrime(p_zz, p_zz+1);
 #if LOG_LEVEL >= 2
             if((count++ & STEP_MASK) == 0) std::cerr << "count: " << count << "\r";
 #endif
         }
 
         /* don't bother checking if p_zz is a factor of L */
-        while (p_zz < p_max && (!max || p_zz <= max))
+        while (p_zz < p_max)
         {
             if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
                 num_primes++;
 
-            NextPrime(p_zz, p_zz);
+            NextPrime(p_zz, p_zz+1);
 
 #if LOG_LEVEL >= 2
             if((count++ & STEP_MASK) == 0) std::cerr << "count: " << count << "\r";

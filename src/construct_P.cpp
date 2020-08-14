@@ -69,6 +69,126 @@ void test_method_1(const std::vector<long> &L_P_primes, const std::vector<long> 
 }
 
 
+/********************** STANDARD METHOD ****************************/
+
+/**
+ * Simply goes through all primes p up to `max`, and checks if:
+ *     (1) p does not divide L_val
+ *     (2) p^2-1 divides L_val
+ * If both conditions are satisfied, then added the primes to `primes` vector.
+ * @param primes    vector<long> to which to add the primes that satify
+ *                  conditions (1) and (2)
+ * @param L_val     reference to NTL::ZZ value representing parameter L
+ * @oaram L         Factorization object containing the prime factorization of L.
+ *                  The vector of prime factors and powers are assumed to be sorted.
+ *                  If they are not sorted, check for condition (1) might not work.
+ */
+void
+construct_primes_standard(
+        std::vector<long> &primes,
+        const NTL::ZZ &L_val,
+        const Factorization &L,
+        size_t max)
+{
+    NTL::ZZ p_max {NTL::SqrRoot(L_val+1)};
+    if (max && max < p_max)
+        p_max = max;
+
+#if LOG_LEVEL >= 1
+    std::cout << "upper bound on prime <= " << NTL::SqrRoot(L_val+1) << "\n";
+    std::cout << "filtering primes <= " << p_max << " ...\n";
+
+#if LOG_LEVEL >= 2
+    size_t count = 0;
+#endif
+#endif
+
+    NTL::PrimeSeq s;
+    const size_t num_factors { L.primes.size() };
+    size_t i { 0 };
+
+    long p = s.next();
+    while ( p != 0 && p <= p_max)
+    {
+        /* check to make sure p is not a factor of L */
+        for(; i < num_factors && L.primes[i] < p; ++i)
+            ; /* NOP */
+
+        if (i >= num_factors)
+            break;
+        else if (p != L.primes[i])
+        {
+            NTL::ZZ p2_1 { NTL::sqr(NTL::ZZ{p})-1 };
+            if(NTL::divide(L_val, p2_1))
+                primes.push_back(p);
+        }
+        p = s.next();
+#if LOG_LEVEL >= 2
+        if((count++ & STEP_MASK) == 0)
+            std::cerr << "count: " << count << "\r";
+#endif
+    }
+
+    /* NOTE: assming L does not contain a factor larger than what NTL::PrimeSeq supports */
+    /* don't bother checking if p is a factor of L */
+    while(p != 0 && p <= p_max)
+    {
+        if(NTL::divide(L_val, NTL::sqr(NTL::ZZ{p})-1))
+        {
+            primes.push_back(p);
+        }
+        p = s.next();
+#if LOG_LEVEL >= 2
+        if((count++ & STEP_MASK) == 0) std::cerr << "count: " << count << "\r";
+#endif
+    }
+
+#if LOG_LEVEL >= 2
+    std::cerr << "count: " << count << "\n";
+#endif
+
+    if (p == 0 && p < p_max)
+    {
+        std::cout << "reached small prime limit, starting from p=" << primes[primes.size()-1] << " ...\n";
+
+        /* maxed out PrimeSeq, use NextPrime */
+        NTL::ZZ p_zz {primes[primes.size()-1]};
+        NextPrime(p_zz, p_zz+1);
+        while (p_zz < p_max)
+        {
+            /* check to make sure p is not a factor of L */
+            for(; i < num_factors && L.primes[i] < p_zz; ++i); /* NOP */
+            if (i >= num_factors) 
+                break;
+            else if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
+                primes.push_back(NTL::conv<long>(p_zz));
+
+            NextPrime(p_zz, p_zz+1);
+#if LOG_LEVEL >= 2
+            if((count++ & STEP_MASK) == 0) std::cerr << "count: " << count << "\r";
+#endif
+        }
+
+        /* don't bother checking if p_zz is a factor of L */
+        while (p_zz < p_max)
+        {
+            if(NTL::divide(L_val, NTL::sqr(p_zz)-1))
+                primes.push_back(NTL::conv<long>(p_zz));
+
+            NextPrime(p_zz, p_zz+1);
+
+#if LOG_LEVEL >= 2
+            if((count++ & STEP_MASK) == 0) 
+                std::cerr << "count: " << count 
+                    << ", size: " << primes.size() << "\r";
+#endif
+        }
+
+#if LOG_LEVEL >= 2
+        std::cerr << "count: " << count << "\n";
+#endif
+    }
+}
 
 
 /********************** METHOD 2 ****************************/

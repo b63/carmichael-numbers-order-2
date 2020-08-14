@@ -6,8 +6,8 @@
 #include <strategy_1/nonrigid.h>
 
 /**
- * Takes the factorization of parameter L as the only cmdline argument,
- * and prints out the set of possible non-rigid factors up to a limit.
+ * Takes a limit max and the factorization of parameter L as cmdline arguments,
+ * and prints out the size of set of possible non-rigid factors up to the given limit max.
  * Then prints out the set of pairs of those factors that partly satisfy
  * the GCD contraints (under "partial: "). Then, finally the set of
  * pairs that satisfy all the GCD contraints imposed by L.
@@ -15,11 +15,11 @@
 int
 main(int argc, char **argv)
 {
-    if (argc != 2)
+    if (argc != 3)
         return 0;
 
-    Factorization L { parse_factorization(argv[1]) };
-    long max = 10000;
+    long max {NTL::conv<long>(argv[1])};
+    Factorization L { parse_factorization(argv[2]) };
 
     //if (!parse_args(argc, argv, max, L))
     //    return 0;
@@ -30,8 +30,7 @@ main(int argc, char **argv)
 
     std::vector<long> factors;
     get_nonrigid_primes(factors, L_val, max);
-    printVec<long>(factors);
-    std::cout << "\n";
+    std::cout << "factors: " << factors.size() << "\n";
 
     std::vector<std::array<long, 2> > pairs;
     get_gcd_Lfilter(pairs, factors, L_val);

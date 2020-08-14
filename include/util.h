@@ -2,11 +2,20 @@
 #define UTIL_H
 
 #include <vector>
-#include <map>
-#include <iomanip>
 #include <iostream>
+#include <iomanip>
 #include <ostream>
+#include <random>
+#include <climits>
+#include <chrono>
+#include <stdio.h>
+#include <cstdlib>
+#include <climits>
+#include <stdexcept>
 #include <functional>
+#include <map>
+#include <unordered_map>
+#include <memory>
 
 #include <NTL/ZZ.h>
 #include <NTL/RR.h>
@@ -65,10 +74,6 @@ NTL::RR get_density(NTL::ZZ &L, size_t prime_size);
 
 Factorization include_as_factor(const Factorization &n, const Factorization &factor);
 
-std::ostream& operator<<(std::ostream &os, const std::array<long, 2> &array);
-
-std::ostream& operator<<(std::ostream &os, const std::vector<long> &array);
-
 const char * strchr_def(const char *str, int character);
 
 Factorization parse_factorization(const char *str);
@@ -76,7 +81,97 @@ Factorization parse_factorization(const char *str);
 size_t parse_numbers(std::vector<long> &list, const char *str);
 
 int parse_args(int argc, char **argv, long &max, Factorization &f);
+
+size_t calc_max_subsets(size_t set_size, size_t min_size, size_t max_size);
+
+size_t binomial(unsigned long n, unsigned long m);
+
+std::unique_ptr<std::vector<size_t>> random_subset(size_t set_size);
+
+void factorize_slow(std::vector<NTL::ZZ> &primes, std::vector<long> &powers, const NTL::ZZ &n);
+
+NTL::ZZ eulers_toitent(const NTL::ZZ &n);
+
 /**************** TEMPLATE FUNCTIONS **************************/
+
+template <typename T>
+inline void bound(T &val, const T &min, const T &max)
+{
+    if (val < min)
+        val = min;
+    else if (val > max)
+        val = max;
+}
+
+template <typename T, typename V>
+V product(T iterable)
+{
+    V ret {1};
+    for (auto v : iterable)
+        ret *= v;
+    return ret;
+}
+
+
+/**
+ * Get the lcm of a container of ZZ's.
+ * Must have at least one element.
+ */
+template <typename T>
+NTL::ZZ get_lcm(const T &arr, size_t size)
+{
+    if (size < 2)
+        return arr[0];
+
+    NTL::ZZ gcd {NTL::GCD(arr[0], arr[1])};
+    for(size_t i=2; i < size; ++i)
+        NTL::GCD(gcd, gcd, arr[i]);
+    NTL::ZZ lcm {product<T, NTL::ZZ>(arr)/gcd};
+    return lcm;
+}
+
+
+/**
+ * Splits the elements of vector<T> `set` into two halves.
+ * If n is the number of elements in `set`, the first
+ * floor(n/2) elements will be appended to `first`, and
+ * the rest will be appended to `second`.
+ */
+template <typename T>
+void split_half(std::vector<T> &first, std::vector<T> &second,
+        const std::vector<T> set)
+{
+    const size_t set_size {set.size()};
+    size_t first_size {first.size()};
+    first.reserve(first_size + set_size/2);
+    for(auto it{set.cbegin()},end=it+set_size/2; it != end; ++it)
+        first.push_back(*it);
+
+    first_size = first.size() - first_size;
+    second.reserve(second.size() + set_size-first_size);
+    for(auto it{set.cbegin()+first_size},end=set.cend(); it != end; ++it)
+        second.push_back(*it);
+}
+
+
+
+/*
+ * Returns the number of bytes storing subsets of sizes ranging from
+ * `min_size` to `max_size` (both inclusive) would take when drawing
+ * from a set of size `set_size` if each element takes sizeof(T) bytes,
+ * where T is the template parameter.
+ */
+template <typename T>
+size_t estimate_subsets_size(size_t set_size, size_t min_size, size_t max_size)
+{
+    const size_t per_T {sizeof(T)};
+    size_t ret {0};
+    max_size = max_size > 0 ? MIN(set_size, max_size) : set_size;
+    for(; min_size <= max_size; min_size++)
+        ret += per_T * binomial(set_size, min_size) * min_size;
+    return ret;
+}
+
 
 // prints the integers in arr specified by the array of indices ind 
 // with a '*' as separator
@@ -112,6 +207,46 @@ void printVec(const std::vector<T> &arr)
     }
 
     std::cout << "}";
+}
+
+
+template <typename T>
+std::ostream& operator<<(std::ostream &os, const std::vector<T> &arr) 
+{
+    size_t size = arr.size();
+    os << "{";
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i > 0) 
+        {
+            os << ", ";
+        }
+        os << arr[i];
+    }
+
+    os << "}";
+    return os;
+}
+
+
+template <typename T, long unsigned int N>
+std::ostream& operator<<(std::ostream &os, const std::array<T,N> &arr) 
+{
+    size_t size = arr.size();
+    os << "{";
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i > 0) 
+        {
+            os << ", ";
+        }
+        os << arr[i];
+    }
+
+    os << "}";
+    return os;
 }
 
 

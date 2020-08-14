@@ -44,4 +44,8 @@ counting_factors
 # data
 data
 
+# plot data
+plots/**/summary
+plots/**/sorted_summary
+
 build

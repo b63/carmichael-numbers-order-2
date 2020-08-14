@@ -88,7 +88,7 @@ ${BUILD_DIR}/%.dd: ${BUILD_DIR}/%.d
 	done < $@.$$$$
 	rm -f $@.$$$$
 
-.PHONY: all benchmarks clean
+.PHONY: all tests benchmarks clean
 
 all: $(addprefix ${BUILD_DIR}/,$(BINARIES))
 
@@ -103,8 +103,8 @@ clean:
 ${BUILD_DIR}/generate_cprimes: $(addprefix ${BUILD_DIR}/,util.o generate_cprimes.o )
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
-${BUILD_DIR}/generate_cprimes_order_2: $(addprefix ${BUILD_DIR}/,generate_cprimes_order_2.o \
-	    timer.o util.o construct_P.o subset_product.o)
+${BUILD_DIR}/generate_cprimes_order_2: $(addprefix ${BUILD_DIR}/,timer.o util.o \
+	    counting_factors.o primality.o construct_P.o generate_cprimes_order_2.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${BUILD_DIR}/construct_P: $(addprefix ${BUILD_DIR}/,construct_P_main.o construct_P.o \
@@ -157,8 +157,7 @@ ${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
 
 TEST_DIR = ${BUILD_DIR}/tests
 
-${TEST_DIR}/test_subsetprod_mod: $(addprefix ${BUILD_DIR}/,util.o) \
-		$(addprefix ${S2_DIR}/, subset_product.o ) \
+${TEST_DIR}/test_subsetprod_mod: $(addprefix ${BUILD_DIR}/,util.o subset_product.o) \
 		$(addprefix ${TEST_DIR}/, test_subsetprod_mod.o )
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 

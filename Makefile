@@ -26,21 +26,27 @@ SOURCES+= gen_distributions.cpp
 SOURCES+= generate_cprimes.cpp generate_cprimes_order_2.cpp
 SOURCES+= construct_P.cpp construct_P_main.cpp
 SOURCES+= calc_density.cpp calc_density_batch.cpp
+SOURCES+= p2_1.cpp
 SOURCES+= $(addprefix strategy_1/, nonrigid.cpp gen_nonrigid.cpp pnonrigid.cpp)
 SOURCES+= $(addprefix strategy_2/, nonrigid.cpp gen_nonrigid.cpp, all_possible_nonrigid_pairs.cpp)
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
 SOURCES+= benchmarks/bench_lambda.cpp 
+SOURCES+= $(addprefix tests/, test_subsetprod_mod.cpp test_binomial.cpp test_rand_subset.cpp \
+                test_factorize_slow.cpp test_eulers_toitent.cpp)
 
 
 OBJECTS=$(SOURCES:%.cpp=%.o)
 
 BINARIES = generate_cprimes generate_cprimes_order_2 construct_P gen_distributions
 BINARIES+= calc_density calc_density_batch
+BINARIES+= p2_1
 BINARIES+= $(addprefix strategy_1/, gen_nonrigid pnonrigid)
 BINARIES+= $(addprefix strategy_2/, gen_nonrigid all_nonrigid_pairs)
 
 BENCHMARKS = $(addprefix benchmarks/, bench_construct_P bench_prodcache)
+TESTS = $(addprefix tests/, test_subsetprod_mod test_binomial test_rand_subset \
+            test_factorize_slow test_eulers_toitent)
 
 DIR_GUARD = [ -d $(@D) ] || mkdir -p $(@D)
 
@@ -89,6 +95,8 @@ all: $(addprefix ${BUILD_DIR}/,$(BINARIES))
 
 benchmarks: $(addprefix ${BUILD_DIR}/,$(BENCHMARKS))
 
+tests: $(addprefix ${BUILD_DIR}/,$(TESTS))
+
 clean:
 	rm -rf ${BUILD_DIR}/*
 
@@ -113,6 +121,9 @@ ${BUILD_DIR}/calc_density: $(addprefix ${BUILD_DIR}/,util.o timer.o calc_density
 ${BUILD_DIR}/calc_density_batch: $(addprefix ${BUILD_DIR}/,util.o timer.o calc_density_batch.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
+${BUILD_DIR}/p2_1: $(addprefix ${BUILD_DIR}/,util.o counting_factors.o p2_1.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
 
 # STRATEGY 1 TARGETS
 # =============================
@@ -133,12 +144,39 @@ ${S1_DIR}/pnonrigid: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
 
 S2_DIR = ${BUILD_DIR}/strategy_2
 
-${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/,util.o) \
+${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/, counting_factors.o util.o timer.o) \
 		$(addprefix ${S2_DIR}/, nonrigid.o gen_nonrigid.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
-${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o) \
+${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
 		$(addprefix ${S2_DIR}/, nonrigid.o all_possible_nonrigid_pairs.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+
+# TEST TARGETS
+# =============================
+
+TEST_DIR = ${BUILD_DIR}/tests
+
+${TEST_DIR}/test_subsetprod_mod: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${S2_DIR}/, subset_product.o ) \
+		$(addprefix ${TEST_DIR}/, test_subsetprod_mod.o )
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${TEST_DIR}/test_binomial: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${TEST_DIR}/, test_binomial.o )
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${TEST_DIR}/test_rand_subset: $(addprefix ${BUILD_DIR}/,util.o) \
+		$(addprefix ${TEST_DIR}/, test_rand_subset.o )
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${TEST_DIR}/test_factorize_slow: $(addprefix ${BUILD_DIR}/,util.o counting_factors.o) \
+		$(addprefix ${TEST_DIR}/, test_factorize_slow.o )
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${TEST_DIR}/test_eulers_toitent: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
+		$(addprefix ${TEST_DIR}/, test_eulers_toitent.o )
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 

@@ -53,4 +53,6 @@ const time_metric end(int id);
  */
 void printTime(const time_metric &t);
 
+std::ostream& operator<<(std::ostream &os, const time_metric &t);
+
 #endif

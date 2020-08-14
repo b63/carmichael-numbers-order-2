@@ -1,13 +1,300 @@
-#include <iostream>
-#include <ostream>
-#include <stdio.h>
-#include <stdexcept>
-#include <functional>
-#include <map>
-#include <unordered_map>
-#include <NTL/ZZ.h>
-
 #include <util.h>
+
+/**
+ * Convinience wrapper function for strchr.
+ * Returns a pointer to the first occurence of `character`
+ * in `str`. If not found, then pointer to end of null terminator
+ * of null-terminated string `str` is returned.
+ */
+const char *
+strchr_def(const char *str, int character)
+{
+    const char *rv { strchr(str, character) };
+    if (rv) return rv;
+
+    /* find end of str */
+    for (rv=str; *rv; ++rv);
+    return rv;
+}
+
+
+/**
+ * Calculate the value for φ(n) where φ is Euler's Toitent function.
+ * Computes the prime factorization of `n`, then calculates φ(n) using
+ * its multiplicative properties.
+ * Note: really slow for very large n
+ * @param   n    an integer >= 1
+ */
+NTL::ZZ
+eulers_toitent(const NTL::ZZ &n)
+{
+    std::vector<NTL::ZZ> primes;
+    std::vector<long>    powers;
+    factorize_slow(primes, powers, n);
+
+    NTL::ZZ phi {1};
+    const size_t num_primes {primes.size()};
+    for(size_t i {0}; i < num_primes; ++i)
+    {
+        phi *= NTL::power(primes[i], powers[i]-1)*(primes[i]-1);
+    }
+    // TODO: check NVRO
+    return phi;
+}
+
+
+/**
+ * Factorize `n` and append prime factors to `primes` and their correspoding powers to
+ * `powers using trial division.` **Really slow**, useful only for one-time pre-computation.
+ * Prime factors are of type NTL::ZZ so that even extremely large `n` can be factored.
+ * Uses the NTL::NextPrime function.
+ * @param  primes   vector to append primes factors to
+ * @param  powers   vector to append correspoding power of the
+ *                  prime factors to
+ * @param  n        number  >= 1 to factorize. If n <= 1, then function
+ *                  does nothing.
+ */
+void
+factorize_slow(std::vector<NTL::ZZ> &primes, std::vector<long> &powers, const NTL::ZZ &n)
+{
+    if (n <= 1)
+        return;
+
+    Factorization f;
+    NTL::ZZ p { 2 };
+    NTL::ZZ m {n};
+    NTL::ZZ sqrt {NTL::SqrRoot(m)};
+
+    while (1)
+    {
+        long power {0};
+        while (NTL::divide(m, m, p))
+        {
+            NTL::SqrRoot(sqrt, m);
+            power++;
+        }
+
+        if(power)
+        {
+            primes.push_back(p);
+            powers.push_back(power);
+        }
+        else if(p >= sqrt)
+        {
+            primes.push_back(m);
+            powers.push_back(1);
+            break;
+        }
+
+        if (NTL::IsOne(m)) break;
+        NTL::NextPrime(p, p+1);
+    }
+}
+
+
+std::unique_ptr<std::vector<size_t>>
+random_subset(size_t set_size)
+{
+    static constexpr size_t bits {sizeof(unsigned long)<<3};
+    static const unsigned long seed {(unsigned long)std::chrono::system_clock::now().time_since_epoch().count()};
+    static std::mt19937_64 generator(seed);
+    static std::uniform_int_distribution<unsigned long> dist(1, ULONG_MAX);
+
+    std::unique_ptr<std::vector<size_t>> indicies { std::make_unique<std::vector<size_t>>() };
+    while (indicies->size() == 0)
+    {
+        for(size_t k{0}; k < set_size; k += bits)
+        {
+            unsigned long rand_num {dist(generator)};
+            while (rand_num)
+            {
+                int n {__builtin_ctzl(rand_num)};
+                size_t index {n+k};
+                if (index >= set_size)
+                    break;
+
+                indicies->push_back(index);
+                rand_num &= rand_num-1;
+            }
+        }
+    }
+
+    return indicies;
+}
+
+
+/*
+ * Returns the number of subsets of sizes ranging from 
+ * `min_size` to `max_size` (both inclusive) when drawing
+ * from a set of size `set_size`.
+ */
+size_t
+calc_max_subsets(size_t set_size, size_t min_size, size_t max_size)
+{
+    size_t ret {0};
+    max_size = max_size > 0 ? MIN(set_size, max_size) : set_size;
+    for(; min_size <= max_size; min_size++)
+        ret += binomial(set_size, min_size);
+    return ret;
+}
+
+
+/*
+ * Calculate the binomial coefficient C(n, m)
+ * by constructing a pascal's triangle.
+ */
+size_t
+binomial(unsigned long n, unsigned long m)
+{
+    if (m == 0 || n == m) return 1;
+    else if (n == 0)      return 0;
+
+    /* TODO: check the assembled output */
+    /* allocate table  to store pascal's triangle */
+    const size_t row {n+1};
+    const size_t size {row*row};
+    size_t *table {new size_t[size]};
+
+    /* fill in pascal's triangle row by row */
+    table[0] = 1;
+    for(size_t i {1}; i <= n; ++i)
+    {
+        const size_t r {row*i};
+        table[r] = i+1;
+        table[r+i] = 1;
+        /* TODO: only really need the last row, use
+        *       some sort of cyclic data structure to
+        *       reduce memory usage */
+        for(size_t k{1}; k < i; ++k)
+            table[r+k] = table[r-row+k] + table[r-row+k-1];
+    }
+
+    const size_t ret {table[row*(n-1)+m-1]};
+    delete[] table;
+    return ret;
+}
+
+
+/**
+ * Parse a string of the form:
+ *      "2^4 3^5  3^55 ... 10^5"
+ *  as a `Factorization` object and return it
+ */
+Factorization
+parse_factorization(const char *str)
+{
+    constexpr size_t BUF_SIZE { 50 };
+    const char *prev { str };
+    const char *ptr { strchr_def(str, ' ') };
+    char buf[BUF_SIZE];
+
+    long factor, power;
+    Factorization f;
+
+    while (prev && *prev)
+    {
+        if (*prev != ' ')
+        {
+            /* copy string to buffer */
+            size_t diff { (size_t) MAX(0, ptr-prev) };
+            strncpy(buf, prev, MIN(BUF_SIZE, diff+1));
+            buf[MIN(BUF_SIZE-1,diff)] = '\0';
+
+            parse_factor_string<long>(factor, power, buf);
+            f.primes.push_back(factor);
+            f.powers.push_back(power);
+        }
+
+        if (*ptr)
+        {
+            prev = ptr + 1;
+            ptr = strchr_def(ptr+1, ' ');
+        }
+        else
+        {
+            prev = nullptr;
+        }
+    }
+    /* TODO: check for NRVO */
+    return f;
+}
+
+
+/**
+ * Parse a string of space separated integers containing up 50 digits
+ * and add them to `list`.
+ * Returns the number of integers added to `list`.
+ */
+size_t
+parse_numbers(std::vector<long> &list, const char *str)
+{
+    constexpr size_t BUF_SIZE { 51 };
+    const char *prev { str };
+    const char *ptr { strchr_def(str, ' ') };
+    char buf[BUF_SIZE];
+
+    size_t count { 0 };
+    while (prev && *prev)
+    {
+        if (*prev != ' ')
+        {
+            /* copy string to buffer */
+            size_t diff { (size_t) MAX(0, ptr-prev) };
+            strncpy(buf, prev, MIN(BUF_SIZE, diff+1));
+            buf[MIN(BUF_SIZE-1,diff)] = '\0';
+
+	    list.push_back(atol(buf));
+	    count++;
+        }
+
+        if (*ptr)
+        {
+            prev = ptr + 1;
+            ptr = strchr_def(ptr+1, ' ');
+        }
+        else
+        {
+            prev = nullptr;
+        }
+    }
+
+    return count;
+}
+
+int
+parse_args(int argc, char **argv, long &max, Factorization &f)
+{
+    long factor, power;
+    int limit { 0 };
+    for (int i {1};  i < argc; i++)
+    {
+        if (*argv[i] == '-')
+        {
+            if (!limit && argv[i][1] == 'l')
+            {
+                size_t digits=0;
+                char *ptr = argv[i]+2;
+                for(; *ptr; digits++,ptr++)
+                    if(*ptr < '0' || *ptr > '9') break;
+
+                // at least 1 digits and no nondigit characters
+                if (digits && !*ptr)
+                {
+                    max = NTL::conv<long>(argv[i]+2);
+                    limit = 1;
+                    continue;
+                }
+            }
+        }
+        parse_factor_string<long>(factor, power, argv[i]);
+        f.primes.push_back(factor);
+        f.powers.push_back(power);
+    }
+
+    if (f.primes.size() < 1)
+        return 0;
+    return 1;
+}
 
 /*
  * Ensures that `n` includes a `factor` as a factor.

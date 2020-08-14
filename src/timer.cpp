@@ -141,6 +141,15 @@ const time_metric end(int id)
     return time_metric {elapsed_time_cpu, elapsed_time_wall};
 }
 
+
+std::ostream&
+operator<<(std::ostream &os, const time_metric &t)
+{
+    os << "(" << t.wall_time << ")";
+    return os;
+}
+
+
 void printTime(const time_metric &t)
 {
     std::cout << "(cpu time " << t.cpu_time << "ms, wall time " 

@@ -89,7 +89,7 @@ ${BUILD_DIR}/%.dd: ${BUILD_DIR}/%.d
 	done < $@.$$$$
 	rm -f $@.$$$$
 
-.PHONY: all benchmarks clean
+.PHONY: all tests benchmarks clean
 
 all: $(addprefix ${BUILD_DIR}/,$(BINARIES))
 
@@ -158,8 +158,7 @@ ${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o timer.o) \
 
 TEST_DIR = ${BUILD_DIR}/tests
 
-${TEST_DIR}/test_subsetprod_mod: $(addprefix ${BUILD_DIR}/,util.o) \
-		$(addprefix ${S2_DIR}/, subset_product.o ) \
+${TEST_DIR}/test_subsetprod_mod: $(addprefix ${BUILD_DIR}/,util.o subset_product.o) \
 		$(addprefix ${TEST_DIR}/, test_subsetprod_mod.o )
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 

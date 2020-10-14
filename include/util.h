@@ -92,6 +92,8 @@ void factorize_slow(std::vector<NTL::ZZ> &primes, std::vector<long> &powers, con
 
 NTL::ZZ eulers_toitent(const NTL::ZZ &n);
 
+size_t estimate_subsets_size_bool(size_t set_size, size_t min_size, size_t max_size);
+
 /**************** TEMPLATE FUNCTIONS **************************/
 
 template <typename T>
@@ -171,6 +173,7 @@ size_t estimate_subsets_size(size_t set_size, size_t min_size, size_t max_size)
         ret += per_T * binomial(set_size, min_size) * min_size;
     return ret;
 }
+
 
 
 // prints the integers in arr specified by the array of indices ind 

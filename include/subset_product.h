@@ -42,7 +42,7 @@ struct ArrayHasher<NTL::ZZ, N>
 
 
 template <unsigned long int N>
-std::unique_ptr<std::vector<std::vector<size_t>>>
+std::unique_ptr<std::vector<std::vector<bool>>>
 subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases,
         const std::function<int(std::array<NTL::ZZ, N>&, const std::vector<size_t>&, size_t)> &callback,
         size_t min_terms=2, size_t max_terms=0, bool reserve=true)
@@ -57,8 +57,8 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
     std::fill(default_prod.begin(), default_prod.end(), 1);
 
     // go through all possible subset sizes starting from 2
-    std::unique_ptr<std::vector<std::vector<size_t>>> subsets_ptr 
-        {std::make_unique<std::vector<std::vector<size_t>>>()};
+    std::unique_ptr<std::vector<std::vector<bool>>> subsets_ptr 
+        {std::make_unique<std::vector<std::vector<bool>>>()};
     const size_t max_num_subsets {calc_max_subsets(set_size, min_terms, max_terms)};
 
 #if LOG_LEVEL >= 1
@@ -66,8 +66,8 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
         << "," << max_terms << "] ...\n";
     if (reserve)
         std::cout << "estimated memory usage (storing all subsets): " <<
-            estimate_subsets_size<size_t>(set_size, min_terms, max_num_subsets)
-            + max_num_subsets*sizeof(std::vector<size_t>) << " bytes\n";
+            estimate_subsets_size_bool(set_size, min_terms, max_num_subsets)
+            + max_num_subsets*sizeof(std::vector<bool>) << " bytes\n";
 #endif
 
     size_t subset_count {0};
@@ -124,7 +124,13 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
                 int ret {callback(mod_prod, index_stack, subset_count)};
                 if(ret == 1)
                 {
-                    subsets_ptr->push_back(index_stack);
+                    std::vector<bool> subset;
+                    subset.reserve(set_size);
+                    subset.resize(set_size, false);
+                    for( auto i : index_stack)
+                        subset[i] = true;
+
+                    subsets_ptr->push_back(std::move(subset));
                     subset_count++;
                 }
 
@@ -198,7 +204,7 @@ void subsetprod_2way_all(
 #endif
 
     /* go through every subset in first half, store inverse in hashmap */
-    std::unique_ptr<std::vector<std::vector<size_t>>> subsets = subsetprod_mod<N>(first_half, bases, 
+    std::unique_ptr<std::vector<std::vector<bool>>> subsets = subsetprod_mod<N>(first_half, bases, 
             [&](std::array<NTL::ZZ, N>& prod_cache,
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
@@ -243,10 +249,13 @@ void subsetprod_2way_all(
                     for (auto ind : ret)
                     {
                         std::vector<long> soln;
-                        const std::vector<size_t> &other_half {(*subsets)[ind]};
+                        const std::vector<bool> &other_half {(*subsets)[ind]};
                         soln.reserve(indicies.size() + other_half.size());
-                        for(auto i : other_half) soln.push_back(first_half[i]);
-                        for(auto i : indicies)   soln.push_back(second_half[i]);
+                        for(size_t i {0}; i < other_half.size(); i++) 
+                            if (other_half[i])
+                                soln.push_back(set[i]);
+                        for(auto i : indicies)
+                            soln.push_back(set[i]);
                         std::cout << "found: " << soln << "\n";
                         solns.push_back(std::move(soln));
                     }

@@ -1,4 +1,5 @@
 #include <util.h>
+#include <cmath>
 
 /**
  * Convinience wrapper function for strchr.
@@ -41,6 +42,21 @@ eulers_toitent(const NTL::ZZ &n)
     // TODO: check NVRO
     return phi;
 }
+
+
+
+/*
+ * Returns the number of bytes storing subsets of sizes ranging from
+ * `min_size` to `max_size` (both inclusive) would take when drawing
+ * from a set of size `set_size` when using std::vector<bool>.
+ */
+size_t estimate_subsets_size_bool(size_t set_size, size_t min_size, size_t max_size)
+{
+    const size_t per_subset { ceil(set_size/8.0) };
+    max_size = max_size > 0 ? MIN(set_size, max_size) : set_size;
+    return calc_max_subsets(set_size, min_size, max_size) * per_subset;
+}
+
 
 
 /**

@@ -532,7 +532,7 @@ gen_cprimes_2way_all(
 #endif
 #endif
     /* go through every subset in first half, store inverse in hashmap */
-    std::unique_ptr<std::vector<std::vector<size_t>>> subsets = subsetprod_mod<3>(h1_primes, prod_base,
+    std::unique_ptr<std::vector<std::vector<bool>>> subsets = subsetprod_mod<3>(h1_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {

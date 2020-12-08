@@ -13,6 +13,16 @@
 #include <construct_P.h>
 #include <subset_product.h>
 
+/**
+ * Format for commandline arguments:
+ *       <max> <min_size> <max_size> <L>
+ * where
+ *    max      -  maximum prime when constructing set of primes P
+ *    min_size - minimum size subsets of P to consider
+ *    max_size - maximum size subsets of P to consider
+ *    L        - parameter L specified as a prime factorization
+ *               ex. "2^3 3^7" specifies L = 2^3 * 3^7
+ */
 int
 main(int argc, char **argv)
 {

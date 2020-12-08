@@ -52,7 +52,7 @@ eulers_toitent(const NTL::ZZ &n)
  */
 size_t estimate_subsets_size_bool(size_t set_size, size_t min_size, size_t max_size)
 {
-    const size_t per_subset { ceil(set_size/8.0) };
+    const size_t per_subset { (size_t) ceil(set_size/8.0) };
     max_size = max_size > 0 ? MIN(set_size, max_size) : set_size;
     return calc_max_subsets(set_size, min_size, max_size) * per_subset;
 }

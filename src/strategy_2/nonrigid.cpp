@@ -13,8 +13,8 @@
 #include <strategy_2/nonrigid.h>
 
 
-typedef std::unordered_map<std::array<NTL::ZZ, 2>, std::vector<size_t>, ArrayHasher<NTL::ZZ, 2>> map_type_2;
-typedef std::unordered_map<std::array<NTL::ZZ, 3>, std::vector<size_t>, ArrayHasher<NTL::ZZ, 3>> map_type_3;
+typedef std::unordered_map<std::array<NTL::ZZ, 2>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, 2>> map_type_2;
+typedef std::unordered_map<std::array<NTL::ZZ, 3>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, 3>> map_type_3;
 
 
 void
@@ -274,7 +274,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
 #endif
 
     /* go through every subset of first half, store inverses * target in hashmap */
-    std::unique_ptr<std::vector<std::vector<size_t>>> subsets = subsetprod_mod<2>(h1_primes, prod_base,
+    subsetprod_mod<2>(h1_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
@@ -286,8 +286,16 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
                 for(size_t j{0}; j < num_bases; ++j)
                     NTL::InvMod(invs[j], prod_cache[j], prod_base[j]);
 
-                std::vector<size_t> &vec {map[std::move(invs)]};
-                vec.push_back(insert_index);
+                // create vector<bool> representing this subset
+                // and store in map
+                std::vector<std::vector<bool>> &vec {map[invs]};
+
+                std::vector<bool> subset;
+                subset.reserve(h1_primes_size);
+                subset.resize(h1_primes_size, false);
+                for (auto i : indicies) subset[i] = true;
+
+                vec.push_back(std::move(subset));
 
 #if LOG_LEVEL >= 1
                 if(vec.size() == 1)
@@ -314,15 +322,19 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
-                const std::vector<size_t> &ret {map[std::move(prod_cache)]};
+                const std::vector<std::vector<bool>> &ret {map[std::move(prod_cache)]};
                 if (ret.size() > 0)
                 {
-                    for (auto ind : ret)
+                    for (const std::vector<bool> &other_half: ret)
                     {
                         std::vector<long> a_primes;
-                        const std::vector<size_t> &other_half {(*subsets)[ind]};
-                        a_primes.reserve(other_half.size() + indicies.size());
-                        for(auto i : other_half) a_primes.push_back(h1_primes[i]);
+                        const size_t other_half_size {other_half.size()};
+                        a_primes.reserve(other_half_size + indicies.size());
+
+                        // assert other_half.size() == h1_primes.size()
+                        for (size_t i = 0; i < other_half_size; i++)
+                            if (other_half[i])
+                                a_primes.push_back(h1_primes[i]);
                         for(auto i : indicies)   a_primes.push_back(h2_primes[i]);
 
                         /* check that p0p1a^-1 = 1 (mod gcd(p0^2-1, p1^2-1, L)) */
@@ -342,7 +354,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
                     std::cerr << "count: " << count << "\r";
 #endif
                 return 0;
-            }, min_terms, max_terms, false);
+            }, min_terms, max_terms);
 }
 
 
@@ -520,19 +532,21 @@ gen_cprimes_2way_all(
     constexpr size_t max_size_t {(size_t)-1};
     const size_t map_capacity {mod_G > max_size_t ? num_subsets 
         : MIN(num_subsets, NTL::conv<size_t>(mod_G)) };
-    map.reserve(map_capacity);
 
 #if LOG_LEVEL >= 1
     std::cout << "|G| = " << mod_G << " (" << ceil(NTL::log(mod_G)/log(2)) << " bits)\n";
-    std::cout << "map capacity: " << map_capacity << "\n";
+    std::cout << "subset sizes " << "[" << min_size << "," << max_size << "]: "
+        << num_subsets << " subsets\n";
     std::cout << "storing inverse subset products of first half (size " << h1_primes_size << ") " << " ...\n";
+    std::cout << "map capacity: " << map_capacity << "\n";
     size_t inv_count {0};
 #if LOG_LEVEL >= 2
     size_t count {0};
 #endif
 #endif
+    map.reserve(map_capacity);
     /* go through every subset in first half, store inverse in hashmap */
-    std::unique_ptr<std::vector<std::vector<bool>>> subsets = subsetprod_mod<3>(h1_primes, prod_base,
+    subsetprod_mod<3>(h1_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
@@ -540,9 +554,17 @@ gen_cprimes_2way_all(
                 std::array<NTL::ZZ, num_bases> invs;
                 for(size_t i {0}; i < num_bases; ++i)
                    invs[i] = NTL::InvMod(prod_cache[i], prod_base[i]);
-                std::vector<size_t> &vec {map[invs]};
-                vec.push_back(insert_index);
 
+                // create vector<bool> representing this subset
+                // and store in map
+                std::vector<std::vector<bool>> &vec {map[invs]};
+
+                std::vector<bool> subset;
+                subset.reserve(h1_primes_size);
+                subset.resize(h1_primes_size, false);
+                for (auto i : indicies) subset[i] = true;
+
+                vec.push_back(std::move(subset));
 #if LOG_LEVEL >= 1
                 if(vec.size() == 1)
                     inv_count++;
@@ -567,14 +589,19 @@ gen_cprimes_2way_all(
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
-                const std::vector<size_t> &ret {map[std::move(prod_cache)]};
-                if (ret.size() > 0)
+                auto it {map.find(prod_cache)};
+                if (it != map.end())
                 {
-                    for (auto ind : ret)
+                    for (const std::vector<bool> &other_half : it->second)
                     {
                         std::vector<long> cprimes;
-                        const std::vector<size_t> &other_half {(*subsets)[ind]};
-                        for(auto i : other_half) cprimes.push_back(h1_primes[i]);
+                        const size_t other_half_size {other_half.size()};
+
+                        // assert other_half.size() == h1_primes.size()
+                        for (size_t i = 0; i < other_half_size; i++)
+                            if (other_half[i])
+                                cprimes.push_back(h1_primes[i]);
+
                         for(auto i : indicies)   cprimes.push_back(h2_primes[i]);
                         std::cout << "found: " << cprimes << "\n";
                     }
@@ -584,7 +611,7 @@ gen_cprimes_2way_all(
                     std::cerr << "count: " << count << "\r";
 #endif
                 return 0;
-            }, min_size, max_size, false);
+            }, min_size, max_size);
 
 #if LOG_LEVEL >= 2
     std::cerr << "count: " << count << "\r";
@@ -611,7 +638,7 @@ gen_cprimes_2way_prob(
 
     constexpr size_t num_bases { 3 };
     std::array<NTL::ZZ, num_bases> prod_base {p02_1, p12_1, L_val};
-    map_type_3 map;
+    std::unordered_map<std::array<NTL::ZZ, 3>, std::vector<size_t>, ArrayHasher<NTL::ZZ, 3>> map;
 
     /* calculate the total group size */
     const NTL::ZZ mag_G {eulers_toitent(get_lcm<std::array<NTL::ZZ, num_bases> >(prod_base, num_bases))};

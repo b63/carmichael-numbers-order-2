@@ -40,6 +40,29 @@ read_primes_from_file(std::vector<long> &vec, const char *filename)
     file.close();
 }
 
+
+/**
+ * Format for commandline arguments(<> required, [] optional):
+ *  [1]     <max> <p0> <p1> <min_terms> <max_terms> <L>
+ *  [2]     <max> <p0> <p1> <min_terms> <max_terms> <L> < - | primes_path> [ - | a_vals_path ]
+ *
+ * where
+ *    max       - maximum prime when constructing set of primes P
+ *    p0        - first non-rigid factor
+ *    p1        - second non-rigid factor
+ *    min_size  - minimum size subsets of P to consider
+ *    max_size  - maximum size subsets of P to consider
+ *    L         - parameter L specified as a prime factorization
+ *               ex. "2^3 3^7" specifies L = 2^3 * 3^7
+ *  For [2],
+ *      < - | primes_path>   can be either '-' or a path to a file containing primes.
+ *         If '-' or not specified, primes will be generated, otherwise primes constituting
+ *         the primes set P will be read in from the path given.
+ *
+ *      [ - | a_vals_path]   can be either '-' or path to file containing list of 
+ *         parameter a values to try. If '-' or not specified, all possible a values
+ *         from the primes set P will be generated.
+ */
 int
 main(int argc, char **argv)
 {
@@ -88,7 +111,7 @@ main(int argc, char **argv)
     }
     else
     {
-        generate_a_values(a_values, primes_set, nonrigid_factors, L_val, 1, 3);
+        generate_a_values(a_values, primes_set, nonrigid_factors, L_val, 1, 4);
     }
 
     const size_t num_a { a_values.size() };
@@ -109,7 +132,7 @@ main(int argc, char **argv)
 
         std::cout << "(|P| = " << primes_set_a.size() << ") trying a = " 
                 << a_val << ", " << a_factors << "\n";
-        gen_cprimes_2way_prob(primes_set_a, nonrigid_factors, a_val, L_val, 1000000, min_terms, max_terms);
+        gen_cprimes_2way_all(primes_set_a, nonrigid_factors, a_val, L_val, min_terms, max_terms);
         std::cout << "\n\n";
     }
 }

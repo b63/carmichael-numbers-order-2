@@ -6,6 +6,7 @@
 #include <algorithm>
 
 #include <util.h>
+#include <timer.h>
 #include <counting_factors.h>
 #include <subset_product.h>
 #include <strategy_2/nonrigid.h>
@@ -117,6 +118,7 @@ main(int argc, char **argv)
     const size_t num_a { a_values.size() };
     std::cout << "number of a values: " << num_a << "\n\n";
 
+    init_timer();
     for(size_t i { 0 }; i < num_a; ++i)
     {
         NTL::ZZ a_val { 1 };

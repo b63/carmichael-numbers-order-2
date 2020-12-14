@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdlib>
 #include <vector>
 #include <functional>
 #include <climits>
@@ -10,6 +11,7 @@
 #include <subset_product.h>
 #include <counting_factors.h>
 #include <util.h>
+#include <timer.h>
 #include <strategy_2/nonrigid.h>
 
 
@@ -545,6 +547,8 @@ gen_cprimes_2way_all(
 #endif
 #endif
     map.reserve(map_capacity);
+    int timer_id = start();
+
     /* go through every subset in first half, store inverse in hashmap */
     subsetprod_mod<3>(h1_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
@@ -570,7 +574,11 @@ gen_cprimes_2way_all(
                     inv_count++;
 #if LOG_LEVEL >= 2
                 if((count++ & STEP_MASK) == 0)
-                    std::cerr << "count: " << count << "\r";
+                {
+                    time_metric t  { end(timer_id) };
+                    fprintf(stderr, ">> %lu %f\n", count, t.wall_time);
+                    // std::cerr << "count: " << count << "\r";
+                }
 #endif
 #endif
                 return 1;
@@ -578,12 +586,14 @@ gen_cprimes_2way_all(
 
 #if LOG_LEVEL >= 1
 #if LOG_LEVEL >= 2
-    std::cerr << "count: " << count << "\r";
+    // std::cerr << "count: " << count << "\r";
     count = 0;
 #endif
     std::cout << "found " << inv_count << " distinct subset products\n";
     std::cout << "checking for inverse subset products of second half (size " << h2_primes.size() << ") ...\n";
+    fprintf(stderr, "---\n");
 #endif
+    start(timer_id);
     /* go through second half, check whether inverses exist in the hashmap */
     subsetprod_mod<3>(h2_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
@@ -608,13 +618,18 @@ gen_cprimes_2way_all(
                 }
 #if LOG_LEVEL >= 2
                 if((count++ & STEP_MASK) == 0)
-                    std::cerr << "count: " << count << "\r";
+                {
+                    time_metric t  { end(timer_id) };
+                    fprintf(stderr, ">> %lu %f\n", count, t.wall_time);
+                    //std::cerr << "count: " << count << "\r";
+                }
 #endif
                 return 0;
             }, min_size, max_size);
 
 #if LOG_LEVEL >= 2
-    std::cerr << "count: " << count << "\r";
+    // std::cerr << "count: " << count << "\r";
+    fprintf(stderr, "===\n");
 #endif
 }
 

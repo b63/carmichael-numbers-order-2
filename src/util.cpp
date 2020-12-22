@@ -1,5 +1,35 @@
-#include <util.h>
+#include <vector>
 #include <cmath>
+
+#include <util.h>
+
+std::vector<std::vector<long>>
+split_vector(const std::vector<long> &src, size_t n)
+{
+
+    const size_t total = src.size();
+    const size_t num_each = total / n;
+
+    std::vector<std::vector<long>> dst;
+    dst.resize(n);
+
+    if (total > 1)
+    {
+        size_t start = 0;
+        for (size_t i = 0; i < n; i++)
+        {
+            const size_t end = (i == n-1 ? total-1 : start + num_each);
+
+            std::vector<long> &v = dst[i];
+            v.reserve(num_each);
+            for (size_t j = start; j < end; j++)
+                v.push_back(src[j]);
+        }
+    }
+
+    return dst;
+}
+
 
 /**
  * Convinience wrapper function for strchr.

@@ -94,16 +94,33 @@ NTL::ZZ eulers_toitent(const NTL::ZZ &n);
 
 size_t estimate_subsets_size_bool(size_t set_size, size_t min_size, size_t max_size);
 
+std::vector<std::vector<long>>
+split_vector(const std::vector<long> &src, size_t n);
+
 /**************** TEMPLATE FUNCTIONS **************************/
 
 template <typename T>
-inline void bound(T &val, const T &min, const T &max)
+std::vector<T>
+join_vector(const std::vector<T> v0, const std::vector<T> v1)
+{
+    std::vector<T> joined;
+    joined.reserve(v0.size() + v1.size());
+    for(const auto &x : v0) joined.push_back(x);
+    for(const auto &x : v1) joined.push_back(x);
+
+    return joined;
+}
+
+
+template <typename T>
+inline T bound(const T &val, const T &min, const T &max)
 {
     if (val < min)
         val = min;
     else if (val > max)
         val = max;
 }
+
 
 template <typename T, typename V>
 V product(T iterable)
@@ -197,7 +214,7 @@ void printProd(const std::vector<size_t> &ind, const std::vector<T> &arr)
 template <typename T>
 void printVec(const std::vector<T> &arr) 
 {
-    size_t size = arr.size();
+    const size_t size = arr.size();
     std::cout << "{";
 
     for (size_t i = 0; i < size; i++)
@@ -207,6 +224,26 @@ void printVec(const std::vector<T> &arr)
             std::cout << ", ";
         }
         std::cout << arr[i];
+    }
+
+    std::cout << "}";
+}
+
+
+template <typename T>
+void print_bool_vec(const std::vector<bool> &arr, const std::vector<T> &src)
+{
+    const size_t size = arr.size() < src.size() ? arr.size() : src.size();
+    std::cout << "{";
+
+    for (size_t i = 0; i < size; i++)
+    {
+        if (i > 0) 
+        {
+            std::cout << ", ";
+        }
+        if (arr[i])
+            std::cout << src[i];
     }
 
     std::cout << "}";

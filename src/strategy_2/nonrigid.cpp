@@ -20,6 +20,15 @@ template <size_t N>
 using map_type = std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>>;
 
 
+/**
+ * Generate possible choices for non-rigid factors for the given choice of L.
+ * The pair of non-rigid factors stored as array<long,2> and added to
+ * `factors` vector.
+ *
+ * @param   factors             vector to add the generate non-rigid factor pairs
+ * @param   L_val               value of parameter L as NTL::ZZ
+ * @param   max                 maximum integer to consider
+ */
 void
 generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::ZZ &L_val, const long max)
 {
@@ -120,6 +129,16 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
 #endif
 }
 
+
+/**
+ * Generate the primes in P(2,L) given the choice of L, p0, and p1.
+ *
+ * @param   primes              vector to add the generate primes
+ * @param   nonrigid_factors    array<NTL::ZZ,2> of non-rigid factors {p0,p1}
+ * @param   L_val               value of parameter L as NTL::ZZ
+ * @param   L                   the factorization of L as a `Factorization` object
+ * @param   max                 maximum integer to consider
+ */
 void
 construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &L_val, const Factorization &L, long max)
@@ -237,6 +256,20 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
 }
 
 
+/**
+ * Go through subsets of `primes` to look for possible choices for paramter a
+ * and store them in `a_values` given the choice of L, p0, and p1.
+ * Uses 2-set subset-product algorithm.
+ *
+ * @param   a_values            vector to store possible choices for parameter a
+ * @param   primes              set of primes, P(2,L)
+ * @param   nonrigid_factors    array<NTL::ZZ,2> of non-rigid factors {p0,p1}
+ * @param   L_val               value of parameter L as NTL::ZZ
+ * @param   min_size            minium size of subset to consider for each of
+ *                              the two paritions of P(2,L)
+ * @param   min_size            maximum size of subset to consider for each of
+ *                              the two paritions of P(2,L)
+ */
 void
 generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<long> &primes,
         const std::array<long,2> &nonrigid_factors,
@@ -497,6 +530,18 @@ gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long>
 }
 
 
+/**
+ * Generate order2-carmichael numbers using 2-set subset-product algorithm.
+ * of `primes`.
+ * @param   primes              set of primes, P(2,L)
+ * @param   nonrigid_factors    array<NTL::ZZ,2> of non-rigid factors {p0,p1}
+ * @param   a_val               parameter a for the given choice of L, p0, and p1
+ * @param   L_val               value of parameter L as NTL::ZZ
+ * @param   min_size            minium size of subset to consider for each of
+ *                              the two paritions of P(2,L)
+ * @param   min_size            maximum size of subset to consider for each of
+ *                              the two paritions of P(2,L)
+ */
 void
 gen_cprimes_2way_all(
         const std::vector<long> &primes,
@@ -620,6 +665,18 @@ gen_cprimes_2way_all(
 }
 
 
+/**
+ * Generate order2-carmichael numbers by picking random subsets
+ * of `primes`.
+ * @param   primes              set of primes, P(2,L)
+ * @param   nonrigid_factors    array<NTL::ZZ,2> of non-rigid factors {p0,p1}
+ * @param   a_val               parameter a for the given choice of L, p0, and p1
+ * @param   L_val               value of parameter L as NTL::ZZ
+ * @param   num_trials          number times to pick random subsets.
+ *                              If zero or > |G|, then |G| is chosen.
+ * @param   min_size            minium size of subset to generate
+ * @param   max_size            maximum size of subset to generate
+ */
 void
 gen_cprimes_2way_prob(
         const std::vector<long> &primes,
@@ -759,6 +816,19 @@ gen_cprimes_2way_prob(
 }
 
 
+/*
+ * Generate order2-carmichael numbers with two non-rigid factors given in
+ * `nonrigid_factors` using 4-set algorithm.
+ *
+ * @param  primes               set of primes P(2,L)
+ * @param  nonrigid_factors     array<NTL:ZZ,2> of non-rigid factors {p0, p1}
+ * @param  a_val                parameter a for given choice for L, p0, and p1
+ * @param  L_val                value for paramter L as NTL::ZZ
+ * @param  min_size             minimum size of subsets to consider for each of
+ *                              of the four partitions of `primes`
+ * @param  min_size             maximum size of subsets to consider for each of
+ *                              of the four partitions of `primes`
+ */
 void
 gen_cprimes_4way_all(
         const std::vector<long> &primes,
@@ -775,13 +845,17 @@ gen_cprimes_4way_all(
     const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
     const NTL::ZZ p0p1a { p0_zz * p1_zz * a_val };
 
-    std::array<NTL::ZZ, 2> prod_base {p02_1, p12_1};
-    std::array<map_type<2>, 4> maps;
-
-
     /* split primes set into 4 */
     std::vector<std::vector<long>> primes_n {split_vector(primes, 4)};
 
+    /* store the subset-product mod p02_1 and p12_1 as array<NTL::ZZ,2>
+     * of every subset of each of the primes set in primes_n */
+    std::array<NTL::ZZ, 2> prod_base {p02_1, p12_1};
+
+    /* subset-products will be stored in a map with an array of
+     * subset-products as the key and the subsets as vector<bool>
+     * as the value */
+    std::array<map_type<2>, 4> maps;
     for (size_t i = 0; i < 4; i++)
     {
         const auto &set = primes_n[i];
@@ -803,16 +877,19 @@ gen_cprimes_4way_all(
                 [&](std::array<NTL::ZZ, 2> &prod_cache,
                     const std::vector<size_t> &indicies, size_t insert_index)->int
                 {
+                    /* store the inverse subset-product instead of subset-product
+                     * mod prod_base for one of the primes sets in the pair */
                     if (i % 2  == 0)
                     {
-                        for(size_t j {0}; i < 2; ++j)
+                        /* primes_n[0] and primes_n[1] */
+                        for (size_t j {0}; i < 2; ++j)
                             prod_cache[j] = NTL::InvMod(prod_cache[j], prod_base[j]);
                     }
 
-                    // create vector<bool> representing this subset
-                    // and store in map
+                    /* create a vector<bool> representing this subset and add it to map */
                     std::vector<std::vector<bool>> &vec {maps[i][prod_cache]};
 
+                    /* `indicies` indexes elements of `set` or `primes_n[i]` */
                     std::vector<bool> subset;
                     subset.resize(set_size, false);
                     for (auto i : indicies) subset[i] = true;
@@ -831,24 +908,34 @@ gen_cprimes_4way_all(
             min_size, max_size);
     }
 
+    /* next we care about subset-product mod L_val only */
     std::array<NTL::ZZ, 1> prod_base_2 {L_val};
+    /* join subsets in maps[0] and map[1] that are in unitary subgroup mod {p02_1, p12_1}
+     * and store them in map2_0 using their product mod L_val as the keys */
     map_type<1> map2_0 { join<2,1>(maps[0], maps[1], primes_n[0], primes_n[1], prod_base_2,
             [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
                 ->std::array<NTL::ZZ,1>
             {
+                /* prod0 and prod1 are the product of each subset from map[0] and map[1]
+                 * mod L_val; we return what they key for joined subset should be. */
                 std::array<NTL::ZZ, 1> prod {NTL::ZZ{1}};
+                /* In this case, they key is the product of the joined subset mod L_val */
                 NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
                 return prod;
             }
         )
     };
+    /* the subsets we care about have been copied already, so clear them */
     maps[0].clear();
     maps[1].clear();
 
+    /* join subsets in map[2] and map[3] this time*/
     map_type<1> map2_1 { join<2,1>(maps[2], maps[3], primes_n[2], primes_n[3],prod_base_2,
             [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
                 ->std::array<NTL::ZZ,1>
             {
+                /* this time they key for the joined subset is
+                 * the inverset of (the product * p0 * p1 * a) mod L_val */
                 std::array<NTL::ZZ, 1> prod {p0p1a};
                 NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
                 NTL::InvMod(prod[0], prod[0], L_val);
@@ -859,6 +946,8 @@ gen_cprimes_4way_all(
     maps[2].clear();
     maps[3].clear();
 
+    /* the subsets stored in maps2_0 and maps2_1 are stored as vector<bool> and
+     * draw halfs of the original `primes` set */
     std::vector<long> primes01 {join_vector(primes_n[0], primes_n[1])};
     std::vector<long> primes23 {join_vector(primes_n[2], primes_n[3])};
 
@@ -867,6 +956,7 @@ gen_cprimes_4way_all(
             [&](const std::array<NTL::ZZ, 0> &prod0, const std::array<NTL::ZZ, 0> &prod1)
                 ->std::array<NTL::ZZ,0>
             {
+                /* we don't care about the key in the final join, just store them under the same key */
                 return empty_base;
             }
         )

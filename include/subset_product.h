@@ -151,9 +151,9 @@ void subsetprod_2way_all(
     const NTL::ZZ mod_G {eulers_toitent(lcm)};
 
     /* clip min_size and max_size */
-    bound<size_t>(min_size, 1, first_half_size);
+    min_size = bound<size_t>(min_size, 1, first_half_size);
     if (max_size)
-        bound<size_t>(max_size, min_size, first_half_size);
+        max_size = bound<size_t>(max_size, min_size, first_half_size);
     else
         max_size = first_half_size;
 
@@ -248,7 +248,7 @@ void subsetprod_2way_all(
                     std::cerr << "count: " << count << "\r";
 #endif
                 return 0;
-            }, min_size, max_size, false);
+            }, min_size, max_size);
 }
 
 #endif

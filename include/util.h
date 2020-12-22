@@ -116,9 +116,11 @@ template <typename T>
 inline T bound(const T &val, const T &min, const T &max)
 {
     if (val < min)
-        val = min;
+        return min;
     else if (val > max)
-        val = max;
+        return max;
+    else
+        return val;
 }
 
 

@@ -153,8 +153,8 @@ test_gen_cprimes_2way_all(
     const NTL::ZZ mod_G {eulers_toitent(lcm)};
 
     /* clip min_size and max_size */
-    bound<size_t>(min_size, 1, h1_primes_size);
-    bound<size_t>(max_size, min_size, h1_primes_size);
+    min_size = bound<size_t>(min_size, 1, h1_primes_size);
+    max_size = bound<size_t>(max_size, min_size, h1_primes_size);
 
     /* reserve space in hashmap */
     size_t num_subsets {calc_max_subsets(h1_primes_size, min_size, max_size)};

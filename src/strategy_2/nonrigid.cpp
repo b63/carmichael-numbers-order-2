@@ -117,7 +117,6 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
 #endif
 }
 
-
 void
 construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &L_val, const Factorization &L, long max)

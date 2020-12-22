@@ -5,7 +5,7 @@ CXX=g++
 override CPPFLAGS:=$(CPPFLAGS) -I ./include
 
 # Extra flags to give to the C++ compiler. 
-override CXXFLAGS:=$(CXXFLAGS) -Wall -Werror -pedantic -std=c++14 -Ofast -march=native -flto -ggdb
+override CXXFLAGS:=$(CXXFLAGS) -Wall -Werror -pedantic -std=c++14 -Ofast -march=native -flto
 
 # Extra flags to give to compilers when they are supposed to invoke the linker, ‘ld’, such as -L. Libraries (-lfoo) should be added to the LDLIBS variable instead. 
 override LDFLAGS:=$(LDFLAGS)
@@ -27,7 +27,8 @@ SOURCES+= construct_P.cpp construct_P_main.cpp
 SOURCES+= calc_density.cpp calc_density_batch.cpp
 SOURCES+= p2_1.cpp
 SOURCES+= $(addprefix strategy_1/, nonrigid.cpp gen_nonrigid.cpp pnonrigid.cpp)
-SOURCES+= $(addprefix strategy_2/, nonrigid.cpp gen_nonrigid.cpp, all_possible_nonrigid_pairs.cpp)
+SOURCES+= $(addprefix strategy_2/, nonrigid.cpp gen_nonrigid.cpp, all_possible_nonrigid_pairs.cpp, \
+		test_howe.cpp)
 SOURCES+= benchmarks/bench_construct_P.cpp 
 SOURCES+= benchmarks/bench_prodcache.cpp 
 SOURCES+= benchmarks/bench_lambda.cpp 
@@ -145,6 +146,10 @@ S2_DIR = ${BUILD_DIR}/strategy_2
 
 ${S2_DIR}/gen_nonrigid: $(addprefix ${BUILD_DIR}/, counting_factors.o util.o timer.o) \
 		$(addprefix ${S2_DIR}/, nonrigid.o gen_nonrigid.o)
+	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
+
+${S2_DIR}/test_howe: $(addprefix ${BUILD_DIR}/, counting_factors.o util.o timer.o) \
+		$(addprefix ${S2_DIR}/, nonrigid.o test_howe.o)
 	$(LINK) $(filter-out %.h,$^) -o $@ $(LDLIBS)
 
 ${S2_DIR}/all_nonrigid_pairs: $(addprefix ${BUILD_DIR}/,util.o timer.o) \

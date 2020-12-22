@@ -19,7 +19,7 @@ struct ArrayHasher
     {
         size_t hash {0};
         for (auto v : arr)
-            hash ^= std::hash<T>{}(v)  
+            hash ^= std::hash<T>{}(v)
                         + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         return hash;
     }
@@ -34,7 +34,7 @@ struct ArrayHasher<NTL::ZZ, N>
     {
         size_t hash {0};
         for (auto v : arr)
-            hash ^= std::hash<unsigned long>{}(NTL::conv<unsigned long>(v))  
+            hash ^= std::hash<unsigned long>{}(NTL::conv<unsigned long>(v))
                         + 0x9e3779b9 + (hash << 6) + (hash >> 2);
         return hash;
     }
@@ -65,18 +65,18 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
 #endif
 
     size_t subset_count {0};
-    for (size_t factors {min_terms}; factors <= max_terms; factors++) 
+    for (size_t factors {min_terms}; factors <= max_terms; factors++)
     {
         std::vector<size_t> index_stack {0};
         index_stack.reserve(factors);
 
         /* cache of products */
-        std::vector<std::array<NTL::ZZ, num_bases> > products; 
+        std::vector<std::array<NTL::ZZ, num_bases> > products;
         products.reserve(factors);
 
         // go through subsets of size factors suing a 'stack' (or odometer?)
         size_t index_size;
-        while ((index_size = index_stack.size()) > 0) 
+        while ((index_size = index_stack.size()) > 0)
         {
             const size_t prod_size  = products.size();
             size_t top = index_size - 1;
@@ -85,7 +85,7 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
             if (index_stack[top] < set_size - (factors - index_size))
             {
                 NTL::ZZ p_zz { set[index_stack[top]] };
-                if (prod_size+1 < factors) 
+                if (prod_size+1 < factors)
                 {
                     std::array<NTL::ZZ, num_bases> prods;
                     for(size_t j { 0 }; j < num_bases; ++j)
@@ -98,7 +98,7 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
                     products.push_back(std::move(prods));
                 }
 
-                if (index_size < factors) 
+                if (index_size < factors)
                 {
                     index_stack.push_back(index_stack[top]+1);
                     continue;
@@ -131,6 +131,103 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
 }
 
 
+template<unsigned long int M>
+void
+prod_mod_subsets(std::vector<std::array<NTL::ZZ, M>> &dst,
+        const std::vector<long> &primes,
+        const std::vector<std::vector<bool>> &subsets,
+        const std::array<NTL::ZZ, M> &bases)
+{
+    const size_t size = subsets.size();
+    size_t start = dst.size();
+    dst.resize(start + size);
+
+    for (size_t k = 0; k < size; k++)
+    {
+        std::array<NTL::ZZ, M> &prods = dst[start+k];
+        const std::vector<bool> &subset = subsets[k];
+        const size_t num_primes = subset.size();
+
+        for (size_t i = 0; i < M; i++)
+        {
+            prods[i] = 1;
+
+            for (size_t j = 0; j < num_primes; j++)
+                if (subset[j])
+                    NTL::MulMod(prods[i], prods[i], primes[j], bases[i]);
+        }
+    }
+
+}
+
+
+template <unsigned long int N, unsigned long int M>
+std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>>
+join(const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> src0,
+        const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> src1,
+        const std::vector<long> &primes0,
+        const std::vector<long> &primes1,
+        const std::array<NTL::ZZ,M> &new_bases,
+        const std::function<std::array<NTL::ZZ,M>(const std::array<NTL::ZZ,M>&, const std::array<NTL::ZZ,M>&)> &callback)
+{
+    std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>> dst;
+    const auto end = src0.cend();
+    for(auto it = src0.cbegin(); it != end; it++)
+    {
+        const std::array<NTL::ZZ, N> &key = it->first;
+        const std::vector<std::vector<bool>> &subsets0 = it->second;
+
+        auto it1 {src1.find(key)};
+        if (it1 != src1.end())
+        {
+            const std::vector<std::vector<bool>> &subsets1 {src1.at(key)};
+            const size_t size0 = subsets0.size();
+            const size_t size1 = subsets1.size();
+
+            std::vector<std::array<NTL::ZZ, M>> products0, products1;
+            if (M > 0)
+            {
+                prod_mod_subsets(products0, primes0, subsets0, new_bases);
+                prod_mod_subsets(products1, primes1, subsets1, new_bases);
+            }
+            else
+            {
+                products0.resize(size0);
+                products1.resize(size1);
+
+                std::cout << "key: ";
+                for(auto &z : key) std::cout << z << " ";
+
+                std::cout << "\n0: ";
+                for (auto &s : subsets0)
+                    print_bool_vec(s, primes0);
+
+                std::cout << "\n1: ";
+                for (auto &s : subsets1)
+                    print_bool_vec(s, primes1);
+                std::cout << "\n";
+            }
+
+            /* make a copy and store every combination of two subsets */
+            for (size_t i = 0; i < size0; i++)
+            {
+                const std::vector<bool> &part0 {subsets0[i]};
+                for (size_t j = 0; j < size1; j++)
+                {
+                    const std::vector<bool> &part1 {subsets1[j]};
+                    std::array<NTL::ZZ, M> new_key { callback(products0[i], products1[j]) };
+
+                    std::vector<bool> joined {join_vector(part0, part1)};
+                    dst[new_key].push_back(std::move(joined));
+                }
+            }
+        }
+    }
+
+    return dst;
+}
+
+
 template <size_t N>
 void subsetprod_2way_all(
     std::vector<std::vector<long>> &solns,
@@ -160,7 +257,7 @@ void subsetprod_2way_all(
     /* reserve space in hashmap */
     size_t num_subsets {calc_max_subsets(first_half_size, min_size, max_size)};
     constexpr size_t max_size_t {(size_t)-1};
-    const size_t map_capacity {mod_G > max_size_t ? num_subsets 
+    const size_t map_capacity {mod_G > max_size_t ? num_subsets
         : MIN(num_subsets, NTL::conv<size_t>(mod_G)) };
 
 #if LOG_LEVEL >= 1
@@ -180,7 +277,7 @@ void subsetprod_2way_all(
 #endif
 
     /* go through every subset in first half, store inverse in hashmap */
-    subsetprod_mod<N>(first_half, bases, 
+    subsetprod_mod<N>(first_half, bases,
             [&](std::array<NTL::ZZ, N>& prod_cache,
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
@@ -223,7 +320,7 @@ void subsetprod_2way_all(
 #endif
 
     subsetprod_mod<N>(second_half, bases,
-            [&](std::array<NTL::ZZ, N>& prod_cache, 
+            [&](std::array<NTL::ZZ, N>& prod_cache,
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
                 auto it { map.find(prod_cache)  };
@@ -233,7 +330,7 @@ void subsetprod_2way_all(
                     {
                         std::vector<long> soln;
                         soln.reserve(indicies.size() + other_half.size());
-                        for(size_t i {0}; i < other_half.size(); i++) 
+                        for(size_t i {0}; i < other_half.size(); i++)
                             if (other_half[i])
                                 soln.push_back(first_half[i]);
 

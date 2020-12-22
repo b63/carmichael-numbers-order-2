@@ -59,7 +59,7 @@ read_primes_from_file(std::vector<long> &vec, const char *filename)
  *         If '-' or not specified, primes will be generated, otherwise primes constituting
  *         the primes set P will be read in from the path given.
  *
- *      [ - | a_vals_path]   can be either '-' or path to file containing list of 
+ *      [ - | a_vals_path]   can be either '-' or path to file containing list of
  *         parameter a values to try. If '-' or not specified, all possible a values
  *         from the primes set P will be generated.
  */
@@ -126,13 +126,13 @@ main(int argc, char **argv)
             a_val *= *it;
 
         std::vector<long> primes_set_a;
-        std::set_difference(primes_set.cbegin(), primes_set.cend(), 
+        std::set_difference(primes_set.cbegin(), primes_set.cend(),
                 a_factors.cbegin(), a_factors.cend(),
                 std::inserter(primes_set_a, primes_set_a.begin()));
 
-        std::cout << "(|P| = " << primes_set_a.size() << ") trying a = " 
+        std::cout << "(|P| = " << primes_set_a.size() << ") trying a = "
                 << a_val << ", " << a_factors << "\n";
-        gen_cprimes_2way_all(primes_set_a, nonrigid_factors, a_val, L_val, min_terms, max_terms);
+        gen_cprimes_4way_all(primes_set_a, nonrigid_factors, a_val, L_val, min_terms, max_terms);
         std::cout << "\n\n";
     }
 }

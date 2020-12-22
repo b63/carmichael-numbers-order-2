@@ -2,6 +2,9 @@
 #define S2_RIGID_H
 
 #include <vector>
+#include <array>
+#include <NTL/ZZ.h>
+
 #include <util.h>
 
 
@@ -32,5 +35,13 @@ void gen_cprimes_2way_prob(
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t num_trials,
         size_t min_size, size_t max_size);
+
+void
+gen_cprimes_4way_all(
+        const std::vector<long> &primes, 
+        const std::array<long, 2> &nonrigid_factors,
+        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
+        size_t min_size, size_t max_size
+        );
 
 #endif

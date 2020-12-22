@@ -1,7 +1,10 @@
 #include <iostream>
 #include <vector>
 #include <functional>
+#include <unordered_map>
+#include <map>
 #include <climits>
+#include <cstdlib>
 #include <cmath>
 
 #include <NTL/ZZ.h>
@@ -13,8 +16,8 @@
 #include <strategy_2/nonrigid.h>
 
 
-typedef std::unordered_map<std::array<NTL::ZZ, 2>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, 2>> map_type_2;
-typedef std::unordered_map<std::array<NTL::ZZ, 3>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, 3>> map_type_3;
+template <size_t N>
+using map_type = std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>>;
 
 
 void
@@ -40,11 +43,11 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
                 << "; cond: " << cond[0] << ", " << cond[1] << "\r";
 #endif
 
-        if (NTL::divide(L_val, p)) 
+        if (NTL::divide(L_val, p))
             continue;
 
         const NTL::ZZ p2_1 { NTL::sqr(p)-1 };
-        if (NTL::divide(L_val, p2_1)) 
+        if (NTL::divide(L_val, p2_1))
             continue;
 #if LOG_LEVEL >= 2
         cond[0]++;
@@ -201,7 +204,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
         {
             /* check to make sure p is not a factor of L */
             for(; i < num_factors && L.primes[i] < p_zz; ++i); /* NOP */
-            if (i >= num_factors) 
+            if (i >= num_factors)
                 break;
             else if(NTL::GCD(p_zz, p02_1) == 1 && NTL::GCD(p_zz, p12_1) == 1
                     && NTL::divide(L_val, NTL::sqr(p_zz)-1))
@@ -236,7 +239,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
 
 void
 generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<long> &primes,
-        const std::array<long,2> &nonrigid_factors, 
+        const std::array<long,2> &nonrigid_factors,
         const NTL::ZZ &L_val,
         size_t min_terms, size_t max_terms)
 {
@@ -250,7 +253,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
 
     constexpr size_t num_bases {2};
     const std::array<NTL::ZZ, num_bases> prod_base {p02_1, p12_1};
-    map_type_2 map;
+    map_type<2> map;
 
     /* split primes into two vectors */
     std::vector<long> h1_primes, h2_primes;
@@ -274,7 +277,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
 
     /* go through every subset of first half, store inverses * target in hashmap */
     subsetprod_mod<2>(h1_primes, prod_base,
-            [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
+            [&](std::array<NTL::ZZ, num_bases>& prod_cache,
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
                 NTL::MulMod(prod_cache[0], prod_cache[0], p1_zz, prod_base[0]);
@@ -318,7 +321,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
 #endif
 
     subsetprod_mod<2>(h2_primes, prod_base,
-            [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
+            [&](std::array<NTL::ZZ, num_bases>& prod_cache,
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
                 const std::vector<std::vector<bool>> &ret {map[std::move(prod_cache)]};
@@ -343,7 +346,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
                         if(!NTL::IsOne(NTL::InvMod(p0p1a, gcd)))
                             continue;
 
-                        std::cout << a_primes.size() << ",|P| = " << num_primes-a_primes.size() 
+                        std::cout << a_primes.size() << ",|P| = " << num_primes-a_primes.size()
                             << "," << a_primes << "\n";
                         a_values.push_back(std::move(a_primes));
                     }
@@ -358,8 +361,8 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
 
 
 void
-gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long> primes, 
-        const std::array<long, 2> &nonrigid_factors, 
+gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long> primes,
+        const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_terms, size_t max_terms)
 {
@@ -382,7 +385,7 @@ gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long>
         max_terms = num_primes;
 
     // go through all possible subset sizes starting from 2
-    for (size_t factors {min_terms}; factors <= max_terms; factors++) 
+    for (size_t factors {min_terms}; factors <= max_terms; factors++)
     {
         std::vector<size_t> index_stack = {0};
 #if LOG_LEVEL >= 1
@@ -395,21 +398,21 @@ gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long>
 #endif
 
         /* cache of products */
-        std::vector<std::array<NTL::ZZ, num_bases> > products; 
+        std::vector<std::array<NTL::ZZ, num_bases> > products;
         products.reserve(factors);
 
         // go through subsets of size factors suing a 'stack' (or odometer?)
         size_t index_size;
-        while ((index_size = index_stack.size()) > 0) 
+        while ((index_size = index_stack.size()) > 0)
         {
             const size_t prod_size  = products.size();
             size_t top = index_size - 1;
             size_t prod_top = prod_size - 1;
 
-            if (index_stack[top] < num_primes - (factors - index_size)) 
+            if (index_stack[top] < num_primes - (factors - index_size))
             {
                 NTL::ZZ p_zz { primes[index_stack[top]] };
-                if (prod_size+1 < factors) 
+                if (prod_size+1 < factors)
                 {
                     std::array<NTL::ZZ, num_bases> prods;
                     for(size_t j { 0 }; j < num_bases; ++j)
@@ -422,7 +425,7 @@ gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long>
                     products.push_back(std::move(prods));
                 }
 
-                if (index_size < factors) 
+                if (index_size < factors)
                 {
                     index_stack.push_back(index_stack[top]+1);
                     continue;
@@ -430,8 +433,8 @@ gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long>
 
 #if LOG_LEVEL >= 2
                 if ((count++ & STEP_MASK) == 0)
-                    std::cerr << "count: " << count 
-                        << ", cond: " << cond[0] 
+                    std::cerr << "count: " << count
+                        << ", cond: " << cond[0]
                         << ", " << cond[1]
                         << ", " << cond[2] << "\r";
 #endif
@@ -496,7 +499,7 @@ gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long>
 
 void
 gen_cprimes_2way_all(
-        const std::vector<long> &primes, 
+        const std::vector<long> &primes,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_size, size_t max_size)
@@ -511,7 +514,7 @@ gen_cprimes_2way_all(
 
     constexpr size_t num_bases { 3 };
     std::array<NTL::ZZ, num_bases> prod_base {p02_1, p12_1, L_val};
-    map_type_3 map;
+    map_type<3> map;
 
     /* split primes into two vectors */
     std::vector<long> h1_primes, h2_primes;
@@ -523,13 +526,13 @@ gen_cprimes_2way_all(
     const NTL::ZZ mod_G {eulers_toitent(lcm)};
 
     /* clip min_size and max_size */
-    bound<size_t>(min_size, 1, h1_primes_size);
-    bound<size_t>(max_size, min_size, h1_primes_size);
+    min_size = bound<size_t>(min_size, 1, h1_primes_size);
+    max_size = bound<size_t>(max_size, min_size, h1_primes_size);
 
     /* reserve space in hashmap */
     size_t num_subsets {calc_max_subsets(h1_primes_size, min_size, max_size)};
     constexpr size_t max_size_t {(size_t)-1};
-    const size_t map_capacity {mod_G > max_size_t ? num_subsets 
+    const size_t map_capacity {mod_G > max_size_t ? num_subsets
         : MIN(num_subsets, NTL::conv<size_t>(mod_G)) };
 
 #if LOG_LEVEL >= 1
@@ -546,7 +549,7 @@ gen_cprimes_2way_all(
     map.reserve(map_capacity);
     /* go through every subset in first half, store inverse in hashmap */
     subsetprod_mod<3>(h1_primes, prod_base,
-            [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
+            [&](std::array<NTL::ZZ, num_bases>& prod_cache,
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
                 NTL::MulMod(prod_cache[2], prod_cache[2], p0p1a, prod_base[2]);
@@ -559,7 +562,6 @@ gen_cprimes_2way_all(
                 std::vector<std::vector<bool>> &vec {map[invs]};
 
                 std::vector<bool> subset;
-                subset.reserve(h1_primes_size);
                 subset.resize(h1_primes_size, false);
                 for (auto i : indicies) subset[i] = true;
 
@@ -585,7 +587,7 @@ gen_cprimes_2way_all(
 #endif
     /* go through second half, check whether inverses exist in the hashmap */
     subsetprod_mod<3>(h2_primes, prod_base,
-            [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
+            [&](std::array<NTL::ZZ, num_bases>& prod_cache,
                 const std::vector<size_t> &indicies, size_t insert_index)->int
             {
                 auto it {map.find(prod_cache)};
@@ -620,7 +622,7 @@ gen_cprimes_2way_all(
 
 void
 gen_cprimes_2way_prob(
-        const std::vector<long> &primes, 
+        const std::vector<long> &primes,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t num_trials,
@@ -656,16 +658,16 @@ gen_cprimes_2way_prob(
     }
 
 #if LOG_LEVEL >= 2
-    size_t count {0}; 
+    size_t count {0};
 #if LOG_LEVEL >= 1
     std::cout << "|G| = " << mag_G << " (" << ceil(NTL::log(mag_G)/log(2)) << " bits)\n";
-    std::cout << "randomly choosing " << num_trials << " subsets from first half (size " 
+    std::cout << "randomly choosing " << num_trials << " subsets from first half (size "
         << h1_primes_size << ")...\n";
     size_t inv_count {0};
 #endif
 #endif
 
-    size_t subset_count {0}; 
+    size_t subset_count {0};
     std::vector<std::vector<size_t> > subsets;
     subsets.reserve(num_trials);
 
@@ -757,3 +759,116 @@ gen_cprimes_2way_prob(
 }
 
 
+void
+gen_cprimes_4way_all(
+        const std::vector<long> &primes,
+        const std::array<long, 2> &nonrigid_factors,
+        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
+        size_t min_size, size_t max_size
+        )
+{
+    const long p0 { nonrigid_factors[0] };
+    const long p1 { nonrigid_factors[1] };
+    const NTL::ZZ p0_zz { p0 };
+    const NTL::ZZ p1_zz { p1 };
+    const NTL::ZZ p02_1 { NTL::sqr(p0_zz)-1 };
+    const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
+    const NTL::ZZ p0p1a { p0_zz * p1_zz * a_val };
+
+    std::array<NTL::ZZ, 2> prod_base {p02_1, p12_1};
+    std::array<map_type<2>, 4> maps;
+
+
+    /* split primes set into 4 */
+    std::vector<std::vector<long>> primes_n {split_vector(primes, 4)};
+
+    for (size_t i = 0; i < 4; i++)
+    {
+        const auto &set = primes_n[i];
+        const size_t set_size = set.size();
+        const size_t pmin_size = bound<size_t>(min_size, 1, set_size);
+        const size_t pmax_size = bound<size_t>(max_size, pmin_size, set_size);
+        size_t num_subsets {calc_max_subsets(set.size(), pmin_size, pmax_size)};
+
+#if LOG_LEVEL >= 1
+        printf("(%lu) subset sizes [%lu,%lu]: %lu subsets\n", i, pmin_size,
+                pmax_size, num_subsets);
+        size_t inv_count {0};
+#if LOG_LEVEL >= 2
+        size_t count {0};
+#endif
+#endif
+        maps[i].reserve(num_subsets);
+        subsetprod_mod<2>(set, prod_base,
+                [&](std::array<NTL::ZZ, 2> &prod_cache,
+                    const std::vector<size_t> &indicies, size_t insert_index)->int
+                {
+                    if (i % 2  == 0)
+                    {
+                        for(size_t j {0}; i < 2; ++j)
+                            prod_cache[j] = NTL::InvMod(prod_cache[j], prod_base[j]);
+                    }
+
+                    // create vector<bool> representing this subset
+                    // and store in map
+                    std::vector<std::vector<bool>> &vec {maps[i][prod_cache]};
+
+                    std::vector<bool> subset;
+                    subset.resize(set_size, false);
+                    for (auto i : indicies) subset[i] = true;
+
+                    vec.push_back(std::move(subset));
+#if LOG_LEVEL >= 1
+                    if(vec.size() == 1)
+                        inv_count++;
+#if LOG_LEVEL >= 2
+                    if((count++ & STEP_MASK) == 0)
+                        std::cerr << "count: " << count << "\r";
+#endif
+#endif
+                    return 1;
+                },
+            min_size, max_size);
+    }
+
+    std::array<NTL::ZZ, 1> prod_base_2 {L_val};
+    map_type<1> map2_0 { join<2,1>(maps[0], maps[1], primes_n[0], primes_n[1], prod_base_2,
+            [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
+                ->std::array<NTL::ZZ,1>
+            {
+                std::array<NTL::ZZ, 1> prod {NTL::ZZ{1}};
+                NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
+                return prod;
+            }
+        )
+    };
+    maps[0].clear();
+    maps[1].clear();
+
+    map_type<1> map2_1 { join<2,1>(maps[2], maps[3], primes_n[2], primes_n[3],prod_base_2,
+            [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
+                ->std::array<NTL::ZZ,1>
+            {
+                std::array<NTL::ZZ, 1> prod {p0p1a};
+                NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
+                NTL::InvMod(prod[0], prod[0], L_val);
+                return prod;
+            }
+        )
+    };
+    maps[2].clear();
+    maps[3].clear();
+
+    std::vector<long> primes01 {join_vector(primes_n[0], primes_n[1])};
+    std::vector<long> primes23 {join_vector(primes_n[2], primes_n[3])};
+
+    std::array<NTL::ZZ,0> empty_base;
+    map_type<0> map_final { join<1,0>(map2_0, map2_1, primes01, primes23, empty_base,
+            [&](const std::array<NTL::ZZ, 0> &prod0, const std::array<NTL::ZZ, 0> &prod1)
+                ->std::array<NTL::ZZ,0>
+            {
+                return empty_base;
+            }
+        )
+    };
+}

@@ -49,3 +49,5 @@ plots/**/summary
 plots/**/sorted_summary
 
 build
+
+**/__pycache__/

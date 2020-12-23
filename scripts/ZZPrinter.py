@@ -42,7 +42,7 @@ class ZZPrinter:
 
 def lookup_type(val):
     t = str(val.type)
-    if 'NTL::ZZ' in t or '_ntl_gbigint' in t:
+    if t.startswith('NTL::ZZ') or t.startswith('_ntl_gbigint'):
         return ZZPrinter(val)
     return None
 gdb.pretty_printers.append(lookup_type)

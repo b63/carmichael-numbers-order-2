@@ -103,6 +103,11 @@ main(int argc, char **argv)
     const size_t primes_set_size { primes_set.size() };
     std::cout << "|P| = " << primes_set_size << "\n";
 
+    /* calculate and print total group size */
+    const NTL::ZZ lcm {get_lcm<std::array<NTL::ZZ, 3> >(std::array<NTL::ZZ,3>{p02_1, p12_1, L_val}, 3)};
+    const NTL::ZZ mod_G {eulers_toitent(lcm)};
+    std::cout << "|G| = " << mod_G << " (" << ceil(NTL::log(mod_G)/log(2)) << " bits)\n";
+
 
     /* read-in/generate values for parameter a */
     std::vector<std::vector<long>> a_values;

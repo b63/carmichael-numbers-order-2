@@ -163,7 +163,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
 
     long p_prev { 0 };
     long p = s.next();
-    while ( p != 0 && p <= p_max && (!max || p <= max))
+    while ( p != 0 && p <= p_max)
     {
         /* check to make sure p is not a factor of L */
         for(; i < num_factors && L.primes[i] < p; ++i)
@@ -191,7 +191,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
 
     /* NOTE: assming L does not contain a factor larger than what NTL::PrimeSeq supports */
     /* don't bother checking if p is a factor of L */
-    while(p != 0 && p <= p_max && (!max || p <= max))
+    while(p != 0 && p <= p_max)
     {
         NTL::ZZ p_zz { p };
         if (NTL::GCD(p_zz, p02_1) == 1 && NTL::GCD(p_zz, p12_1) == 1)
@@ -219,7 +219,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
         /* maxed out PrimeSeq, use NextPrime */
         NTL::ZZ p_zz {p_prev};
         NextPrime(p_zz, p_zz+1);
-        while (p_zz < p_max && (!max || p_zz <= max))
+        while (p_zz < p_max)
         {
             /* check to make sure p is not a factor of L */
             for(; i < num_factors && L.primes[i] < p_zz; ++i); /* NOP */
@@ -236,7 +236,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
         }
 
         /* don't bother checking if p_zz is a factor of L */
-        while (p_zz < p_max && (!max || p_zz <= max))
+        while (p_zz < p_max)
         {
             if(NTL::GCD(p_zz, p02_1) == 1 && NTL::GCD(p_zz, p12_1) ==1
                     && NTL::divide(L_val, NTL::sqr(p_zz)-1))
@@ -581,7 +581,6 @@ gen_cprimes_2way_all(
         : MIN(num_subsets, NTL::conv<size_t>(mod_G)) };
 
 #if LOG_LEVEL >= 1
-    std::cout << "|G| = " << mod_G << " (" << ceil(NTL::log(mod_G)/log(2)) << " bits)\n";
     std::cout << "subset sizes " << "[" << min_size << "," << max_size << "]: "
         << num_subsets << " subsets\n";
     std::cout << "storing inverse subset products of first half (size " << h1_primes_size << ") " << " ...\n";
@@ -847,13 +846,6 @@ gen_cprimes_4way_all(
 
     /* split primes set into 4 */
     std::vector<std::vector<long>> primes_n {split_vector(primes, 4)};
-
-#if LOG_LEVEL >= 1
-    /* calculate and print total group size */
-    const NTL::ZZ lcm {get_lcm<std::array<NTL::ZZ, 3> >(std::array<NTL::ZZ,3>{p02_1, p12_1, L_val}, 3)};
-    const NTL::ZZ mod_G {eulers_toitent(lcm)};
-    std::cout << "|G| = " << mod_G << " (" << ceil(NTL::log(mod_G)/log(2)) << " bits)\n";
-#endif
 
     /* store the subset-product mod p02_1 and p12_1 as array<NTL::ZZ,2>
      * of every subset of each of the primes set in primes_n */

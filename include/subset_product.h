@@ -4,6 +4,7 @@
 #include <functional>
 #include <vector>
 #include <memory>
+#include <cstdio>
 #include <NTL/ZZ.h>
 
 #include <util.h>
@@ -131,103 +132,6 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
 }
 
 
-template<unsigned long int M>
-void
-prod_mod_subsets(std::vector<std::array<NTL::ZZ, M>> &dst,
-        const std::vector<long> &primes,
-        const std::vector<std::vector<bool>> &subsets,
-        const std::array<NTL::ZZ, M> &bases)
-{
-    const size_t size = subsets.size();
-    size_t start = dst.size();
-    dst.resize(start + size);
-
-    for (size_t k = 0; k < size; k++)
-    {
-        std::array<NTL::ZZ, M> &prods = dst[start+k];
-        const std::vector<bool> &subset = subsets[k];
-        const size_t num_primes = subset.size();
-
-        for (size_t i = 0; i < M; i++)
-        {
-            prods[i] = 1;
-
-            for (size_t j = 0; j < num_primes; j++)
-                if (subset[j])
-                    NTL::MulMod(prods[i], prods[i], primes[j], bases[i]);
-        }
-    }
-
-}
-
-
-template <unsigned long int N, unsigned long int M>
-std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>>
-join(const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> src0,
-        const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> src1,
-        const std::vector<long> &primes0,
-        const std::vector<long> &primes1,
-        const std::array<NTL::ZZ,M> &new_bases,
-        const std::function<std::array<NTL::ZZ,M>(const std::array<NTL::ZZ,M>&, const std::array<NTL::ZZ,M>&)> &callback)
-{
-    std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>> dst;
-    const auto end = src0.cend();
-    for(auto it = src0.cbegin(); it != end; it++)
-    {
-        const std::array<NTL::ZZ, N> &key = it->first;
-        const std::vector<std::vector<bool>> &subsets0 = it->second;
-
-        auto it1 {src1.find(key)};
-        if (it1 != src1.end())
-        {
-            const std::vector<std::vector<bool>> &subsets1 {src1.at(key)};
-            const size_t size0 = subsets0.size();
-            const size_t size1 = subsets1.size();
-
-            std::vector<std::array<NTL::ZZ, M>> products0, products1;
-            if (M > 0)
-            {
-                prod_mod_subsets(products0, primes0, subsets0, new_bases);
-                prod_mod_subsets(products1, primes1, subsets1, new_bases);
-            }
-            else
-            {
-                products0.resize(size0);
-                products1.resize(size1);
-
-                std::cout << "key: ";
-                for(auto &z : key) std::cout << z << " ";
-
-                std::cout << "\n0: ";
-                for (auto &s : subsets0)
-                    print_bool_vec(s, primes0);
-
-                std::cout << "\n1: ";
-                for (auto &s : subsets1)
-                    print_bool_vec(s, primes1);
-                std::cout << "\n";
-            }
-
-            /* make a copy and store every combination of two subsets */
-            for (size_t i = 0; i < size0; i++)
-            {
-                const std::vector<bool> &part0 {subsets0[i]};
-                for (size_t j = 0; j < size1; j++)
-                {
-                    const std::vector<bool> &part1 {subsets1[j]};
-                    std::array<NTL::ZZ, M> new_key { callback(products0[i], products1[j]) };
-
-                    std::vector<bool> joined {join_vector(part0, part1)};
-                    dst[new_key].push_back(std::move(joined));
-                }
-            }
-        }
-    }
-
-    return dst;
-}
-
-
 template <size_t N>
 void subsetprod_2way_all(
     std::vector<std::vector<long>> &solns,
@@ -347,6 +251,116 @@ void subsetprod_2way_all(
                 return 0;
             }, min_size, max_size);
 }
+
+
+template<unsigned long int M>
+void
+prod_mod_subsets(std::vector<std::array<NTL::ZZ, M>> &dst,
+        const std::vector<long> &primes,
+        const std::vector<std::vector<bool>> &subsets,
+        const std::array<NTL::ZZ, M> &bases)
+{
+    const size_t size = subsets.size();
+    size_t start = dst.size();
+    dst.resize(start + size);
+
+    for (size_t k = 0; k < size; k++)
+    {
+        std::array<NTL::ZZ, M> &prods = dst[start+k];
+        const std::vector<bool> &subset = subsets[k];
+        const size_t num_primes = subset.size();
+
+        for (size_t i = 0; i < M; i++)
+        {
+            prods[i] = 1;
+
+            for (size_t j = 0; j < num_primes; j++)
+                if (subset[j])
+                    NTL::MulMod(prods[i], prods[i], primes[j], bases[i]);
+        }
+    }
+
+}
+
+
+template <unsigned long int N, unsigned long int M>
+std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>>
+join(const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> src0,
+        const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> src1,
+        const std::vector<long> &primes0,
+        const std::vector<long> &primes1,
+        const std::array<NTL::ZZ,M> &new_bases,
+        const std::function<std::array<NTL::ZZ,M>(const std::array<NTL::ZZ,M>&, const std::array<NTL::ZZ,M>&)> &callback)
+{
+#if LOG_LEVEL >= 2
+    size_t count {0};
+#endif
+
+    std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>> dst;
+    const auto end = src0.cend();
+    for(auto it = src0.cbegin(); it != end; it++)
+    {
+        const std::array<NTL::ZZ, N> &key = it->first;
+        const std::vector<std::vector<bool>> &subsets0 = it->second;
+
+        auto it1 {src1.find(key)};
+        if (it1 != src1.end())
+        {
+            const std::vector<std::vector<bool>> &subsets1 {src1.at(key)};
+            const size_t size0 = subsets0.size();
+            const size_t size1 = subsets1.size();
+
+            std::vector<std::array<NTL::ZZ, M>> products0, products1;
+            if (M > 0)
+            {
+                prod_mod_subsets(products0, primes0, subsets0, new_bases);
+                prod_mod_subsets(products1, primes1, subsets1, new_bases);
+            }
+            else
+            {
+                products0.resize(size0);
+                products1.resize(size1);
+
+                std::cout << "key: ";
+                for(auto &z : key) std::cout << z << " ";
+
+                std::cout << "\n0: ";
+                for (auto &s : subsets0)
+                    print_bool_vec(s, primes0);
+
+                std::cout << "\n1: ";
+                for (auto &s : subsets1)
+                    print_bool_vec(s, primes1);
+                std::cout << "\n";
+            }
+
+            /* make a copy and store every combination of two subsets */
+            for (size_t i = 0; i < size0; i++)
+            {
+                const std::vector<bool> &part0 {subsets0[i]};
+                for (size_t j = 0; j < size1; j++)
+                {
+                    const std::vector<bool> &part1 {subsets1[j]};
+                    std::array<NTL::ZZ, M> new_key { callback(products0[i], products1[j]) };
+
+                    std::vector<bool> joined {join_vector(part0, part1)};
+                    dst[new_key].push_back(std::move(joined));
+                }
+            }
+        }
+#if LOG_LEVEL >= 2
+        if((count++ & STEP_MASK) == 0)
+            fprintf(stderr, "count: %lu\r", count);
+#endif
+    }
+
+#if LOG_LEVEL >= 2
+    fprintf(stderr, "count: %lu\n", count);
+#endif
+
+    return dst;
+}
+
 
 #endif
 

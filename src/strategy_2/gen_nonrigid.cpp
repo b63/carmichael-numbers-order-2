@@ -44,7 +44,7 @@ read_primes_from_file(std::vector<long> &vec, const char *filename)
 /**
  * Format for commandline arguments(<> required, [] optional):
  *  [1]     <max> <p0> <p1> <min_terms> <max_terms> <L>
- *  [2]     <max> <p0> <p1> <min_terms> <max_terms> <L> < - | primes_path> [ - | a_vals_path ]
+ *  [2]     <max> <p0> <p1> <min_terms> <max_terms> <L> < - | primes_path> [ -<min>,<max> | a_vals_path ]
  *
  * where
  *    max       - maximum prime when constructing set of primes P
@@ -59,9 +59,10 @@ read_primes_from_file(std::vector<long> &vec, const char *filename)
  *         If '-' or not specified, primes will be generated, otherwise primes constituting
  *         the primes set P will be read in from the path given.
  *
- *      [ - | a_vals_path]   can be either '-' or path to file containing list of
- *         parameter a values to try. If '-' or not specified, all possible a values
- *         from the primes set P will be generated.
+ *      [ - | a_vals_path]   can be either "-<min>,<max>" or path to file containing list of
+ *         parameter a values to try. <min> and <max> refers to minimum subset to consideror
+ *         where generating possible values for parameter a from  the primes set P.
+ *         Since 2-set algorithm is used, subsets are drawn from halves.
  */
 int
 main(int argc, char **argv)
@@ -105,13 +106,20 @@ main(int argc, char **argv)
 
     /* read-in/generate values for parameter a */
     std::vector<std::vector<long>> a_values;
-    if (argc >= 9 && strcmp(argv[8], "-"))
+    if (argc >= 9 && argv[8][0] != '-')
     {
         read_a_values_from_file(a_values, argv[8]);
     }
     else
     {
-        generate_a_values(a_values, primes_set, nonrigid_factors, L_val, 1, 4);
+        char *comma = strchr(argv[8], ',');
+        if (comma == NULL) return 1;
+        *comma = 0;
+        int min {atoi(argv[8]+1)};
+        int max {atoi(comma+1)};
+        *comma = ',';
+
+        generate_a_values(a_values, primes_set, nonrigid_factors, L_val, min, max);
     }
 
     const size_t num_a { a_values.size() };

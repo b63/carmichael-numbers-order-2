@@ -848,6 +848,13 @@ gen_cprimes_4way_all(
     /* split primes set into 4 */
     std::vector<std::vector<long>> primes_n {split_vector(primes, 4)};
 
+#if LOG_LEVEL >= 1
+    /* calculate and print total group size */
+    const NTL::ZZ lcm {get_lcm<std::array<NTL::ZZ, 3> >(std::array<NTL::ZZ,3>{p02_1, p12_1, L_val}, 3)};
+    const NTL::ZZ mod_G {eulers_toitent(lcm)};
+    std::cout << "|G| = " << mod_G << " (" << ceil(NTL::log(mod_G)/log(2)) << " bits)\n";
+#endif
+
     /* store the subset-product mod p02_1 and p12_1 as array<NTL::ZZ,2>
      * of every subset of each of the primes set in primes_n */
     std::array<NTL::ZZ, 2> prod_base {p02_1, p12_1};
@@ -865,8 +872,8 @@ gen_cprimes_4way_all(
         size_t num_subsets {calc_max_subsets(set.size(), pmin_size, pmax_size)};
 
 #if LOG_LEVEL >= 1
-        printf("(%lu) subset sizes [%lu,%lu]: %lu subsets\n", i, pmin_size,
-                pmax_size, num_subsets);
+        printf("(%lu) subset sizes [%lu,%lu] of %lu: %lu subsets\n", i, pmin_size,
+                pmax_size, set_size, num_subsets);
         size_t inv_count {0};
 #if LOG_LEVEL >= 2
         size_t count {0};
@@ -882,7 +889,7 @@ gen_cprimes_4way_all(
                     if (i % 2  == 0)
                     {
                         /* primes_n[0] and primes_n[1] */
-                        for (size_t j {0}; i < 2; ++j)
+                        for (size_t j {0}; j < 2; ++j)
                             prod_cache[j] = NTL::InvMod(prod_cache[j], prod_base[j]);
                     }
 
@@ -905,9 +912,21 @@ gen_cprimes_4way_all(
 #endif
                     return 1;
                 },
-            min_size, max_size);
+            pmin_size, pmax_size
+        );
+
+#if LOG_LEVEL >= 1
+#if LOG_LEVEL >= 2
+        printf("count: %lu\n", count);
+#endif
+        printf("inverses: %lu\n", inv_count);
+#endif
     }
 
+#if LOG_LEVEL >= 1
+    printf("\njoining [0] and [1] ...\n");
+    size_t count {0};
+#endif
     /* next we care about subset-product mod L_val only */
     std::array<NTL::ZZ, 1> prod_base_2 {L_val};
     /* join subsets in maps[0] and map[1] that are in unitary subgroup mod {p02_1, p12_1}
@@ -921,6 +940,9 @@ gen_cprimes_4way_all(
                 std::array<NTL::ZZ, 1> prod {NTL::ZZ{1}};
                 /* In this case, they key is the product of the joined subset mod L_val */
                 NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
+#if LOG_LEVEL >= 1
+                count++;
+#endif
                 return prod;
             }
         )
@@ -928,6 +950,12 @@ gen_cprimes_4way_all(
     /* the subsets we care about have been copied already, so clear them */
     maps[0].clear();
     maps[1].clear();
+
+#if LOG_LEVEL >= 1
+    printf("subset count: %lu\n", count);
+    printf("\njoining [2] and [3] ...\n");
+    count = 0;
+#endif
 
     /* join subsets in map[2] and map[3] this time*/
     map_type<1> map2_1 { join<2,1>(maps[2], maps[3], primes_n[2], primes_n[3],prod_base_2,
@@ -939,12 +967,20 @@ gen_cprimes_4way_all(
                 std::array<NTL::ZZ, 1> prod {p0p1a};
                 NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
                 NTL::InvMod(prod[0], prod[0], L_val);
+#if LOG_LEVEL >= 1
+                count++;
+#endif
                 return prod;
             }
         )
     };
     maps[2].clear();
     maps[3].clear();
+#if LOG_LEVEL >= 1
+    printf("subset count: %lu\n", count);
+    printf("\nfinal join ...\n");
+    count = 0;
+#endif
 
     /* the subsets stored in maps2_0 and maps2_1 are stored as vector<bool> and
      * draw halfs of the original `primes` set */
@@ -956,9 +992,16 @@ gen_cprimes_4way_all(
             [&](const std::array<NTL::ZZ, 0> &prod0, const std::array<NTL::ZZ, 0> &prod1)
                 ->std::array<NTL::ZZ,0>
             {
+#if LOG_LEVEL >= 1
+                count++;
+#endif
                 /* we don't care about the key in the final join, just store them under the same key */
                 return empty_base;
             }
         )
     };
+
+#if LOG_LEVEL >= 1
+    printf("subset count: %lu\n", count);
+#endif
 }

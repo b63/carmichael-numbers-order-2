@@ -143,11 +143,17 @@ NTL::ZZ get_lcm(const T &arr, size_t size)
 {
     if (size < 2)
         return arr[0];
-
     NTL::ZZ gcd {NTL::GCD(arr[0], arr[1])};
+    NTL::ZZ prod {arr[0] * arr[1]};
+    NTL::ZZ lcm {prod/gcd};
+
     for(size_t i=2; i < size; ++i)
-        NTL::GCD(gcd, gcd, arr[i]);
-    NTL::ZZ lcm {product<T, NTL::ZZ>(arr)/gcd};
+    {
+        gcd = NTL::GCD(lcm, arr[i]);
+        prod = lcm * arr[i];
+        lcm = prod / gcd;
+    }
+
     return lcm;
 }
 

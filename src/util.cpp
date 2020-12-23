@@ -24,6 +24,7 @@ split_vector(const std::vector<long> &src, size_t n)
             v.reserve(num_each);
             for (size_t j = start; j < end; j++)
                 v.push_back(src[j]);
+            start = end;
         }
     }
 

@@ -1,31 +1,34 @@
 #include <vector>
 #include <cmath>
+#include <algorithm>
 
 #include <util.h>
 
+/**
+ * Returns `n` vectors whose elements are randomly chosen from `src`.
+ * @param  src   vector to draw elements from
+ * @param  n     number of vectors to distribute the elements of `src` 
+ */
 std::vector<std::vector<long>>
 split_vector(const std::vector<long> &src, size_t n)
 {
 
     const size_t total = src.size();
-    const size_t num_each = total / n;
+
+    /* create array of shuffled indicies */
+    std::vector<size_t> indicies;
+    indicies.resize(total);
+    for (size_t i=0; i < total; i++) indicies[i] = i;
+    std::random_shuffle(indicies.begin(), indicies.end());
 
     std::vector<std::vector<long>> dst;
     dst.resize(n);
+    for(auto &v : dst)
+        v.reserve(total/n+1);
 
-    if (total > 1)
+    for (size_t i=0; i < total; i++)
     {
-        size_t start = 0;
-        for (size_t i = 0; i < n; i++)
-        {
-            const size_t end = (i == n-1 ? total-1 : start + num_each);
-
-            std::vector<long> &v = dst[i];
-            v.reserve(num_each);
-            for (size_t j = start; j < end; j++)
-                v.push_back(src[j]);
-            start = end;
-        }
+        dst[i%n].push_back(src[indicies[i]]);
     }
 
     return dst;

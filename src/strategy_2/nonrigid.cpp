@@ -834,7 +834,7 @@ gen_cprimes_4way_all(
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_size, size_t max_size
-        )
+    )
 {
     const long p0 { nonrigid_factors[0] };
     const long p1 { nonrigid_factors[1] };
@@ -923,7 +923,8 @@ gen_cprimes_4way_all(
     std::array<NTL::ZZ, 1> prod_base_2 {L_val};
     /* join subsets in maps[0] and map[1] that are in unitary subgroup mod {p02_1, p12_1}
      * and store them in map2_0 using their product mod L_val as the keys */
-    map_type<1> map2_0 { join<2,1>(maps[0], maps[1], primes_n[0], primes_n[1], prod_base_2,
+    map_type<1> map2_0;
+    join<2,1>(map2_0, maps[0], maps[1], primes_n[0], primes_n[1], prod_base_2,
             [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
                 ->std::array<NTL::ZZ,1>
             {
@@ -937,8 +938,7 @@ gen_cprimes_4way_all(
 #endif
                 return prod;
             }
-        )
-    };
+        );
     /* the subsets we care about have been copied already, so clear them */
     maps[0].clear();
     maps[1].clear();
@@ -950,7 +950,8 @@ gen_cprimes_4way_all(
 #endif
 
     /* join subsets in map[2] and map[3] this time*/
-    map_type<1> map2_1 { join<2,1>(maps[2], maps[3], primes_n[2], primes_n[3],prod_base_2,
+    map_type<1> map2_1;
+    join<2,1>(map2_1, maps[2], maps[3], primes_n[2], primes_n[3],prod_base_2,
             [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
                 ->std::array<NTL::ZZ,1>
             {
@@ -964,8 +965,7 @@ gen_cprimes_4way_all(
 #endif
                 return prod;
             }
-        )
-    };
+        );
     maps[2].clear();
     maps[3].clear();
 #if LOG_LEVEL >= 1
@@ -980,7 +980,8 @@ gen_cprimes_4way_all(
     std::vector<long> primes23 {join_vector(primes_n[2], primes_n[3])};
 
     std::array<NTL::ZZ,0> empty_base;
-    map_type<0> map_final { join<1,0>(map2_0, map2_1, primes01, primes23, empty_base,
+    map_type<0> map_final;
+    join<1,0>(map_final, map2_0, map2_1, primes01, primes23, empty_base,
             [&](const std::array<NTL::ZZ, 0> &prod0, const std::array<NTL::ZZ, 0> &prod1)
                 ->std::array<NTL::ZZ,0>
             {
@@ -990,10 +991,173 @@ gen_cprimes_4way_all(
                 /* we don't care about the key in the final join, just store them under the same key */
                 return empty_base;
             }
-        )
-    };
+        );
 
 #if LOG_LEVEL >= 1
     printf("subset count: %lu\n", count);
 #endif
+}
+
+
+
+/*
+ * Generate order2-carmichael numbers with two non-rigid factors given in
+ * `nonrigid_factors` using 8-set algorithm.
+ *
+ * @param  primes               set of primes P(2,L)
+ * @param  nonrigid_factors     array<NTL:ZZ,2> of non-rigid factors {p0, p1}
+ * @param  a_val                parameter a for given choice for L, p0, and p1
+ * @param  L_val                value for paramter L as NTL::ZZ
+ * @param  min_size             minimum size of subsets to consider for each of
+ *                              of the 8 partitions of `primes`
+ * @param  min_size             maximum size of subsets to consider for each of
+ *                              of the 8 partitions of `primes`
+ */
+void
+gen_cprimes_8way_all(
+        const std::vector<long> &primes,
+        const std::array<long, 2> &nonrigid_factors,
+        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
+        size_t min_size, size_t max_size
+    )
+{
+    const long p0 { nonrigid_factors[0] };
+    const long p1 { nonrigid_factors[1] };
+    const NTL::ZZ p0_zz { p0 };
+    const NTL::ZZ p1_zz { p1 };
+    const NTL::ZZ p02_1 { NTL::sqr(p0_zz)-1 };
+    const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
+    const NTL::ZZ p0p1a { p0_zz * p1_zz * a_val };
+
+    /* split primes set into 8 */
+    std::vector<std::vector<long>> partitions {split_vector(primes, 8)};
+    std::array<NTL::ZZ, 4> prod_bases {p02_1, p12_1, L_val, NTL::ZZ{1}};
+
+    std::vector<map_type<1>> maps0;
+    maps0.resize(8);
+    for (size_t n=0; n < 8; n++)
+    {
+        const std::vector<long> &Pn { partitions[n] };
+        const size_t Pn_size { Pn.size() };
+        const size_t pmin_size = bound<size_t>(min_size, 1, Pn_size);
+        const size_t pmax_size = bound<size_t>(max_size, pmin_size, Pn_size);
+        size_t num_subsets {calc_max_subsets(Pn_size, pmin_size, pmax_size)};
+
+#if LOG_LEVEL >= 1
+        printf("(%lu) subset sizes [%lu,%lu] of %lu: %lu subsets\n", n, pmin_size,
+                pmax_size, Pn_size, num_subsets);
+        size_t inv_count {0};
+#if LOG_LEVEL >= 2
+        size_t count {0};
+#endif
+#endif
+
+        maps0[n].reserve(num_subsets);
+        /* calculate & store subset-product mod p0^2-1 for subsets of
+         * sizes pmin_size to pmax_size for all of the 8 partitions */
+        subsetprod_mod<1>(Pn, std::array<NTL::ZZ,1>{prod_bases[0]},
+                [&](std::array<NTL::ZZ, 1> &prod_cache,
+                    const std::vector<size_t> &indicies, size_t insert_index)->int
+                {
+                    /* store the inverse subset-product instead of subset-product
+                     * mod p02_1 for one of the primes sets in the pair */
+                    if (n % 2  == 0)
+                    {
+                        prod_cache[0] = NTL::InvMod(prod_cache[0], prod_bases[0]);
+                    }
+
+                    /* create a vector<bool> representing this subset and add it to map */
+                    std::vector<std::vector<bool>> &vec {maps0[n][prod_cache]};
+
+                    std::vector<bool> subset;
+                    subset.resize(Pn_size, false);
+                    for (auto i : indicies) subset[i] = true;
+
+                    vec.push_back(std::move(subset));
+#if LOG_LEVEL >= 1
+                    if(vec.size() == 1)
+                        inv_count++;
+#if LOG_LEVEL >= 2
+                    if((count++ & STEP_MASK) == 0)
+                        std::cerr << "count: " << count << "\r";
+#endif
+#endif
+                    return 1;
+                },
+            pmin_size, pmax_size
+        );
+#if LOG_LEVEL >= 1
+#if LOG_LEVEL >= 2
+        fprintf(stderr, "count: %lu\r", count);
+#endif
+
+        fprintf(stderr, "inverses: %lu\n", inv_count);
+#endif
+    }
+
+    std::vector<map_type<1>> maps1;
+    std::vector<std::vector<long>> joined_partitions = partitions;
+    for (size_t layer=1; layer <= 3; layer++)
+    {
+        std::vector<std::vector<long>> next_partitions;
+        std::vector<map_type<1>> &prev_maps { layer % 2 == 1 ? maps0 : maps1};
+        std::vector<map_type<1>> &next_maps { layer % 2 == 1 ? maps1 : maps0};
+        next_maps.clear();
+
+        const size_t num_joined {(size_t)1 << layer};
+        const size_t num_joins  {(size_t)8 >> layer};
+        next_maps.resize(num_joins);
+        next_partitions.reserve(num_joins);
+
+        for (size_t k=0; k < num_joins; k++)
+        {
+            const size_t k0 = 2*k; 
+            const size_t k1 = k0+1;
+#if LOG_LEVEL >= 1
+            printf("\nlayer %lu, joining [%lu] and [%lu] ...\n", layer-1, k0, k1);
+            size_t count {0};
+#endif
+            join<1,1>(
+                    next_maps[k],
+                    prev_maps[k0], prev_maps[k1], 
+                    joined_partitions[k0], joined_partitions[k1],
+                    std::array<NTL::ZZ,1>{prod_bases[layer]},
+                    [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
+                        ->std::array<NTL::ZZ,1>
+                    {
+                        std::array<NTL::ZZ, 1> prod {NTL::ZZ{1}};
+                        if (layer < 3)
+                        {
+                            NTL::MulMod(prod[0], prod0[0], prod1[0], prod_bases[layer]);
+                            if (k % 2 == 0)
+                            {
+                                if (layer == 2) 
+                                    NTL::MulMod(prod[0], prod[0], p0p1a, prod_bases[layer]);
+                                NTL::InvMod(prod[0], prod[0], prod_bases[layer]);
+                            }
+                        }
+#if LOG_LEVEL >= 1
+                        count++;
+#endif
+                        return prod;
+                    },
+                    layer == 3
+                );
+            prev_maps[k0].clear();
+            prev_maps[k1].clear();
+
+            std::vector<long> Pn {join_partitions(partitions, k*num_joined, (k+1)*num_joined)};
+            next_partitions.push_back(std::move(Pn));
+#if LOG_LEVEL >= 1
+            printf("subset count: %lu\n", count);
+#endif
+        }
+
+        joined_partitions = std::move(next_partitions);
+    }
+
+
+
+
+
 }

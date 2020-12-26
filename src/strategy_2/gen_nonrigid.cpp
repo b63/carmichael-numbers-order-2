@@ -145,7 +145,7 @@ main(int argc, char **argv)
 
         std::cout << "(|P| = " << primes_set_a.size() << ") trying a = "
                 << a_val << ", " << a_factors << "\n";
-        gen_cprimes_4way_all(primes_set_a, nonrigid_factors, a_val, L_val, min_terms, max_terms);
+        gen_cprimes_8way_all(primes_set_a, nonrigid_factors, a_val, L_val, min_terms, max_terms);
         std::cout << "\n\n";
     }
 }

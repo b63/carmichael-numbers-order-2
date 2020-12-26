@@ -284,19 +284,24 @@ prod_mod_subsets(std::vector<std::array<NTL::ZZ, M>> &dst,
 
 
 template <unsigned long int N, unsigned long int M>
-std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>>
-join(const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> src0,
-        const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> src1,
+void
+join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>> &dst,
+        const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> &src0,
+        const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>> &src1,
         const std::vector<long> &primes0,
         const std::vector<long> &primes1,
         const std::array<NTL::ZZ,M> &new_bases,
-        const std::function<std::array<NTL::ZZ,M>(const std::array<NTL::ZZ,M>&, const std::array<NTL::ZZ,M>&)> &callback)
+        const std::function<std::array<NTL::ZZ,M>(const std::array<NTL::ZZ,M>&, const std::array<NTL::ZZ,M>&)> &callback,
+        bool final_join=false
+    )
 {
+#if LOG_LEVEL >= 1
+    size_t pairs {0};
 #if LOG_LEVEL >= 2
     size_t count {0};
 #endif
+#endif
 
-    std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>> dst;
     const auto end = src0.cend();
     for(auto it = src0.cbegin(); it != end; it++)
     {
@@ -311,7 +316,7 @@ join(const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bo
             const size_t size1 = subsets1.size();
 
             std::vector<std::array<NTL::ZZ, M>> products0, products1;
-            if (M > 0)
+            if (M != 0 && !final_join)
             {
                 prod_mod_subsets(products0, primes0, subsets0, new_bases);
                 prod_mod_subsets(products1, primes1, subsets1, new_bases);
@@ -347,6 +352,9 @@ join(const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bo
                     dst[new_key].push_back(std::move(joined));
                 }
             }
+#if LOG_LEVEL >= 1
+            pairs++;
+#endif
         }
 #if LOG_LEVEL >= 2
         if((count++ & STEP_MASK) == 0)
@@ -354,11 +362,12 @@ join(const std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bo
 #endif
     }
 
+#if LOG_LEVEL >= 1
 #if LOG_LEVEL >= 2
     fprintf(stderr, "count: %lu\n", count);
 #endif
-
-    return dst;
+    fprintf(stderr, "pairs: %lu\n", pairs);
+#endif
 }
 
 

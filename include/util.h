@@ -101,7 +101,30 @@ split_vector(const std::vector<long> &src, size_t n);
 
 template <typename T>
 std::vector<T>
-join_vector(const std::vector<T> v0, const std::vector<T> v1)
+join_partitions(const std::vector<std::vector<T>> &partitions, size_t start, size_t end)
+{
+    std::vector<T> joined;
+    size_t total_size {0};
+    for (size_t i = start; i < end; i++)
+        total_size += partitions[i].size();
+
+    joined.reserve(total_size);
+    for (size_t i = start; i < end; i++)
+    {
+        for (const auto &elem : partitions[i])
+        {
+            joined.push_back(elem);
+        }
+    }
+
+    return joined;
+}
+
+
+
+template <typename T>
+std::vector<T>
+join_vector(const std::vector<T> &v0, const std::vector<T> &v1)
 {
     std::vector<T> joined;
     joined.reserve(v0.size() + v1.size());

@@ -345,6 +345,10 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
                 const std::vector<bool> &part0 {subsets0[i]};
                 for (size_t j = 0; j < size1; j++)
                 {
+#if LOG_LEVEL >= 2
+                    if((count++ & STEP_MASK) == 0)
+                        fprintf(stderr, "\rcount: %lu, pairs: ", count, pairs);
+#endif
                     const std::vector<bool> &part1 {subsets1[j]};
                     std::array<NTL::ZZ, M> new_key { callback(products0[i], products1[j]) };
 
@@ -356,10 +360,6 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
             pairs++;
 #endif
         }
-#if LOG_LEVEL >= 2
-        if((count++ & STEP_MASK) == 0)
-            fprintf(stderr, "count: %lu\r", count);
-#endif
     }
 
 #if LOG_LEVEL >= 1

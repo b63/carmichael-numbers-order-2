@@ -1115,7 +1115,6 @@ gen_cprimes_8way_all(
             const size_t k1 = k0+1;
 #if LOG_LEVEL >= 1
             printf("\nlayer %lu, joining [%lu] and [%lu] ...\n", layer-1, k0, k1);
-            size_t count {0};
 #endif
             join<1,1>(
                     next_maps[k],
@@ -1136,9 +1135,7 @@ gen_cprimes_8way_all(
                                 NTL::InvMod(prod[0], prod[0], prod_bases[layer]);
                             }
                         }
-#if LOG_LEVEL >= 1
-                        count++;
-#endif
+
                         return prod;
                     },
                     layer == 3
@@ -1148,9 +1145,6 @@ gen_cprimes_8way_all(
 
             std::vector<long> Pn {join_partitions(partitions, k*num_joined, (k+1)*num_joined)};
             next_partitions.push_back(std::move(Pn));
-#if LOG_LEVEL >= 1
-            printf("subset count: %lu\n", count);
-#endif
         }
 
         joined_partitions = std::move(next_partitions);

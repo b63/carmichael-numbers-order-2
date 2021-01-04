@@ -393,140 +393,44 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
 }
 
 
-void
-gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long> primes,
-        const std::array<long, 2> &nonrigid_factors,
-        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
-        size_t min_terms, size_t max_terms)
+NTL::ZZ&
+calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
+        const NTL::ZZ &a_val,
+        const std::array<long,2> &nonrigid_factors)
 {
-    const long p0 { nonrigid_factors[0] };
-    const long p1 { nonrigid_factors[1] };
-    const NTL::ZZ p0_zz { p0 };
-    const NTL::ZZ p1_zz { p1 };
+    const NTL::ZZ p0_zz { nonrigid_factors[0] };
+    const NTL::ZZ p1_zz { nonrigid_factors[1] };
     const NTL::ZZ p02_1 { NTL::sqr(p0_zz)-1 };
     const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
     const NTL::ZZ p0p1a { p0_zz * p1_zz * a_val };
 
-    constexpr size_t num_bases { 3 };
-    const std::array<NTL::ZZ, num_bases> prod_base {p02_1, p12_1, L_val};
+    const NTL::ZZ lcm_p0p1 {
+        get_lcm<std::array<NTL::ZZ,2>>(std::array<NTL::ZZ,2>{p02_1, p12_1},2)
+    };
+    // std::cout << "lcm(p0^2-1,  p1^2-1) = " << lcm_p0p1 << "\n";
 
-    const size_t num_primes = primes.size();
-    min_terms = MAX(min_terms, 2);
-    if (max_terms > 0)
-        max_terms = MIN(num_primes, max_terms);
-    else
-        max_terms = num_primes;
-
-    // go through all possible subset sizes starting from 2
-    for (size_t factors {min_terms}; factors <= max_terms; factors++)
     {
-        std::vector<size_t> index_stack = {0};
-#if LOG_LEVEL >= 1
-        if (max_terms > min_terms)
-            std::cout << "checking subsets of size " << factors << " ...\n";
-#if LOG_LEVEL >= 2
-        size_t count { 0 };
-        size_t cond[3] { 0, 0, 0 };
-#endif
-#endif
+        const NTL::ZZ gcd { NTL::GCD(L_val, lcm_p0p1) };
+        const NTL::ZZ base { lcm_p0p1/gcd };
 
-        /* cache of products */
-        std::vector<std::array<NTL::ZZ, num_bases> > products;
-        products.reserve(factors);
+        NTL::ZZ Ld_inv;
+        NTL::rem(Ld_inv, L_val/gcd, base);
+        NTL::InvMod(Ld_inv, Ld_inv, base);
+        // std::cout << "(L/gcd)^-1 = " << Ld_inv << " (mod " << base << ")\n";
 
-        // go through subsets of size factors suing a 'stack' (or odometer?)
-        size_t index_size;
-        while ((index_size = index_stack.size()) > 0)
-        {
-            const size_t prod_size  = products.size();
-            size_t top = index_size - 1;
-            size_t prod_top = prod_size - 1;
+        NTL::ZZ p0p1a_inv;
+        NTL::rem(p0p1a_inv, p0p1a, base);
+        NTL::InvMod(p0p1a_inv, p0p1a_inv, base);
+        // std::cout << "(p0p1a)^-1 = " << p0p1a << " (mod " << base << ")\n";
 
-            if (index_stack[top] < num_primes - (factors - index_size))
-            {
-                NTL::ZZ p_zz { primes[index_stack[top]] };
-                if (prod_size+1 < factors)
-                {
-                    std::array<NTL::ZZ, num_bases> prods;
-                    for(size_t j { 0 }; j < num_bases; ++j)
-                    {
-                        NTL::ZZ prod { 1 };
-                        if (prod_size)
-                            prod = products[prod_top][j];
-                        NTL::MulMod(prods[j], prod, p_zz, prod_base[j]);
-                    }
-                    products.push_back(std::move(prods));
-                }
-
-                if (index_size < factors)
-                {
-                    index_stack.push_back(index_stack[top]+1);
-                    continue;
-                }
-
-#if LOG_LEVEL >= 2
-                if ((count++ & STEP_MASK) == 0)
-                    std::cerr << "count: " << count
-                        << ", cond: " << cond[0]
-                        << ", " << cond[1]
-                        << ", " << cond[2] << "\r";
-#endif
-                /* IMPORTANT: must have at least TWO factors */
-                /*            otherwise segfault  */
-                std::array<NTL::ZZ, num_bases> &prods { products[top-1] };
-                NTL::ZZ n0;
-
-                // TODO: nested if's kinda ugly, refactor
-                /* check n0 = 1 (mod p0^2-1) */
-                NTL::MulMod(n0, prods[0], p_zz, prod_base[0]);
-                if (NTL::IsOne(n0))
-                {
-#if LOG_LEVEL >= 2
-                    cond[0]++;
-#endif
-                    /* check n0 = 1 (mod p1^2-1) */
-                    NTL::MulMod(n0, prods[1], p_zz, prod_base[1]);
-                    if (NTL::IsOne(n0))
-                    {
-#if LOG_LEVEL >= 2
-                        cond[1]++;
-#endif
-                        /* check n0 * p0 * p1 * a = 1 (mod L) */
-                        NTL::MulMod(n0, prods[1], p_zz, prod_base[2]);
-                        NTL::MulMod(n0, n0, p0p1a, prod_base[2]);
-                        if (NTL::IsOne(n0))
-                        {
-#if LOG_LEVEL >= 2
-                            cond[2]++;
-#endif
-                            std::vector<long> n;
-                            n.reserve(factors);
-                            for(auto it=index_stack.cbegin(), end=index_stack.cend();
-                                    it != end; ++it)
-                                n.push_back(primes[*it]);
-                            cprimes.push_back(std::move(n));
-                            std::cout << "found: " << n << "\n";
-                        }
-                    }
-                }
-
-                index_stack[top]++;
-            }
-            else
-            {
-                index_stack.pop_back();
-                if (top > 0) {
-                    ++index_stack[top - 1];
-                    products.pop_back();
-                }
-
-                continue;
-            }
-        }
-#if LOG_LEVEL >= 2
-        std::cerr << "count: " << count << "\n";
-#endif
+        NTL::ZZ t {1-p0p1a_inv};
+        if (t < 0) t = base - t;
+        t = (t / gcd) * Ld_inv;
+        target = t;
     }
+
+    std::cout << "t1 = " << target << "\n";
+    return target;
 }
 
 

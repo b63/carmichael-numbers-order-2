@@ -18,10 +18,10 @@ void generate_a_values(std::vector<std::vector<long> > &a_values, const std::vec
 void construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &L_val, const Factorization &L, long max = 0);
 
-void gen_cprimes_all(std::vector<std::vector<long>> &cprimes, const std::vector<long> primes, 
-        const std::array<long, 2> &nonrigid_factors, 
-        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
-        size_t min_terms, size_t max_terms);
+NTL::ZZ&
+calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
+        const NTL::ZZ &a_val,
+        const std::array<long,2> &nonrigid_factors);
 
 void gen_cprimes_2way_all(
         const std::vector<long> &primes, 

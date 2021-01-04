@@ -391,6 +391,12 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
 }
 
 
+/**
+ * Calculate the target residue given non-rigid factors,
+ * L, and the choice of parameter a.
+ * Writes b to `target` where 
+ *         b = (p0p1a)^-1 + t1 * L    [mod L']
+ */
 NTL::ZZ&
 calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
         const NTL::ZZ &a_val,
@@ -407,6 +413,7 @@ calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
     };
     // std::cout << "lcm(p0^2-1,  p1^2-1) = " << lcm_p0p1 << "\n";
 
+    NTL::ZZ t1;
     {
         const NTL::ZZ gcd { NTL::GCD(L_val, lcm_p0p1) };
         const NTL::ZZ base { lcm_p0p1/gcd };
@@ -423,11 +430,25 @@ calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
 
         NTL::ZZ t {1-p0p1a_inv};
         if (t < 0) t = base - t;
-        t = (t / gcd) * Ld_inv;
-        target = t;
+        t1 = (t / gcd) * Ld_inv;
     }
 
-    std::cout << "t1 = " << target << "\n";
+    // L' => LL
+    const NTL::ZZ LL {
+        get_lcm<std::array<NTL::ZZ,2>>(std::array<NTL::ZZ,2>{L_val, lcm_p0p1},2)
+    };
+
+    {
+        NTL::ZZ p0p1a_inv;
+        NTL::rem(p0p1a_inv, p0p1a, LL);
+        NTL::InvMod(p0p1a_inv, p0p1a_inv, LL);
+        // std::cout << "(p0p1a)^-1 = " << p0p1a_inv << "(mod " << LL << ")\n";
+        //
+        NTL::ZZ b {p0p1a_inv + t1 * L_val};
+        NTL::rem(target, b, LL);
+    }
+
+    std::cout << "b = " << target << "\n";
     return target;
 }
 
@@ -736,7 +757,7 @@ gen_cprimes_4way_all(
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_size, size_t max_size,
-        size_t LIMIT=0
+        size_t LIMIT
     )
 {
     const long p0 { nonrigid_factors[0] };
@@ -925,7 +946,7 @@ gen_cprimes_8way_all(
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_size, size_t max_size,
-        size_t LIMIT=0
+        size_t LIMIT
     )
 {
     const long p0 { nonrigid_factors[0] };

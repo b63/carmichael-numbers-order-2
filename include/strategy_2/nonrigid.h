@@ -42,7 +42,7 @@ gen_cprimes_4way_all(
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_size, size_t max_size,
-        size_t LIMIT
+        size_t LIMIT=0
         );
 
 void
@@ -51,6 +51,6 @@ gen_cprimes_8way_all(
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
         size_t min_size, size_t max_size,
-        size_t LIMIT
+        size_t LIMIT=0
     );
 #endif

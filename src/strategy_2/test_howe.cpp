@@ -177,7 +177,7 @@ test_gen_cprimes_2way_all(
     /* go through every subset in first half, store inverse in hashmap */
     subsetprod_mod<2>(h1_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
-                const std::vector<size_t> &indicies, size_t insert_index)->int
+                const std::vector<size_t> &indicies, size_t subset_count)->void
             {
                 NTL::MulMod(prod_cache[1], prod_cache[1], p0_zz, prod_base[1]);
                 std::array<NTL::ZZ, num_bases> invs;
@@ -202,7 +202,6 @@ test_gen_cprimes_2way_all(
                     std::cerr << "count: " << count << "\r";
 #endif
 #endif
-                return 1;
             }, min_size, max_size);
 
 #if LOG_LEVEL >= 1
@@ -216,7 +215,7 @@ test_gen_cprimes_2way_all(
     /* go through second half, check whether inverses exist in the hashmap */
     subsetprod_mod<2>(h2_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache, 
-                const std::vector<size_t> &indicies, size_t insert_index)->int
+                const std::vector<size_t> &indicies, size_t insert_index)->void
             {
                 auto it {map.find(prod_cache)};
                 if (it != map.end())
@@ -239,7 +238,6 @@ test_gen_cprimes_2way_all(
                 if((count++ & STEP_MASK) == 0)
                     std::cerr << "count: " << count << "\r";
 #endif
-                return 0;
             }, min_size, max_size);
 
 #if LOG_LEVEL >= 2

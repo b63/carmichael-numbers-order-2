@@ -41,12 +41,26 @@ struct ArrayHasher<NTL::ZZ, N>
     }
 };
 
+/**
+ * Enumerate every single subset of `set` with sizes [min_terms, max_terms],
+ * calculating the product of all the terms in the subset mod `bases` 
+ * (subset product) along the way. The subset-product, a copy of
+ * the subset, and current subset count will be passed to the `callback` function.
+ *
+ * @param  set          vector of long integers from which to draw subsets
+ * @param  bases        array of modulus bases to compute the subset-product
+ * @param  callback     a function of that accepts the subset-product, the subset,
+ *                      and the current subset count.
+ * @param  min_terms    the minimum number of elements to draw
+ * @param  max_terms    the maximum number of elements to draw
+ * @param  limit        maximum number of subsets to enumerate
+ */
 
 template <unsigned long int N>
 void
 subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases,
-        const std::function<int(std::array<NTL::ZZ, N>&, const std::vector<size_t>&, size_t)> &callback,
-        size_t min_terms=2, size_t max_terms=0)
+        const std::function<void(std::array<NTL::ZZ, N>&, const std::vector<size_t>&, size_t)> &callback,
+        size_t min_terms=2, size_t max_terms=0, size_t limit=0)
 {
     constexpr size_t num_bases { N };
 
@@ -115,7 +129,14 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
                     NTL::MulMod(mod_prod[j], prods[j], p_zz, bases[j]);
 
                 callback(mod_prod, index_stack, subset_count);
+                subset_count++;
                 index_stack[top]++;
+
+                if (limit > 0 && subset_count > limit)
+                {
+                    std::cout << "! reached limit " << limit << '\n';
+                    return;
+                }
             }
             else
             {
@@ -183,7 +204,7 @@ void subsetprod_2way_all(
     /* go through every subset in first half, store inverse in hashmap */
     subsetprod_mod<N>(first_half, bases,
             [&](std::array<NTL::ZZ, N>& prod_cache,
-                const std::vector<size_t> &indicies, size_t insert_index)->int
+                const std::vector<size_t> &indicies, size_t subset_count)->void
             {
                 std::array<NTL::ZZ, N> invs;
                 for(size_t i{0}; i < N; ++i)
@@ -210,7 +231,6 @@ void subsetprod_2way_all(
                     std::cerr << "count: " << count << "\r";
 #endif
 #endif
-                return 1;
             }, min_size, max_size);
 
 #if LOG_LEVEL >= 1
@@ -225,7 +245,7 @@ void subsetprod_2way_all(
 
     subsetprod_mod<N>(second_half, bases,
             [&](std::array<NTL::ZZ, N>& prod_cache,
-                const std::vector<size_t> &indicies, size_t insert_index)->int
+                const std::vector<size_t> &indicies, size_t subset_count)->void
             {
                 auto it { map.find(prod_cache)  };
                 if (it != map.end())
@@ -248,7 +268,6 @@ void subsetprod_2way_all(
                 if((count++ & STEP_MASK) == 0)
                     std::cerr << "count: " << count << "\r";
 #endif
-                return 0;
             }, min_size, max_size);
 }
 
@@ -347,7 +366,7 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
                 {
 #if LOG_LEVEL >= 2
                     if((count++ & STEP_MASK) == 0)
-                        fprintf(stderr, "\rcount: %lu, pairs: ", count, pairs);
+                        fprintf(stderr, "\rcount: %lu, pairs: %lu", count, pairs);
 #endif
                     const std::vector<bool> &part1 {subsets1[j]};
                     std::array<NTL::ZZ, M> new_key { callback(products0[i], products1[j]) };

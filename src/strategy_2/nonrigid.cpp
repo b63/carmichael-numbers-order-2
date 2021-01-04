@@ -311,7 +311,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
     /* go through every subset of first half, store inverses * target in hashmap */
     subsetprod_mod<2>(h1_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache,
-                const std::vector<size_t> &indicies, size_t insert_index)->int
+                const std::vector<size_t> &indicies, size_t subset_count)->void
             {
                 NTL::MulMod(prod_cache[0], prod_cache[0], p1_zz, prod_base[0]);
                 NTL::MulMod(prod_cache[1], prod_cache[1], p0_zz, prod_base[1]);
@@ -341,7 +341,6 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
                         << ", inv: " << inv_count << "\r";
 #endif
 #endif
-                return 1;
             }, min_terms, max_terms);
 
 #if LOG_LEVEL >= 1
@@ -355,7 +354,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
 
     subsetprod_mod<2>(h2_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache,
-                const std::vector<size_t> &indicies, size_t insert_index)->int
+                const std::vector<size_t> &indicies, size_t subset_count)->void
             {
                 const std::vector<std::vector<bool>> &ret {map[std::move(prod_cache)]};
                 if (ret.size() > 0)
@@ -388,7 +387,6 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
                 if((count++ & STEP_MASK) == 0)
                     std::cerr << "count: " << count << "\r";
 #endif
-                return 0;
             }, min_terms, max_terms);
 }
 
@@ -498,7 +496,7 @@ gen_cprimes_2way_all(
     /* go through every subset in first half, store inverse in hashmap */
     subsetprod_mod<3>(h1_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache,
-                const std::vector<size_t> &indicies, size_t insert_index)->int
+                const std::vector<size_t> &indicies, size_t subset_count)->void
             {
                 NTL::MulMod(prod_cache[2], prod_cache[2], p0p1a, prod_base[2]);
                 std::array<NTL::ZZ, num_bases> invs;
@@ -522,7 +520,6 @@ gen_cprimes_2way_all(
                     std::cerr << "count: " << count << "\r";
 #endif
 #endif
-                return 1;
             }, min_size, max_size);
 
 #if LOG_LEVEL >= 1
@@ -536,7 +533,7 @@ gen_cprimes_2way_all(
     /* go through second half, check whether inverses exist in the hashmap */
     subsetprod_mod<3>(h2_primes, prod_base,
             [&](std::array<NTL::ZZ, num_bases>& prod_cache,
-                const std::vector<size_t> &indicies, size_t insert_index)->int
+                const std::vector<size_t> &indicies, size_t subset_count)->void
             {
                 auto it {map.find(prod_cache)};
                 if (it != map.end())
@@ -559,7 +556,6 @@ gen_cprimes_2way_all(
                 if((count++ & STEP_MASK) == 0)
                     std::cerr << "count: " << count << "\r";
 #endif
-                return 0;
             }, min_size, max_size);
 
 #if LOG_LEVEL >= 2
@@ -778,7 +774,7 @@ gen_cprimes_4way_all(
         maps[i].reserve(num_subsets);
         subsetprod_mod<2>(set, prod_base,
                 [&](std::array<NTL::ZZ, 2> &prod_cache,
-                    const std::vector<size_t> &indicies, size_t insert_index)->int
+                    const std::vector<size_t> &indicies, size_t subset_count)->void
                 {
                     /* store the inverse subset-product instead of subset-product
                      * mod prod_base for one of the primes sets in the pair */
@@ -806,7 +802,6 @@ gen_cprimes_4way_all(
                         std::cerr << "count: " << count << "\r";
 #endif
 #endif
-                    return 1;
                 },
             pmin_size, pmax_size
         );
@@ -961,7 +956,7 @@ gen_cprimes_8way_all(
          * sizes pmin_size to pmax_size for all of the 8 partitions */
         subsetprod_mod<1>(Pn, std::array<NTL::ZZ,1>{prod_bases[0]},
                 [&](std::array<NTL::ZZ, 1> &prod_cache,
-                    const std::vector<size_t> &indicies, size_t insert_index)->int
+                    const std::vector<size_t> &indicies, size_t subset_count)->void
                 {
                     /* store the inverse subset-product instead of subset-product
                      * mod p02_1 for one of the primes sets in the pair */
@@ -986,7 +981,6 @@ gen_cprimes_8way_all(
                         std::cerr << "count: " << count << "\r";
 #endif
 #endif
-                    return 1;
                 },
             pmin_size, pmax_size
         );

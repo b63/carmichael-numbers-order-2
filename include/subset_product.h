@@ -55,7 +55,6 @@ struct ArrayHasher<NTL::ZZ, N>
  * @param  max_terms    the maximum number of elements to draw
  * @param  limit        maximum number of subsets to enumerate
  */
-
 template <unsigned long int N>
 void
 subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases,
@@ -153,6 +152,19 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
 }
 
 
+/**
+ * Employ two-set subset-product algorithm to find subsets of `set` whose subset-product mod `bases`
+ * is `targets`. Uses `subsetprod_mod` to go through all subsets of sizes [`min_size`, `max_size`]
+ * from each halves of `set`.
+ *
+ * @param soln      vector of vector<long> to add solutions to
+ * @param set       vector of long intergers to draw subsets from
+ * @param targets   array of N residues (corresponds to the N values in `bases`)
+ *                  that solutions should match
+ * @param bases     array of N intergers that are the bases for the residues in `target`
+ * @param min_size  minimum number of elements to draw from each half of `set`
+ * @param max_size  maximum number of elements to draw from each half of `set`
+ */
 template <size_t N>
 void subsetprod_2way_all(
     std::vector<std::vector<long>> &solns,
@@ -272,6 +284,17 @@ void subsetprod_2way_all(
 }
 
 
+/**
+ * Calculate the subset-product mod the M bases given in `bases`
+ * for each of the subsets of `primes` given in`subsets` specified
+ * as `vector<bool>`.
+ *
+ * @param dst       vector in which to store the subset-products 
+ * @param primes    vector<long> of elements from which subsets
+ *                  in `subsets` are drawn
+ * @param subsets   vector of subsets of `primes` specified as vector<bool>
+ * @param baes      array of M bases for the subset-product
+ */
 template<unsigned long int M>
 void
 prod_mod_subsets(std::vector<std::array<NTL::ZZ, M>> &dst,

@@ -727,13 +727,16 @@ gen_cprimes_2way_prob(
  *                              of the four partitions of `primes`
  * @param  min_size             maximum size of subsets to consider for each of
  *                              of the four partitions of `primes`
+ * @param  LIMIT                maximum number of subsets to draw from the
+ *                              four paritions
  */
 void
 gen_cprimes_4way_all(
         const std::vector<long> &primes,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
-        size_t min_size, size_t max_size
+        size_t min_size, size_t max_size,
+        size_t LIMIT=0
     )
 {
     const long p0 { nonrigid_factors[0] };
@@ -762,6 +765,8 @@ gen_cprimes_4way_all(
         const size_t pmin_size = bound<size_t>(min_size, 1, set_size);
         const size_t pmax_size = bound<size_t>(max_size, pmin_size, set_size);
         size_t num_subsets {calc_max_subsets(set.size(), pmin_size, pmax_size)};
+        if (LIMIT > 0 && num_subsets > LIMIT)
+            num_subsets = LIMIT;
 
 #if LOG_LEVEL >= 1
         printf("(%lu) subset sizes [%lu,%lu] of %lu: %lu subsets\n", i, pmin_size,
@@ -803,7 +808,7 @@ gen_cprimes_4way_all(
 #endif
 #endif
                 },
-            pmin_size, pmax_size
+            pmin_size, pmax_size, num_subsets
         );
 
 #if LOG_LEVEL >= 1
@@ -911,13 +916,16 @@ gen_cprimes_4way_all(
  *                              of the 8 partitions of `primes`
  * @param  min_size             maximum size of subsets to consider for each of
  *                              of the 8 partitions of `primes`
+ * @param  LIMIT                maximum number of subsets to draw from the
+ *                              eight paritions
  */
 void
 gen_cprimes_8way_all(
         const std::vector<long> &primes,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
-        size_t min_size, size_t max_size
+        size_t min_size, size_t max_size,
+        size_t LIMIT=0
     )
 {
     const long p0 { nonrigid_factors[0] };
@@ -941,6 +949,8 @@ gen_cprimes_8way_all(
         const size_t pmin_size = bound<size_t>(min_size, 1, Pn_size);
         const size_t pmax_size = bound<size_t>(max_size, pmin_size, Pn_size);
         size_t num_subsets {calc_max_subsets(Pn_size, pmin_size, pmax_size)};
+        if (LIMIT > 0 && num_subsets > LIMIT)
+            num_subsets = LIMIT;
 
 #if LOG_LEVEL >= 1
         printf("(%lu) subset sizes [%lu,%lu] of %lu: %lu subsets\n", n, pmin_size,
@@ -982,7 +992,7 @@ gen_cprimes_8way_all(
 #endif
 #endif
                 },
-            pmin_size, pmax_size
+            pmin_size, pmax_size, num_subsets
         );
 #if LOG_LEVEL >= 1
 #if LOG_LEVEL >= 2

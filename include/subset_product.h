@@ -339,35 +339,61 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
 {
 #if LOG_LEVEL >= 1
     size_t pairs {0};
-#if LOG_LEVEL >= 2
+    size_t distinct_keys {0};
+    size_t lookups {0};
     size_t count {0};
 #endif
-#endif
+    /* default key, used if M == 0 or final_join == true */
+    static const  std::array<NTL::ZZ, M> EMPTY_KEY;
 
-    const auto end = src0.cend();
-    for(auto it = src0.cbegin(); it != end; it++)
+    /* make map0 point to smaller of the two maps */
+    auto *small_map = &src0;
+    auto *big_map = &src1;
+    bool flip {src1.size() < src0.size()};
+    if (flip)
     {
-        const std::array<NTL::ZZ, N> &key = it->first;
-        const std::vector<std::vector<bool>> &subsets0 = it->second;
+        small_map = &src1;
+        big_map   = &src0;
+    }
 
-        auto it1 {src1.find(key)};
-        if (it1 != src1.end())
+
+    /* go through every item in map0 */
+    const auto end = small_map->cend();
+    for(auto it = small_map->cbegin(); it != end; it++)
+    {
+#if LOG_LEVEL >= 1
+        if((lookups++ & STEP_MASK) == 0)
+            fprintf(stderr, "\rlookups: %lu, pairs: %lu, subset count: %lu, keys: %lu",
+                    lookups, pairs, count, distinct_keys);
+#else
+        lookups++;
+#endif
+        const std::array<NTL::ZZ, N> &key = it->first;
+
+        auto it1 {big_map->find(key)};
+        if (it1 != big_map->end())
         {
-            const std::vector<std::vector<bool>> &subsets1 {src1.at(key)};
+            /* get vector of subsets from src0 */
+            const std::vector<std::vector<bool>> &subsets0 { flip ? src0.at(key) : it->second};
+            /* get vector of subsets from src1 */
+            const std::vector<std::vector<bool>> &subsets1 {!flip ? src1.at(key) : it->second};
+
             const size_t size0 = subsets0.size();
             const size_t size1 = subsets1.size();
+
 
             std::vector<std::array<NTL::ZZ, M>> products0, products1;
             if (M != 0 && !final_join)
             {
+                /* store products of subsets in subsets0 and subset1 
+                * modulo new_bases in products0 and products1 */
                 prod_mod_subsets(products0, primes0, subsets0, new_bases);
                 prod_mod_subsets(products1, primes1, subsets1, new_bases);
             }
             else
             {
-                products0.resize(size0);
-                products1.resize(size1);
-
+                /* final join, no need to compute the products of joined subset pairs
+                 * in another base */
                 std::cout << "key: ";
                 for(auto &z : key) std::cout << z << " ";
 
@@ -387,15 +413,28 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
                 const std::vector<bool> &part0 {subsets0[i]};
                 for (size_t j = 0; j < size1; j++)
                 {
+                    const std::vector<bool> &part1 {subsets1[j]};
+                    std::vector<bool> joined {join_vector(part0, part1)};
+
+                    std::vector<std::vector<bool>> *subsets_ptr {nullptr};
+
+                    /* final join, use default key */
+                    if (final_join || M == 0)  subsets_ptr = &dst[EMPTY_KEY];
+                    /* get new key for joined subset using callback */
+                    else  subsets_ptr = &dst[callback(products0[i], products1[j])];
+
+                    subsets_ptr->push_back(std::move(joined));
+
+#if LOG_LEVEL >= 1
+                    if (subsets_ptr->size() == 1)  distinct_keys++;
 #if LOG_LEVEL >= 2
                     if((count++ & STEP_MASK) == 0)
-                        fprintf(stderr, "\rcount: %lu, pairs: %lu", count, pairs);
+                        fprintf(stderr, "\rlookups: %lu, pairs: %lu, subset count: %lu, keys: %lu",
+                                lookups, pairs, count, distinct_keys);
+#else
+                    count++;
 #endif
-                    const std::vector<bool> &part1 {subsets1[j]};
-                    std::array<NTL::ZZ, M> new_key { callback(products0[i], products1[j]) };
-
-                    std::vector<bool> joined {join_vector(part0, part1)};
-                    dst[new_key].push_back(std::move(joined));
+#endif
                 }
             }
 #if LOG_LEVEL >= 1
@@ -405,10 +444,8 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
     }
 
 #if LOG_LEVEL >= 1
-#if LOG_LEVEL >= 2
-    fprintf(stderr, "count: %lu\n", count);
-#endif
-    fprintf(stderr, "pairs: %lu\n", pairs);
+    fprintf(stderr, "\rlookups: %lu, pairs: %lu, subset count: %lu, keys: %lu\n",
+            lookups, pairs, count, distinct_keys);
 #endif
 }
 

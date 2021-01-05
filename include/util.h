@@ -266,15 +266,16 @@ void print_bool_vec(const std::vector<bool> &arr, const std::vector<T> &src)
 {
     const size_t size = arr.size() < src.size() ? arr.size() : src.size();
     std::cout << "{";
+    bool first = true;
 
     for (size_t i = 0; i < size; i++)
     {
-        if (i > 0) 
-        {
-            std::cout << ", ";
-        }
         if (arr[i])
+        {
+            if (first) first = false;
+            else       std::cout << ", ";
             std::cout << src[i];
+        }
     }
 
     std::cout << "}";

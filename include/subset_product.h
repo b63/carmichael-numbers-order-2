@@ -43,7 +43,7 @@ struct ArrayHasher<NTL::ZZ, N>
 
 /**
  * Enumerate every single subset of `set` with sizes [min_terms, max_terms],
- * calculating the product of all the terms in the subset mod `bases` 
+ * calculating the product of all the terms in the subset mod `bases`
  * (subset product) along the way. The subset-product, a copy of
  * the subset, and current subset count will be passed to the `callback` function.
  *
@@ -53,13 +53,13 @@ struct ArrayHasher<NTL::ZZ, N>
  *                      and the current subset count.
  * @param  min_terms    the minimum number of elements to draw
  * @param  max_terms    the maximum number of elements to draw
- * @param  limit        maximum number of subsets to enumerate
+ * @param  LIMIT        maximum number of subsets to enumerate
  */
 template <unsigned long int N>
 void
 subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases,
         const std::function<void(std::array<NTL::ZZ, N>&, const std::vector<size_t>&, size_t)> &callback,
-        size_t min_terms=2, size_t max_terms=0, size_t limit=0)
+        size_t min_terms=2, size_t max_terms=0, size_t LIMIT=0)
 {
     constexpr size_t num_bases { N };
 
@@ -75,7 +75,7 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
 
 #if LOG_LEVEL >= 1
     std::cout << "> enumerating " << max_num_subsets << " subsets [" << min_terms
-        << "," << max_terms << "] ...\n";
+        << "," << max_terms << "] (limit " << LIMIT << ") ...\n";
 #endif
 
     size_t subset_count {0};
@@ -131,9 +131,8 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
                 subset_count++;
                 index_stack[top]++;
 
-                if (limit > 0 && subset_count > limit)
+                if (LIMIT > 0 && subset_count > LIMIT)
                 {
-                    std::cout << "! reached limit " << limit << '\n';
                     return;
                 }
             }
@@ -289,7 +288,7 @@ void subsetprod_2way_all(
  * for each of the subsets of `primes` given in`subsets` specified
  * as `vector<bool>`.
  *
- * @param dst       vector in which to store the subset-products 
+ * @param dst       vector in which to store the subset-products
  * @param primes    vector<long> of elements from which subsets
  *                  in `subsets` are drawn
  * @param subsets   vector of subsets of `primes` specified as vector<bool>
@@ -325,6 +324,39 @@ prod_mod_subsets(std::vector<std::array<NTL::ZZ, M>> &dst,
 }
 
 
+/**
+ * Enumerate all subsets stored one of the maps (`src0` or `src1`) to find
+ * keys (array of N subset-products) that are contained in both maps.
+ *
+ * If such pairs are found, then computes the new keys (array of M subset-products
+ * in M bases) for the joined subset and stores them in `dst` using the key returned
+ * by `callback.` The callback function is called with the products of each of the two
+ * subsets to be joined in the new bases, and is expected to return the key that is used
+ * to store the joined subset in map `dst`.
+ *
+ * The subsets are stored as `vector<bool>` so `primes0` is the parent set from which
+ * the subsets stored in `src0` draw from; the same for `primes1` and the `vector<bool>`
+ * subsets stored `src1`.
+ *
+ * @param dst           map to store the joined subsets using keys returned by `callback`
+ * @param src0          one of the maps containing the subsets
+ * @param src1          one of the maps containing the subsets
+ * @param primes0       the parent set from which the subsets stored in `src0`
+ *                      encoded as `vector<bool>` draw from
+ * @param primes1       the parent set from which the subsets stored in `src1`
+ *                      encoded as `vector<bool>` draw from
+ * @param new_bases     array of M integers to use as the modulo base when
+ *                      computing the new subset-product of the two subsets that are
+ *                      passed on to `callback`
+ * @param callback      function that returns the new key to use to store the joined subset
+ *                      given the subset-product of the two subsets that are to be joined in
+ *                      the new base
+ * @param final_join    whether to not compute the new subset-product for each of the subsets
+ *                      in the new base. If true, then this is the final so the new subset-product
+ *                      are not computed and `callback` is not called to get the new key. The
+ *                      default key of array of M elements is used as the key to store all
+ *                      joined subsets.
+ */
 template <unsigned long int N, unsigned long int M>
 void
 join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, M>> &dst,
@@ -385,7 +417,7 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
             std::vector<std::array<NTL::ZZ, M>> products0, products1;
             if (M != 0 && !final_join)
             {
-                /* store products of subsets in subsets0 and subset1 
+                /* store products of subsets in subsets0 and subset1
                 * modulo new_bases in products0 and products1 */
                 prod_mod_subsets(products0, primes0, subsets0, new_bases);
                 prod_mod_subsets(products1, primes1, subsets1, new_bases);

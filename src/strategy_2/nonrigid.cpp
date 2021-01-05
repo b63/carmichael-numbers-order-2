@@ -833,16 +833,12 @@ gen_cprimes_4way_all(
         );
 
 #if LOG_LEVEL >= 1
-#if LOG_LEVEL >= 2
-        printf("count: %lu\n", count);
-#endif
-        printf("inverses: %lu\n", inv_count);
+        printf("inverses: %lu \n", inv_count);
 #endif
     }
 
 #if LOG_LEVEL >= 1
     printf("\njoining [0] and [1] ...\n");
-    size_t count {0};
 #endif
     /* next we care about subset-product mod L_val only */
     std::array<NTL::ZZ, 1> prod_base_2 {L_val};
@@ -858,9 +854,6 @@ gen_cprimes_4way_all(
                 std::array<NTL::ZZ, 1> prod {NTL::ZZ{1}};
                 /* In this case, they key is the product of the joined subset mod L_val */
                 NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
-#if LOG_LEVEL >= 1
-                count++;
-#endif
                 return prod;
             }
         );
@@ -869,9 +862,7 @@ gen_cprimes_4way_all(
     maps[1].clear();
 
 #if LOG_LEVEL >= 1
-    printf("subset count: %lu\n", count);
     printf("\njoining [2] and [3] ...\n");
-    count = 0;
 #endif
 
     /* join subsets in map[2] and map[3] this time*/
@@ -885,18 +876,13 @@ gen_cprimes_4way_all(
                 std::array<NTL::ZZ, 1> prod {p0p1a};
                 NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
                 NTL::InvMod(prod[0], prod[0], L_val);
-#if LOG_LEVEL >= 1
-                count++;
-#endif
                 return prod;
             }
         );
     maps[2].clear();
     maps[3].clear();
 #if LOG_LEVEL >= 1
-    printf("subset count: %lu\n", count);
     printf("\nfinal join ...\n");
-    count = 0;
 #endif
 
     /* the subsets stored in maps2_0 and maps2_1 are stored as vector<bool> and
@@ -910,17 +896,10 @@ gen_cprimes_4way_all(
             [&](const std::array<NTL::ZZ, 0> &prod0, const std::array<NTL::ZZ, 0> &prod1)
                 ->std::array<NTL::ZZ,0>
             {
-#if LOG_LEVEL >= 1
-                count++;
-#endif
                 /* we don't care about the key in the final join, just store them under the same key */
                 return empty_base;
             }
         );
-
-#if LOG_LEVEL >= 1
-    printf("subset count: %lu\n", count);
-#endif
 }
 
 
@@ -959,7 +938,11 @@ gen_cprimes_8way_all(
 
     /* split primes set into 8 */
     std::vector<std::vector<long>> partitions {split_vector(primes, 8)};
+    /* the modulo base for each layer of join */
     std::array<NTL::ZZ, 4> prod_bases {p02_1, p12_1, L_val, NTL::ZZ{1}};
+#if LOG_LEVEL >= 2
+    std::cout << "product bases: " << prod_bases << "\n";
+#endif
 
     std::vector<map_type<1>> maps0;
     maps0.resize(8);
@@ -977,9 +960,6 @@ gen_cprimes_8way_all(
         printf("(%lu) subset sizes [%lu,%lu] of %lu: %lu subsets\n", n, pmin_size,
                 pmax_size, Pn_size, num_subsets);
         size_t inv_count {0};
-#if LOG_LEVEL >= 2
-        size_t count {0};
-#endif
 #endif
 
         maps0[n].reserve(num_subsets);
@@ -1007,19 +987,11 @@ gen_cprimes_8way_all(
 #if LOG_LEVEL >= 1
                     if(vec.size() == 1)
                         inv_count++;
-#if LOG_LEVEL >= 2
-                    if((count++ & STEP_MASK) == 0)
-                        std::cerr << "count: " << count << "\r";
-#endif
 #endif
                 },
             pmin_size, pmax_size, num_subsets
         );
 #if LOG_LEVEL >= 1
-#if LOG_LEVEL >= 2
-        fprintf(stderr, "count: %lu\r", count);
-#endif
-
         fprintf(stderr, "inverses: %lu\n", inv_count);
 #endif
     }

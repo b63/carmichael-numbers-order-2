@@ -110,7 +110,6 @@ factorize_slow(std::vector<NTL::ZZ> &primes, std::vector<long> &powers, const NT
     if (n <= 1)
         return;
 
-    Factorization f;
     NTL::ZZ p { 2 };
     NTL::ZZ m {n};
     NTL::ZZ sqrt {NTL::SqrRoot(m)};

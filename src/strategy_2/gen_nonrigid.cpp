@@ -4,6 +4,7 @@
 #include <cmath>
 #include <fstream>
 #include <algorithm>
+#include <NTL/ZZ.h>
 
 #include <util.h>
 #include <counting_factors.h>
@@ -41,10 +42,50 @@ read_primes_from_file(std::vector<long> &vec, const char *filename)
 }
 
 
+Factorization
+get_factorization(const NTL::ZZ &n)
+{
+    Factorization r;
+    std::vector<NTL::ZZ> primes;
+    factorize_slow(primes, r.powers, n);
+
+    r.primes.reserve(primes.size());
+    for (const auto &zz : primes) r.primes.push_back(NTL::conv<long>(zz));
+
+    return r;
+}
+
+
+Factorization
+combine(const Factorization &f1, const Factorization &f2)
+{
+    std::unordered_map<long,long> map;
+    for (size_t i = 0, n = f1.primes.size(); i < n; i++)
+        map[f1.primes[i]] += f1.powers[i];
+    for (size_t i = 0, n = f2.primes.size(); i < n; i++)
+        map[f2.primes[i]] += f2.powers[i];
+
+
+    Factorization ff;
+    for (auto it = map.cbegin(), cend = map.cend(); it != cend; ++it)
+    {
+        long prime = it->first, power = it->second;
+
+        size_t i = 0, ff_size = ff.primes.size();
+        for (; i < ff_size; ++i)
+            if (prime < ff.primes[i])
+                break;
+
+        ff.primes.insert(ff.primes.cbegin()+i, prime);
+        ff.powers.insert(ff.powers.cbegin()+i, power);
+    }
+    return ff;
+}
+
 /**
  * Format for commandline arguments(<> required, [] optional):
- *  [1]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L>
- *  [2]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> < - | primes_path> [ -<min>,<max> | a_vals_path ]
+ *  [1]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> <H>
+ *  [2]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> <H> < - | primes_path> [ -<min>,<max> | a_vals_path ]
  *
  * where
  *    max       - maximum prime when constructing set of primes P
@@ -55,6 +96,7 @@ read_primes_from_file(std::vector<long> &vec, const char *filename)
  *    max_size  - maximum size subsets of P to consider
  *    L         - parameter L specified as a prime factorization
  *               ex. "2^3 3^7" specifies L = 2^3 * 3^7
+ *    H         - parameter H specified as an integer
  *  For [2],
  *      < - | primes_path>   can be either '-' or a path to a file containing primes.
  *         If '-' or not specified, primes will be generated, otherwise primes constituting
@@ -83,17 +125,29 @@ main(int argc, char **argv)
     const size_t max_terms { NTL::conv<size_t>(argv[argi++]) };
 
     Factorization L { parse_factorization(argv[argi++]) };
+    Factorization p02_f { get_factorization(p02_1) };
+    Factorization p12_f { get_factorization(p12_1) };
+    Factorization LL_f {include_as_factor(L, include_as_factor(p02_f, p12_f))};
 
+    const NTL::ZZ H {NTL::conv<NTL::ZZ>(argv[argi++])};
+
+    /* print out information about parameter choices */
     NTL::ZZ L_val;
     multiply_factors(L_val, L.primes, L.powers);
     std::cout << "L = " << L_val << "\n";
-
     std::cout << "p0 = " << p0 << ", p1 = " << p1 << "\n";
     std::cout << "p0^2-1 = " << p02_1 << ", p1^2-1 = " << p12_1 << "\n";
+    std::cout << "lcm(L, p0^2-1, p1^2-1) = " << LL_f << "\n";
 
+    NTL::ZZ LL_val;
+    multiply_factors(LL_val, LL_f.primes, LL_f.powers);
+    std::cout << "                       = " << LL_val << "\n";
+
+
+    /* read in primes from file or construct it */
     const std::array<long,2> nonrigid_factors { p0, p1 };
     std::vector<long> primes_set;
-    if (argc >= 10 && strcmp(argv[argi], "-"))
+    if (argc >= 11 && strcmp(argv[argi], "-"))
     {
         read_primes_from_file(primes_set, argv[argi++]);
     }
@@ -114,7 +168,7 @@ main(int argc, char **argv)
 
     /* read-in/generate values for parameter a */
     std::vector<std::vector<long>> a_values;
-    if (argc >= 10 && argv[argi][0] != '-')
+    if (argc >= 11 && argv[argi][0] != '-')
     {
         read_a_values_from_file(a_values, argv[argi++]);
     }
@@ -149,7 +203,7 @@ main(int argc, char **argv)
         std::cout << "(|P| = " << primes_set_a.size() << ") trying a = "
                 << a_val << ", " << a_factors << "\n";
 
-        gen_cprimes_4way_all(primes_set_a, nonrigid_factors, a_val, L_val, min_terms, max_terms, limit);
+        gen_cprimes_4way_all(primes_set_a, nonrigid_factors, a_val, L_val, H, min_terms, max_terms, limit);
         std::cout << "\n\n";
     }
 }

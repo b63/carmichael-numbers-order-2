@@ -448,7 +448,6 @@ calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
         NTL::rem(target, b, LL);
     }
 
-    std::cout << "b = " << target << "\n";
     return target;
 }
 
@@ -749,13 +748,14 @@ gen_cprimes_2way_prob(
  * @param  min_size             maximum size of subsets to consider for each of
  *                              of the four partitions of `primes`
  * @param  LIMIT                maximum number of subsets to draw from the
- *                              four paritions
+ *                              four paritions. zero for no limit
  */
 void
 gen_cprimes_4way_all(
         const std::vector<long> &primes,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
+        const NTL::ZZ &H,
         size_t min_size, size_t max_size,
         size_t LIMIT
     )
@@ -768,17 +768,45 @@ gen_cprimes_4way_all(
     const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
     const NTL::ZZ p0p1a { p0_zz * p1_zz * a_val };
 
+    /* LL -> L' */
+    const NTL::ZZ LL { get_lcm<std::array<NTL::ZZ,3>>
+        (std::array<NTL::ZZ,3>{L_val, p02_1, p12_1},3) };
+
+    /* check if choice of H is valid */
+    const NTL::ZZ m2 {LL/H};
+    {
+        if (NTL::GCD(H, m2) != 1)
+        {
+            throw std::invalid_argument("gen_cprimes_4way_all: H and it's cofactor are not co-prime");
+        }
+
+        NTL::ZZ temp;
+        NTL::rem(temp, LL, H);
+        if (temp != 0)
+        {
+            throw std::invalid_argument("gen_cprimes_4way_all: L (mod H) =/= 0");
+        }
+    }
+
+    /* get target residue b, given the parameter choices */
+    NTL::ZZ b;
+    calc_target_residue(b, L_val, a_val, nonrigid_factors);
+
+    std::cout << "H = " << H << ", L'/H = " << m2 << "\n";
+    std::cout << "b = " << b << "\n";
+
     /* split primes set into 4 */
     std::vector<std::vector<long>> primes_n {split_vector(primes, 4)};
 
-    /* store the subset-product mod p02_1 and p12_1 as array<NTL::ZZ,2>
+
+    /* store the subset-product mod m2 as array<NTL::ZZ,2>
      * of every subset of each of the primes set in primes_n */
-    std::array<NTL::ZZ, 2> prod_base {p02_1, p12_1};
+    std::array<NTL::ZZ, 1> prod_base {m2};
 
     /* subset-products will be stored in a map with an array of
      * subset-products as the key and the subsets as vector<bool>
      * as the value */
-    std::array<map_type<2>, 4> maps;
+    std::array<map_type<1>, 4> maps;
     for (size_t i = 0; i < 4; i++)
     {
         const auto &set = primes_n[i];
@@ -786,7 +814,7 @@ gen_cprimes_4way_all(
         const size_t pmin_size = bound<size_t>(min_size, 1, set_size);
         const size_t pmax_size = bound<size_t>(max_size, pmin_size, set_size);
         size_t num_subsets {calc_max_subsets(set.size(), pmin_size, pmax_size)};
-        if (LIMIT > 0 && num_subsets > LIMIT)
+        if (LIMIT > 0 && num_subsets >= LIMIT)
             num_subsets = LIMIT;
 
 #if LOG_LEVEL >= 1
@@ -798,17 +826,16 @@ gen_cprimes_4way_all(
 #endif
 #endif
         maps[i].reserve(num_subsets);
-        subsetprod_mod<2>(set, prod_base,
-                [&](std::array<NTL::ZZ, 2> &prod_cache,
+        subsetprod_mod<1>(set, prod_base,
+                [&](std::array<NTL::ZZ, 1> &prod_cache,
                     const std::vector<size_t> &indicies, size_t subset_count)->void
                 {
                     /* store the inverse subset-product instead of subset-product
                      * mod prod_base for one of the primes sets in the pair */
                     if (i % 2  == 0)
                     {
-                        /* primes_n[0] and primes_n[1] */
-                        for (size_t j {0}; j < 2; ++j)
-                            prod_cache[j] = NTL::InvMod(prod_cache[j], prod_base[j]);
+                        /* primes_n[0] and primes_n[2] */
+                        NTL::InvMod(prod_cache[0], prod_cache[0], m2);
                     }
 
                     /* create a vector<bool> representing this subset and add it to map */
@@ -841,19 +868,19 @@ gen_cprimes_4way_all(
     printf("\njoining [0] and [1] ...\n");
 #endif
     /* next we care about subset-product mod L_val only */
-    std::array<NTL::ZZ, 1> prod_base_2 {L_val};
+    std::array<NTL::ZZ, 1> prod_base_2 {H};
     /* join subsets in maps[0] and map[1] that are in unitary subgroup mod {p02_1, p12_1}
      * and store them in map2_0 using their product mod L_val as the keys */
     map_type<1> map2_0;
-    join<2,1>(map2_0, maps[0], maps[1], primes_n[0], primes_n[1], prod_base_2,
+    join<1,1>(map2_0, maps[0], maps[1], primes_n[0], primes_n[1], prod_base_2,
             [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
                 ->std::array<NTL::ZZ,1>
             {
                 /* prod0 and prod1 are the product of each subset from map[0] and map[1]
                  * mod L_val; we return what they key for joined subset should be. */
                 std::array<NTL::ZZ, 1> prod {NTL::ZZ{1}};
-                /* In this case, they key is the product of the joined subset mod L_val */
-                NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
+                /* In this case, they key is the product of the joined subset mod H */
+                NTL::MulMod(prod[0], prod0[0], prod1[0], H);
                 return prod;
             }
         );
@@ -867,15 +894,15 @@ gen_cprimes_4way_all(
 
     /* join subsets in map[2] and map[3] this time*/
     map_type<1> map2_1;
-    join<2,1>(map2_1, maps[2], maps[3], primes_n[2], primes_n[3],prod_base_2,
+    join<1,1>(map2_1, maps[2], maps[3], primes_n[2], primes_n[3],prod_base_2,
             [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
                 ->std::array<NTL::ZZ,1>
             {
                 /* this time they key for the joined subset is
-                 * the inverset of (the product * p0 * p1 * a) mod L_val */
-                std::array<NTL::ZZ, 1> prod {p0p1a};
-                NTL::MulMod(prod[0], prod0[0], prod1[0], L_val);
-                NTL::InvMod(prod[0], prod[0], L_val);
+                 * the inverset of (the product * b) mod H */
+                std::array<NTL::ZZ, 1> prod {b};
+                NTL::MulMod(prod[0], prod0[0], prod1[0], H);
+                NTL::InvMod(prod[0], prod[0], H);
                 return prod;
             }
         );

@@ -131,7 +131,7 @@ subsetprod_mod(const std::vector<long> &set, const std::array<NTL::ZZ, N> &bases
                 subset_count++;
                 index_stack[top]++;
 
-                if (LIMIT > 0 && subset_count > LIMIT)
+                if (LIMIT > 0 && subset_count >= LIMIT)
                 {
                     return;
                 }

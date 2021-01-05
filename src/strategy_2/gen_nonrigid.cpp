@@ -43,11 +43,12 @@ read_primes_from_file(std::vector<long> &vec, const char *filename)
 
 /**
  * Format for commandline arguments(<> required, [] optional):
- *  [1]     <max> <p0> <p1> <min_terms> <max_terms> <L>
- *  [2]     <max> <p0> <p1> <min_terms> <max_terms> <L> < - | primes_path> [ -<min>,<max> | a_vals_path ]
+ *  [1]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L>
+ *  [2]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> < - | primes_path> [ -<min>,<max> | a_vals_path ]
  *
  * where
  *    max       - maximum prime when constructing set of primes P
+ *    limit     - limit argument to pass to subroutine
  *    p0        - first non-rigid factor
  *    p1        - second non-rigid factor
  *    min_size  - minimum size subsets of P to consider
@@ -70,16 +71,18 @@ main(int argc, char **argv)
     if (argc <  7)
         return 0;
 
-    const long max { NTL::conv<long>(argv[1]) };
-    const long p0 { NTL::conv<long>(argv[2]) };
-    const long p1 { NTL::conv<long>(argv[3]) };
+    size_t argi = 1;
+    const long max   { NTL::conv<long>(argv[argi++]) };
+    const long limit { NTL::conv<long>(argv[argi++]) };
+    const long p0    { NTL::conv<long>(argv[argi++]) };
+    const long p1    { NTL::conv<long>(argv[argi++]) };
     const NTL::ZZ p0_zz {p0}, p1_zz {p1};
     const NTL::ZZ p02_1 {NTL::sqr(p0_zz)-1}, p12_1 {NTL::sqr(p1_zz)-1};
 
-    const size_t min_terms { NTL::conv<size_t>(argv[4]) };
-    const size_t max_terms { NTL::conv<size_t>(argv[5]) };
+    const size_t min_terms { NTL::conv<size_t>(argv[argi++]) };
+    const size_t max_terms { NTL::conv<size_t>(argv[argi++]) };
 
-    Factorization L { parse_factorization(argv[6]) };
+    Factorization L { parse_factorization(argv[argi++]) };
 
     NTL::ZZ L_val;
     multiply_factors(L_val, L.primes, L.powers);
@@ -90,9 +93,9 @@ main(int argc, char **argv)
 
     const std::array<long,2> nonrigid_factors { p0, p1 };
     std::vector<long> primes_set;
-    if (argc >= 9 && strcmp(argv[7], "-"))
+    if (argc >= 10 && strcmp(argv[argi], "-"))
     {
-        read_primes_from_file(primes_set, argv[7]);
+        read_primes_from_file(primes_set, argv[argi++]);
     }
     else
     {
@@ -111,16 +114,16 @@ main(int argc, char **argv)
 
     /* read-in/generate values for parameter a */
     std::vector<std::vector<long>> a_values;
-    if (argc >= 9 && argv[8][0] != '-')
+    if (argc >= 10 && argv[argi][0] != '-')
     {
-        read_a_values_from_file(a_values, argv[8]);
+        read_a_values_from_file(a_values, argv[argi++]);
     }
     else
     {
-        char *comma = strchr(argv[8], ',');
+        char *comma = strchr(argv[argi], ',');
         if (comma == NULL) return 1;
         *comma = 0;
-        int min {atoi(argv[8]+1)};
+        int min {atoi(argv[argi++]+1)};
         int max {atoi(comma+1)};
         *comma = ',';
 
@@ -145,7 +148,8 @@ main(int argc, char **argv)
 
         std::cout << "(|P| = " << primes_set_a.size() << ") trying a = "
                 << a_val << ", " << a_factors << "\n";
-        gen_cprimes_8way_all(primes_set_a, nonrigid_factors, a_val, L_val, min_terms, max_terms);
+
+        gen_cprimes_4way_all(primes_set_a, nonrigid_factors, a_val, L_val, min_terms, max_terms, limit);
         std::cout << "\n\n";
     }
 }

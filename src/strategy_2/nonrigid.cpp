@@ -900,9 +900,9 @@ gen_cprimes_4way_all(
             {
                 /* this time they key for the joined subset is
                  * the inverset of (the product * b) mod H */
-                std::array<NTL::ZZ, 1> prod {b};
-                NTL::MulMod(prod[0], prod0[0], prod1[0], H);
-                NTL::InvMod(prod[0], prod[0], H);
+                std::array<NTL::ZZ, 1> prod;
+                NTL::InvMod(prod[0], prod0[0], H);
+                NTL::MulMod(prod[0], b, prod[0], H);
                 return prod;
             }
         );

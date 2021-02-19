@@ -1,3 +1,4 @@
+#include <NTL/sp_arith.h>
 #include <iostream>
 #include <vector>
 #include <functional>
@@ -16,9 +17,6 @@
 #include <strategy_2/nonrigid.h>
 
 
-template <size_t N>
-using map_type = std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vector<bool>>, ArrayHasher<NTL::ZZ, N>>;
-
 
 /**
  * Generate possible choices for non-rigid factors for the given choice of L.
@@ -29,8 +27,7 @@ using map_type = std::unordered_map<std::array<NTL::ZZ, N>, std::vector<std::vec
  * @param   L_val               value of parameter L as NTL::ZZ
  * @param   max                 maximum integer to consider
  */
-void
-generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::ZZ &L_val, const long max)
+void generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::ZZ &L_val, const long max)
 {
     std::vector<long> primes;
 #if LOG_LEVEL >= 1
@@ -139,8 +136,7 @@ generate_possible_factors(std::vector<std::array<long,2> > &factors, const NTL::
  * @param   L                   the factorization of L as a `Factorization` object
  * @param   max                 maximum integer to consider
  */
-void
-construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonrigid_factors,
+void construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &L_val, const Factorization &L, long max)
 {
     NTL::ZZ p0_zz { nonrigid_factors[0] };
@@ -270,8 +266,7 @@ construct_primes_set(std::vector<long> &primes, const std::array<long, 2> &nonri
  * @param   min_size            maximum size of subset to consider for each of
  *                              the two paritions of P(2,L)
  */
-void
-generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<long> &primes,
+void generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<long> &primes,
         const std::array<long,2> &nonrigid_factors,
         const NTL::ZZ &L_val,
         size_t min_terms, size_t max_terms)
@@ -397,8 +392,7 @@ generate_a_values(std::vector<std::vector<long> > &a_values, const std::vector<l
  * Writes b to `target` where 
  *         b = (p0p1a)^-1 + t1 * L    [mod L']
  */
-NTL::ZZ&
-calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
+NTL::ZZ& calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
         const NTL::ZZ &a_val,
         const std::array<long,2> &nonrigid_factors)
 {
@@ -429,7 +423,7 @@ calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
         // std::cout << "(p0p1a)^-1 = " << p0p1a << " (mod " << base << ")\n";
 
         NTL::ZZ t {1-p0p1a_inv};
-        if (t < 0) t = base - t;
+        if (t < 0) t += base;
         t1 = (t / gcd) * Ld_inv;
     }
 
@@ -464,8 +458,7 @@ calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
  * @param   min_size            maximum size of subset to consider for each of
  *                              the two paritions of P(2,L)
  */
-void
-gen_cprimes_2way_all(
+void gen_cprimes_2way_all(
         const std::vector<long> &primes,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
@@ -596,8 +589,7 @@ gen_cprimes_2way_all(
  * @param   min_size            minium size of subset to generate
  * @param   max_size            maximum size of subset to generate
  */
-void
-gen_cprimes_2way_prob(
+void gen_cprimes_2way_prob(
         const std::vector<long> &primes,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
@@ -736,6 +728,7 @@ gen_cprimes_2way_prob(
 
 
 /*
+ * TODO: update docs
  * Generate order2-carmichael numbers with two non-rigid factors given in
  * `nonrigid_factors` using 4-set algorithm.
  *
@@ -750,12 +743,12 @@ gen_cprimes_2way_prob(
  * @param  LIMIT                maximum number of subsets to draw from the
  *                              four paritions. zero for no limit
  */
-void
-gen_cprimes_4way_all(
-        const std::vector<long> &primes,
+map_type<1>* gen_cprimes_4way_all(
+        const std::array<std::vector<long>,4> &partition,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
-        const NTL::ZZ &H,
+        const NTL::ZZ &H, const NTL::ZZ &b,
+        const std::function<std::array<NTL::ZZ,1>(const std::array<NTL::ZZ,1>&, const std::array<NTL::ZZ,1>&)> &callback,
         size_t min_size, size_t max_size,
         size_t LIMIT
     )
@@ -788,20 +781,17 @@ gen_cprimes_4way_all(
         }
     }
 
-    /* get target residue b, given the parameter choices */
-    NTL::ZZ b;
-    calc_target_residue(b, L_val, a_val, nonrigid_factors);
-
     std::cout << "H = " << H << ", L'/H = " << m2 << "\n";
-    std::cout << "b = " << b << "\n";
+    std::cout << "σ = " << b << "\n";
 
-    /* split primes set into 4 */
-    std::vector<std::vector<long>> primes_n {split_vector(primes, 4)};
-
+    /* calculate target residues mod H and L'/H (chinese remainder theorem) */
+    NTL::ZZ target_m2 {b % m2};
+    NTL::ZZ target_m1 {b % H};
 
     /* store the subset-product mod m2 as array<NTL::ZZ,2>
-     * of every subset of each of the primes set in primes_n */
+     * of every subset of each of the primes set in partition */
     std::array<NTL::ZZ, 1> prod_base {m2};
+
 
     /* subset-products will be stored in a map with an array of
      * subset-products as the key and the subsets as vector<bool>
@@ -809,7 +799,7 @@ gen_cprimes_4way_all(
     std::array<map_type<1>, 4> maps;
     for (size_t i = 0; i < 4; i++)
     {
-        const auto &set = primes_n[i];
+        const auto &set = partition[i];
         const size_t set_size = set.size();
         const size_t pmin_size = bound<size_t>(min_size, 1, set_size);
         const size_t pmax_size = bound<size_t>(max_size, pmin_size, set_size);
@@ -832,10 +822,12 @@ gen_cprimes_4way_all(
                 {
                     /* store the inverse subset-product instead of subset-product
                      * mod prod_base for one of the primes sets in the pair */
-                    if (i % 2  == 0)
+                    if (i % 2  == 1)
                     {
                         /* primes_n[0] and primes_n[2] */
                         NTL::InvMod(prod_cache[0], prod_cache[0], m2);
+                        if (i == 3)
+                            prod_cache[0] = NTL::MulMod(prod_cache[0], target_m2, m2);
                     }
 
                     /* create a vector<bool> representing this subset and add it to map */
@@ -872,7 +864,7 @@ gen_cprimes_4way_all(
     /* join subsets in maps[0] and map[1] that are in unitary subgroup mod {p02_1, p12_1}
      * and store them in map2_0 using their product mod L_val as the keys */
     map_type<1> map2_0;
-    join<1,1>(map2_0, maps[0], maps[1], primes_n[0], primes_n[1], prod_base_2,
+    join<1,1>(map2_0, maps[0], maps[1], partition[0], partition[1], prod_base_2,
             [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
                 ->std::array<NTL::ZZ,1>
             {
@@ -894,15 +886,16 @@ gen_cprimes_4way_all(
 
     /* join subsets in map[2] and map[3] this time*/
     map_type<1> map2_1;
-    join<1,1>(map2_1, maps[2], maps[3], primes_n[2], primes_n[3],prod_base_2,
+    join<1,1>(map2_1, maps[2], maps[3], partition[2], partition[3], prod_base_2,
             [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
                 ->std::array<NTL::ZZ,1>
             {
                 /* this time they key for the joined subset is
                  * the inverset of (the product * b) mod H */
                 std::array<NTL::ZZ, 1> prod;
-                NTL::InvMod(prod[0], prod0[0], H);
-                NTL::MulMod(prod[0], b, prod[0], H);
+                NTL::MulMod(prod[0], prod0[0], prod1[0], H);
+                NTL::InvMod(prod[0], prod[0], H);
+                NTL::MulMod(prod[0], target_m1, prod[0], H);
                 return prod;
             }
         );
@@ -914,21 +907,39 @@ gen_cprimes_4way_all(
 
     /* the subsets stored in maps2_0 and maps2_1 are stored as vector<bool> and
      * draw halfs of the original `primes` set */
-    std::vector<long> primes01 {join_vector(primes_n[0], primes_n[1])};
-    std::vector<long> primes23 {join_vector(primes_n[2], primes_n[3])};
+    std::vector<long> primes01 {join_vector(partition[0], partition[1])};
+    std::vector<long> primes23 {join_vector(partition[2], partition[3])};
 
-    std::array<NTL::ZZ,0> empty_base;
-    map_type<0> map_final;
-    join<1,0>(map_final, map2_0, map2_1, primes01, primes23, empty_base,
-            [&](const std::array<NTL::ZZ, 0> &prod0, const std::array<NTL::ZZ, 0> &prod1)
-                ->std::array<NTL::ZZ,0>
-            {
-                /* we don't care about the key in the final join, just store them under the same key */
-                return empty_base;
-            }
-        );
+    map_type<1> *map_final = new map_type<1>;
+    join<1,1>(*map_final, map2_0, map2_1, primes01, primes23, prod_base_2, callback);
+
+    return map_final;
 }
 
+
+/**
+ * Returns the overall group given L, a, p0, and p1
+ * we work under.
+ * @param  L_val             value of the L parameter
+ * @param  a_val             value of the a parameter
+ * @param  nonrigid_factors  array of two chosen non-rigid factors
+ *                           consistent with a and L.
+ * @returns the overall group G
+ */
+NTL::ZZ get_group(
+        const NTL::ZZ &L_val, const NTL::ZZ &a_val,
+        const std::array<long,2> nonrigid_factors
+    )
+{
+    const NTL::ZZ p0_zz { nonrigid_factors[0] };
+    const NTL::ZZ p1_zz { nonrigid_factors[1] };
+    const NTL::ZZ p02_1 { NTL::sqr(p0_zz)-1 };
+    const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
+    const NTL::ZZ p0p1a { p0_zz * p1_zz * a_val };
+
+    return get_lcm<std::array<NTL::ZZ,3>>
+        (std::array<NTL::ZZ,3>{L_val, p02_1, p12_1},3);
+}
 
 
 /*
@@ -941,13 +952,12 @@ gen_cprimes_4way_all(
  * @param  L_val                value for paramter L as NTL::ZZ
  * @param  min_size             minimum size of subsets to consider for each of
  *                              of the 8 partitions of `primes`
- * @param  min_size             maximum size of subsets to consider for each of
+ * @param  max_size             maximum size of subsets to consider for each of
  *                              of the 8 partitions of `primes`
  * @param  LIMIT                maximum number of subsets to draw from the
  *                              eight paritions
  */
-void
-gen_cprimes_8way_all(
+void gen_cprimes_8way_all(
         const std::vector<long> &primes,
         const std::array<long, 2> &nonrigid_factors,
         const NTL::ZZ &a_val, const NTL::ZZ &L_val,
@@ -1077,9 +1087,207 @@ gen_cprimes_8way_all(
 
         joined_partitions = std::move(next_partitions);
     }
+}
 
 
 
+void gen_cprimes_8way_random(
+        const std::vector<long> &primes,
+        const std::array<long, 2> &nonrigid_factors,
+        const NTL::ZZ &a_val, const NTL::ZZ &L_val,
+        const std::array<NTL::ZZ, 4> &subgroups,
+        size_t min_size, size_t max_size,
+        size_t LIMIT
+    )
+{
+    /* extract two nonrigid factors */
+    const long p0 { nonrigid_factors[0] };
+    const long p1 { nonrigid_factors[1] };
+    const NTL::ZZ p0_zz { p0 };
+    const NTL::ZZ p1_zz { p1 };
+    /* cache p^2-1 for each non-rigid factor */
+    const NTL::ZZ p02_1 { NTL::sqr(p0_zz)-1 };
+    const NTL::ZZ p12_1 { NTL::sqr(p1_zz)-1 };
+    /* cache p0 * p1 * a */
+    const NTL::ZZ p0p1a { p0_zz * p1_zz * a_val };
 
+    /* split primes set into 8  partitions */
+    std::vector<std::vector<long>> partitions {split_vector(primes, 8)};
+
+    /* target resident in whole group (Z/L'Z)*/
+    NTL::ZZ target_G;
+    calc_target_residue(target_G, L_val, a_val, nonrigid_factors);
+
+    /* calculate targets in sub-groups using CRT */
+    std::array<NTL::ZZ, 4> targets;
+    for (auto i = 0; i < 4; i++) { targets[i] = target_G % subgroups[i]; }
+
+#if LOG_LEVEL >= 2
+    std::cout << "product bases: " << subgroups << "\n";
+    std::cout << "targets: " << targets << "\n";
+    std::cout << "target (in G): " << target_G << "\n";
+#endif
+
+    /* hashmap to store subsets and their products as residues */
+    std::vector<map_type<1>> maps0;
+    /*resize to store subset products drawn from all 8 partitions */
+    maps0.resize(8);
+    for (size_t n=0; n < 8; n++)
+    {
+
+        const std::vector<long> &Pn { partitions[n] };
+        /* find appropriate limits/bounds */
+        const size_t Pn_size { Pn.size() };
+        const size_t pmin_size = bound<size_t>(min_size, 1, Pn_size);
+        const size_t pmax_size = bound<size_t>(max_size, pmin_size, Pn_size);
+        /* maximum number of subsets we can draw from this partition */
+        size_t num_subsets {calc_max_subsets(Pn_size, pmin_size, pmax_size)};
+        if (LIMIT > 0 && num_subsets > LIMIT)
+            num_subsets = LIMIT;
+
+#if LOG_LEVEL >= 1
+        printf("(%lu) subset sizes [%lu,%lu] of %lu: %lu subsets\n", n, pmin_size,
+                pmax_size, Pn_size, num_subsets);
+        size_t inv_count {0};
+#endif
+
+        maps0[n].reserve(num_subsets);
+        /* calculate & store subset-products and their residues mod subgroup[0]
+         * drawing primes from this parition */
+        subsetprod_mod<1>(Pn, std::array<NTL::ZZ,1>{subgroups[0]},
+                [&](std::array<NTL::ZZ, 1> &prod_cache,
+                    const std::vector<size_t> &indicies, size_t subset_count)->void
+                {
+                    /* store the inverse subset-product * target
+                     * for one of the primes sets in the pair */
+                    if (n % 2  == 1)
+                    {
+                        prod_cache[0] = NTL::InvMod(prod_cache[0], subgroups[0]);
+                        /* add in the target residue to *one* of the 8 paritions */
+                        /* when joined the subset-product will attain the target
+                         * residue in this group*/
+                        if (n == 7)
+                            NTL::MulMod(prod_cache[0], prod_cache[0], targets[0], subgroups[0]);
+                    }
+
+                    /* create a vector<bool> representing this subset and add it to map */
+                    std::vector<std::vector<bool>> &vec {maps0[n][prod_cache]};
+
+                    std::vector<bool> subset;
+                    subset.resize(Pn_size, false);
+                    for (auto i : indicies) subset[i] = true;
+
+                    vec.push_back(std::move(subset));
+#if LOG_LEVEL >= 1
+                    if(vec.size() == 1)
+                        inv_count++;
+#endif
+                },
+            pmin_size, pmax_size, num_subsets
+        );
+#if LOG_LEVEL >= 1
+        fprintf(stderr, "inverses: %lu\n", inv_count);
+#endif
+    }
+
+    /* another vec of hashmaps to store subset-products and their residues for
+     * the previous layer; data is swapped back and forth between maps0
+     * and maps1 as we join partitions from one layer to the next */
+    std::vector<map_type<1>> maps1;
+    /* points to the hashmaps that stores the subsets and their residues
+     * for the final join */
+    map_type<1> *final_map = nullptr;
+    /* vector to store merged partitions as we progress across layers */
+    std::vector<std::vector<long>> joined_partitions = partitions;
+    /* 8-set algorithmn involves 3 layers of joins */
+    for (size_t layer=1; layer <= 3; layer++)
+    {
+        /* stores partitions for next layer */
+        std::vector<std::vector<long>> next_partitions;
+        /* pointer to hashmaps from previous layer */
+        std::vector<map_type<1>> &prev_maps { layer % 2 == 1 ? maps0 : maps1};
+        /* pointer to hashmaps for next layer */
+        std::vector<map_type<1>> &next_maps { layer % 2 == 1 ? maps1 : maps0};
+        /* clear so it can be filled with subset generated from this join*/
+        next_maps.clear();
+
+        /* each partition on this layer is a merge of `num_joined` number of
+         * the original 8 partitions */
+        const size_t num_joined {(size_t)1 << layer};
+        /* number of joins/merges we need to on this layer */
+        const size_t num_joins  {(size_t)8 >> layer};
+        next_maps.resize(num_joins);
+        next_partitions.reserve(num_joins);
+
+        for (size_t k=0; k < num_joins; k++)
+        {
+            /* indexes into the hashmap that stores the subsets
+             * we would like to join */
+            const size_t k0 = 2*k; 
+            const size_t k1 = k0+1;
+#if LOG_LEVEL >= 1
+            printf("\nlayer %lu, joining [%lu] and [%lu] ...\n", layer-1, k0, k1);
+#endif
+            join<1,1>(
+                    next_maps[k],
+                    prev_maps[k0], prev_maps[k1], 
+                    joined_partitions[k0], joined_partitions[k1],
+                    std::array<NTL::ZZ,1>{subgroups[layer]},
+                    [&](const std::array<NTL::ZZ,1> &prod0, const std::array<NTL::ZZ,1> &prod1)
+                        ->std::array<NTL::ZZ,1>
+                    {
+                        /* returns what the residue should be for the next layer*/
+                        std::array<NTL::ZZ, 1> prod {NTL::ZZ{1}};
+                        NTL::MulMod(prod[0], prod0[0], prod1[0], subgroups[layer]);
+                        if (k % 2 == 1)
+                        {
+                            NTL::InvMod(prod[0], prod[0], subgroups[layer]);
+
+                            if (k == num_joins-1)
+                                NTL::MulMod(prod[0], prod[0], targets[layer],
+                                        subgroups[layer]);
+                        }
+
+                        return prod;
+                    },
+                    false,
+                    LIMIT
+                );
+            /* a copy is already stored in the hashmap for next layer, so
+             * delete these subsets */
+            prev_maps[k0].clear();
+            prev_maps[k1].clear();
+
+            std::vector<long> Pn {join_partitions(partitions, k*num_joined, (k+1)*num_joined)};
+            next_partitions.push_back(std::move(Pn));
+        }
+
+        joined_partitions = std::move(next_partitions);
+        if (layer == 3)
+            final_map = &next_maps[0];
+    }
+
+    {
+        const size_t final_size {final_map->size()};
+        const auto &soln { final_map->find(std::array<NTL::ZZ,1>{targets[3]}) };
+        if (soln == final_map->end())
+        {
+            std::cout << ">> No subsets with target residue " << targets[3]
+                << " found.";
+
+        }
+        else
+        {
+            /* print out the subsets along with their remaining residues */
+            auto &shuffled_primes {joined_partitions[joined_partitions.size()-1]};
+            std::cout << soln->first << ":\n";
+            for (const auto &v : soln->second)
+            {
+                std::cout << "   ";
+                print_bool_vec(v, shuffled_primes);
+                std::cout << "\n";
+            }
+        }
+    }
 
 }

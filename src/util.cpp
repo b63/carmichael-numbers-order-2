@@ -10,7 +10,7 @@
  * @param  n     number of vectors to distribute the elements of `src` 
  */
 std::vector<std::vector<long>>
-split_vector(const std::vector<long> &src, size_t n)
+split_vector(const std::vector<long> &src, size_t n, bool shuffle)
 {
 
     const size_t total = src.size();
@@ -19,7 +19,8 @@ split_vector(const std::vector<long> &src, size_t n)
     std::vector<size_t> indicies;
     indicies.resize(total);
     for (size_t i=0; i < total; i++) indicies[i] = i;
-    std::random_shuffle(indicies.begin(), indicies.end());
+    if (shuffle)
+        std::random_shuffle(indicies.begin(), indicies.end());
 
     std::vector<std::vector<long>> dst;
     dst.resize(n);

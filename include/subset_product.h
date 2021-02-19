@@ -366,18 +366,29 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
         const std::vector<long> &primes1,
         const std::array<NTL::ZZ,M> &new_bases,
         const std::function<std::array<NTL::ZZ,M>(const std::array<NTL::ZZ,M>&, const std::array<NTL::ZZ,M>&)> &callback,
-        bool final_join=false
+        bool final_join=false,
+        size_t limit_subsets=0
     )
 {
-#if LOG_LEVEL >= 1
+    #if LOG_LEVEL >= 1
+    /* counts the pairs of residues considered */
     size_t pairs {0};
+    /* counts the number of distinct residues in the next group we got after
+     * joining subsets with of two residues in current group */
     size_t distinct_keys {0};
+    /* number of lookups done against the other map to find residues that
+     * matched */
     size_t lookups {0};
-    size_t count {0};
-#endif
+    #endif
+
+    /* counts the total number of distinct subsets generated */
+    size_t num_subsets {0};
+    /* switch to stop when num_subsets > limit_subsets */
+    bool limit_reached = false;
     /* default key, used if M == 0 or final_join == true */
     static const  std::array<NTL::ZZ, M> EMPTY_KEY;
 
+    /* find map with smaller number of entries so we have to do less lookups */
     /* make map0 point to smaller of the two maps */
     auto *small_map = &src0;
     auto *big_map = &src1;
@@ -388,18 +399,18 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
         big_map   = &src0;
     }
 
-
-    /* go through every item in map0 */
+    /* go through every item in one of the maps */
     const auto end = small_map->cend();
     for(auto it = small_map->cbegin(); it != end; it++)
     {
-#if LOG_LEVEL >= 1
-        if((lookups++ & STEP_MASK) == 0)
-            fprintf(stderr, "\rlookups: %lu, pairs: %lu, subset count: %lu, keys: %lu",
-                    lookups, pairs, count, distinct_keys);
-#else
-        lookups++;
-#endif
+        #if LOG_LEVEL >= 1
+            if((lookups++ & STEP_MASK) == 0)
+                fprintf(stderr, "\rlookups: %lu, pairs: %lu, subset count: %lu, keys: %lu",
+                        lookups, pairs, num_subsets, distinct_keys);
+        #else
+            lookups++;
+        #endif
+
         const std::array<NTL::ZZ, N> &key = it->first;
 
         auto it1 {big_map->find(key)};
@@ -422,10 +433,11 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
                 prod_mod_subsets(products0, primes0, subsets0, new_bases);
                 prod_mod_subsets(products1, primes1, subsets1, new_bases);
             }
+            /**
             else
             {
-                /* final join, no need to compute the products of joined subset pairs
-                 * in another base */
+                // final join, no need to compute the products of joined subset pairs
+                // in another base 
                 std::cout << "key: ";
                 for(auto &z : key) std::cout << z << " ";
 
@@ -438,6 +450,7 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
                     print_bool_vec(s, primes1);
                 std::cout << "\n";
             }
+            ()*/
 
             /* make a copy and store every combination of two subsets */
             for (size_t i = 0; i < size0; i++)
@@ -456,28 +469,33 @@ join(std::unordered_map<std::array<NTL::ZZ, M>, std::vector<std::vector<bool>>, 
                     else  subsets_ptr = &dst[callback(products0[i], products1[j])];
 
                     subsets_ptr->push_back(std::move(joined));
+                    num_subsets++;
 
 #if LOG_LEVEL >= 1
                     if (subsets_ptr->size() == 1)  distinct_keys++;
 #if LOG_LEVEL >= 2
-                    if((count++ & STEP_MASK) == 0)
+                    if((num_subsets & STEP_MASK) == 0)
                         fprintf(stderr, "\rlookups: %lu, pairs: %lu, subset count: %lu, keys: %lu",
-                                lookups, pairs, count, distinct_keys);
-#else
-                    count++;
+                                lookups, pairs, num_subsets, distinct_keys);
 #endif
 #endif
+
+                    if ((limit_reached = limit_subsets && num_subsets >= limit_subsets))
+                        break;
                 }
             }
 #if LOG_LEVEL >= 1
             pairs++;
 #endif
+            if (limit_reached) break;
         }
+
+        if (limit_reached) break;
     }
 
 #if LOG_LEVEL >= 1
     fprintf(stderr, "\rlookups: %lu, pairs: %lu, subset count: %lu, keys: %lu\n",
-            lookups, pairs, count, distinct_keys);
+            lookups, pairs, num_subsets, distinct_keys);
 #endif
 }
 

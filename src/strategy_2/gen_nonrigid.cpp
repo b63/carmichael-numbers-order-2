@@ -84,8 +84,8 @@ combine(const Factorization &f1, const Factorization &f2)
 
 /**
  * Format for commandline arguments(<> required, [] optional):
- *  [1]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> <H>
- *  [2]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> <H> < - | primes_path> [ -<min>,<max> | a_vals_path ]
+ *  [1]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> <m1> <m2> <m3>
+ *  [2]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> <m1> <m2> <m3> < - | primes_path> [ -<min>,<max> | a_vals_path ]
  *
  * where
  *    max       - maximum prime when constructing set of primes P
@@ -110,7 +110,9 @@ combine(const Factorization &f1, const Factorization &f2)
 int
 main(int argc, char **argv)
 {
-    if (argc <  7)
+    constexpr int MAX_PARAMS = 13;
+    constexpr int MIN_PARAMS = 10;
+    if (argc <  MIN_PARAMS)
         return 0;
 
     size_t argi = 1;
@@ -129,7 +131,9 @@ main(int argc, char **argv)
     Factorization p12_f { get_factorization(p12_1) };
     Factorization LL_f {include_as_factor(L, include_as_factor(p02_f, p12_f))};
 
-    const NTL::ZZ H {NTL::conv<NTL::ZZ>(argv[argi++])};
+    const NTL::ZZ m1 {NTL::conv<NTL::ZZ>(argv[argi++])};
+    const NTL::ZZ m2 {NTL::conv<NTL::ZZ>(argv[argi++])};
+    const NTL::ZZ m3 {NTL::conv<NTL::ZZ>(argv[argi++])};
 
     /* print out information about parameter choices */
     NTL::ZZ L_val;
@@ -147,7 +151,7 @@ main(int argc, char **argv)
     /* read in primes from file or construct it */
     const std::array<long,2> nonrigid_factors { p0, p1 };
     std::vector<long> primes_set;
-    if (argc >= 11 && strcmp(argv[argi], "-"))
+    if (argc >= MAX_PARAMS && strcmp(argv[argi], "-"))
     {
         read_primes_from_file(primes_set, argv[argi++]);
     }
@@ -163,12 +167,17 @@ main(int argc, char **argv)
     /* calculate and print total group size */
     const NTL::ZZ lcm {get_lcm<std::array<NTL::ZZ, 3> >(std::array<NTL::ZZ,3>{p02_1, p12_1, L_val}, 3)};
     const NTL::ZZ mod_G {eulers_toitent(lcm)};
+    const NTL::ZZ m4 { lcm / (m1*m2*m3) };
     std::cout << "|G| = " << mod_G << " (" << ceil(NTL::log(mod_G)/log(2)) << " bits)\n";
+    std::cout << "m1 = " << m1 << " (" << ceil(NTL::log(eulers_toitent(m1))/log(2)) << " bits)\n";
+    std::cout << "m2 = " << m2 << " (" << ceil(NTL::log(eulers_toitent(m2))/log(2)) << " bits)\n";
+    std::cout << "m3 = " << m3 << " (" << ceil(NTL::log(eulers_toitent(m3))/log(2)) << " bits)\n";
+    std::cout << "N = " <<  m4 << " (" << ceil(NTL::log(eulers_toitent(m4))/log(2)) << " bits)\n";
 
 
     /* read-in/generate values for parameter a */
     std::vector<std::vector<long>> a_values;
-    if (argc >= 11 && argv[argi][0] != '-')
+    if (argc >= MAX_PARAMS && argv[argi][0] != '-')
     {
         read_a_values_from_file(a_values, argv[argi++]);
     }
@@ -203,7 +212,11 @@ main(int argc, char **argv)
         std::cout << "(|P| = " << primes_set_a.size() << ") trying a = "
                 << a_val << ", " << a_factors << "\n";
 
-        gen_cprimes_4way_all(primes_set_a, nonrigid_factors, a_val, L_val, H, min_terms, max_terms, limit);
+        gen_cprimes_8way_random(primes_set_a, nonrigid_factors, a_val, L_val,
+                std::array<NTL::ZZ, 4>{m1, m2, m3, m4}, min_terms, max_terms,
+                limit);
+
+        //gen_cprimes_4way_all(primes_set_a, nonrigid_factors, a_val, L_val, H, min_terms, max_terms, limit);
         std::cout << "\n\n";
     }
 }

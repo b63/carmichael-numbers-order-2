@@ -95,7 +95,7 @@ NTL::ZZ eulers_toitent(const NTL::ZZ &n);
 size_t estimate_subsets_size_bool(size_t set_size, size_t min_size, size_t max_size);
 
 std::vector<std::vector<long>>
-split_vector(const std::vector<long> &src, size_t n);
+split_vector(const std::vector<long> &src, size_t n, bool shuffle=false);
 
 /**************** TEMPLATE FUNCTIONS **************************/
 

@@ -6,7 +6,7 @@
 #include <algorithm>
 #include <NTL/ZZ.h>
 
-#include <util.h>
+#include "util.h"
 #include <counting_factors.h>
 #include <subset_product.h>
 #include <strategy_2/nonrigid.h>
@@ -85,35 +85,45 @@ combine(const Factorization &f1, const Factorization &f2)
 /**
  * Format for commandline arguments(<> required, [] optional):
  *  [1]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> <m1> <m2> <m3>
- *  [2]     <max> <limit> <p0> <p1> <min_terms> <max_terms> <L> <m1> <m2> <m3> < - | primes_path> [ -<min>,<max> | a_vals_path ]
+ *              < - | primes_path> < -<min>,<max> | a_vals_path >
  *
  * where
  *    max       - maximum prime when constructing set of primes P
- *    limit     - limit argument to pass to subroutine
+ *                ignored if primes are read in from file
+ *    limit     - maximum number of subsets to look at, usually (0 means no limit)
  *    p0        - first non-rigid factor
  *    p1        - second non-rigid factor
  *    min_size  - minimum size subsets of P to consider
  *    max_size  - maximum size subsets of P to consider
  *    L         - parameter L specified as a prime factorization
  *               ex. "2^3 3^7" specifies L = 2^3 * 3^7
- *    H         - parameter H specified as an integer
- *  For [2],
- *      < - | primes_path>   can be either '-' or a path to a file containing primes.
- *         If '-' or not specified, primes will be generated, otherwise primes constituting
- *         the primes set P will be read in from the path given.
+ *    m1        - cofactor 1 (specifies the subgroups)
+ *    m2        - cofactor 2
+ *    m3        - cofactor 3
  *
- *      [ - | a_vals_path]   can be either "-<min>,<max>" or path to file containing list of
- *         parameter a values to try. <min> and <max> refers to minimum subset to consideror
- *         where generating possible values for parameter a from  the primes set P.
- *         Since 2-set algorithm is used, subsets are drawn from halves.
+ *    < - | primes_path>
+ *       can be either '-' or a path to a file containing
+ *       primes.  If '-' or not specified, primes will be generated, otherwise
+ *       primes constituting the primes set P will be read in from the path
+ *       given.
+ *
+ *    < -<min>,<max> | a_vals_path >
+ *       can be either "-<min>,<max>" or path to file containing list of parameter
+ *       a values to try. <min> and <max> refers to minimum subset to
+ *       consideror where generating possible values for parameter a from  the
+ *       primes set P.  Since 2-set algorithm is used, subsets are drawn from
+ *       halves.
  */
 int
 main(int argc, char **argv)
 {
-    constexpr int MAX_PARAMS = 13;
-    constexpr int MIN_PARAMS = 10;
-    if (argc <  MIN_PARAMS)
+    constexpr int MAX_PARAMS = 12;
+    if (argc <  MAX_PARAMS+1)
+    {
+        std::cerr << "error: required " << MAX_PARAMS << " arguments "
+                  << ", only " << argc-1 << " given.\n";
         return 0;
+    }
 
     size_t argi = 1;
     const long max   { NTL::conv<long>(argv[argi++]) };
@@ -151,9 +161,9 @@ main(int argc, char **argv)
     /* read in primes from file or construct it */
     const std::array<long,2> nonrigid_factors { p0, p1 };
     std::vector<long> primes_set;
-    if (argc >= MAX_PARAMS && strcmp(argv[argi], "-"))
+    if (strcmp(argv[argi++], "-"))
     {
-        read_primes_from_file(primes_set, argv[argi++]);
+        read_primes_from_file(primes_set, argv[argi-1]);
     }
     else
     {
@@ -177,14 +187,19 @@ main(int argc, char **argv)
 
     /* read-in/generate values for parameter a */
     std::vector<std::vector<long>> a_values;
-    if (argc >= MAX_PARAMS && argv[argi][0] != '-')
+    if (argv[argi][0] != '-')
     {
         read_a_values_from_file(a_values, argv[argi++]);
     }
     else
     {
         char *comma = strchr(argv[argi], ',');
-        if (comma == NULL) return 1;
+        if (comma == NULL)
+        {
+            std::cerr << "error: -<min>,<max> expected got '" << argv[argi]
+                      << "'\n";
+            return 1;
+        }
         *comma = 0;
         int min {atoi(argv[argi++]+1)};
         int max {atoi(comma+1)};

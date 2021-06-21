@@ -113,6 +113,7 @@ combine(const Factorization &f1, const Factorization &f2)
  *       consideror where generating possible values for parameter a from  the
  *       primes set P.  Since 2-set algorithm is used, subsets are drawn from
  *       halves.
+ *       Lines beginning with '#' will be ignored
  */
 int
 main(int argc, char **argv)

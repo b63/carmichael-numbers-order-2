@@ -7,14 +7,6 @@ binary="build/bin/strategy_2/gen_nonrigid"
 # ignored if primes are read in from file
 max=100000000
 
-#    min_size  - minimum size subsets of P to consider
-#    max_size  - maximum size subsets of P to consider
-#    L         - parameter L specified as a prime factorization
-#               ex. "2^3 3^7" specifies L = 2^3 * 3^7
-#    m1        - cofactor 1 (specifies the subgroups)
-#    m2        - cofactor 2
-#    m3        - cofactor 3
-
 # usually maximum number of subsets to look at per partition (0 means no limit)
 limit=1000
 

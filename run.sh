@@ -5,30 +5,30 @@ binary="build/bin/strategy_2/gen_nonrigid"
 
 # maximum prime when constructing set of primes P
 # ignored if primes are read in from file
-max=100000000
+max=1000000000
 
 # usually maximum number of subsets to look at per partition (0 means no limit)
-limit=1000
+limit=1000000
 
 # the two non-rigid factors
 p01="193 6337"
 
 # minimum and maximum sizes of subets from each partition of P to consider
 # (another way to limit the number of subsets besides $limit)
-min_size=10
-max_size=1000  # use 10000 or something large to include all
+min_size=7
+max_size=10  # use 10000 or something large to include all
 
 # factors of L
-L_factors=" 2^5 3^5 5^4 7^2 11^1 13^1 17^1 19^1 29^1 31^1 37^1 41^1 47^1 53^1 59^1 61^1 67^1 71^1 73^1 79^1 83^1 89^1 97^1 101^1 "
+L_factors="2^6 3^5 5^3 7^2 11 13 17 19 23 29 31 37 41 43 47 53"
 # subgroups (cofactors m1 m2 and m3)
-subgroups="7 11 13"
+subgroups="18312281 14535931 266731860866625"
 
 # path to read set of primes P from
 # or '-' to generate the primes
-primes="cache/3/primes"
+primes="cache/7/primes"
 # path to read set _a_ values from
 # or '-' to generate them
-a_values="cache/3/a_values"
+a_values="cache/7/a_values"
  
 $binary $max $limit $p01 $min_size $max_size "$L_factors"\
             $subgroups $primes $a_values

@@ -418,13 +418,13 @@ NTL::ZZ& calc_target_residue(NTL::ZZ &target, const NTL::ZZ &L_val,
         // std::cout << "(L/gcd)^-1 = " << Ld_inv << " (mod " << base << ")\n";
 
         NTL::ZZ p0p1a_inv;
-        NTL::rem(p0p1a_inv, p0p1a, base);
-        NTL::InvMod(p0p1a_inv, p0p1a_inv, base);
+        NTL::rem(p0p1a_inv, p0p1a, lcm_p0p1);
+        NTL::InvMod(p0p1a_inv, p0p1a_inv, lcm_p0p1);
         // std::cout << "(p0p1a)^-1 = " << p0p1a << " (mod " << base << ")\n";
 
-        NTL::ZZ t {1-p0p1a_inv};
-        if (t < 0) t += base;
-        t1 = (t / gcd) * Ld_inv;
+        NTL::ZZ t {(1-p0p1a_inv)/gcd};
+        if (t < 0) t = t + base*(t/base);
+        t1 = t * Ld_inv;
     }
 
     // L' => LL
